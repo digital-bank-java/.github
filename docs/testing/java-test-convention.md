@@ -162,7 +162,7 @@ Integration tests may use:
 
 ## CI Stage Convention
 
-Recommended Java service CI stages:
+Current Java service CI stage order:
 
 1. Unit tests:
 
@@ -170,19 +170,56 @@ Recommended Java service CI stages:
    ./mvnw test
    ```
 
-2. Integration tests and package verification:
+2. Integration tests and package verification without rerunning unit tests:
 
    ```bash
-   ./mvnw verify
+   ./mvnw verify -DskipUnitTests=true
    ```
 
-3. Container build and smoke test.
+3. Helm lint/template validation.
 
-4. Helm lint/template validation.
+4. Container build and smoke test.
 
 5. Quality gates, such as Spotless, Checkstyle, SpotBugs, and SonarQube, when added.
 
-The initial implementation may keep `./mvnw verify` as one job while services are small. As the project grows, CI can split unit and integration stages for clearer failure reporting and faster feedback.
+Why the integration stage uses `-DskipUnitTests=true`:
+
+- `verify` normally includes the `test` phase.
+- Running `verify` directly after `test` would execute the unit suite twice.
+- The explicit skip flag keeps the CI stages separate without losing the Failsafe-backed integration coverage.
+
+This is the current production-style baseline for the Digital Bank Java platform.
+
+### Current Workflow Shape
+
+For now, service repositories keep their own CI workflows instead of using a reusable workflow from `.github`.
+
+Current decision:
+
+- Keep per-service workflows first.
+- Reuse the same command convention across services.
+- Extract a reusable workflow later only after the service workflows stop diverging in meaningful ways.
+
+Reasoning:
+
+- The Maven test phases are now standardized.
+- Container smoke tests still differ slightly by service because config payloads, ports, and dependency wiring are service-specific.
+- Extracting too early would add indirection before the shape is stable.
+
+### Example GitHub Actions Test Stages
+
+```yaml
+jobs:
+  test:
+    steps:
+      - name: Run unit tests
+        run: ./mvnw --batch-mode --no-transfer-progress test
+
+      - name: Run integration tests
+        run: ./mvnw --batch-mode --no-transfer-progress verify -DskipUnitTests=true
+```
+
+This is the preferred service-level pattern until a reusable workflow is introduced.
 
 ## Migration Plan For Existing Services
 
@@ -199,6 +236,16 @@ Apply the convention incrementally:
    ```
 
 5. Update service README and CI workflow if command behavior changes.
+
+   Recommended CI test stages:
+
+   ```yaml
+   - name: Run unit tests
+     run: ./mvnw --batch-mode --no-transfer-progress test
+
+   - name: Run integration tests
+     run: ./mvnw --batch-mode --no-transfer-progress verify -DskipUnitTests=true
+   ```
 
 Start with:
 
