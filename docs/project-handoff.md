@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-07-28
+Last updated: 2026-08-02
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -231,6 +231,25 @@ Deferred or intentionally not first:
 
 Use GitHub Issues and Projects as the source of executable work.
 
+### Outcome-Based Sprints
+
+GitHub Project #1 is organized around outcome-based, rather than calendar-based, sprints. A sprint closes only when its required implementation, verification, documentation, and SIT demonstration evidence are complete.
+
+The current delivery sequence is:
+
+1. [Sprint 0 - Platform Foundation and Local SIT](https://github.com/digital-bank-java/.github/issues/18)
+2. [Sprint 1 - Customer and Account Foundation](https://github.com/digital-bank-java/.github/issues/19)
+3. [Sprint 2 - Ledger Foundation](https://github.com/digital-bank-java/.github/issues/20)
+4. [Sprint 3 - Internal Transfers and Event Consistency](https://github.com/digital-bank-java/.github/issues/21)
+5. [Sprint 4 - Secure Customer Access and Step-Up Authorization](https://github.com/digital-bank-java/.github/issues/22)
+6. [Sprint 5 - Payment Rails and Notifications](https://github.com/digital-bank-java/.github/issues/23)
+7. [Sprint 6 - Operational Resilience and Observability](https://github.com/digital-bank-java/.github/issues/24)
+8. [Sprint 7 - AWS UAT and Production Readiness](https://github.com/digital-bank-java/.github/issues/25)
+
+The Project `Sprint` field is the authoritative cross-repository delivery grouping. Keep the native `Item Type`, `Status`, `Service`, `Priority`, `Size`, parent/sub-issue relationships, and linked pull requests intact. Historic DraftIssues are converted into `.github` issues before native type assignment so every planning item has a colored GitHub type.
+
+The historic `Phase`, `Slice`, `Epic`, and `Delivery Priority` fields are intentionally retained. They contain prior planning classifications that are not duplicated by the new Sprint model. The native GitHub type remains the source of truth for issue classification; the Project `Item Type` field is synchronized to provide a board-friendly colored display.
+
 Issue title prefixes:
 
 - `EPIC:`
@@ -298,6 +317,18 @@ This sequence keeps infrastructure and contracts ahead of event-driven financial
 - Added this project handoff document as the durable resume point for AI agents and contributors.
 - Confirmed that `AGENTS.md` remains the working-rules source of truth, while this document tracks current project state and next work.
 - Established that future updates should append dated entries here after major architecture decisions, cross-repo changes, new service creation, or completed story-level work.
+
+### 2026-08-02
+
+- Adopted outcome-based Sprint 0 through Sprint 7 delivery structure for GitHub Project #1.
+- Created the eight sprint epics in `.github` and added the Project `Sprint` field.
+- Captured pre-migration Project and relationship inventories before the migration.
+- Converted Project DraftIssues to `.github` issues so native Issue Types can be applied consistently.
+- Mapped historic and active work to a single Sprint without changing existing structured parent/sub-issue relationships.
+- Verified 171 Project items, zero remaining DraftIssues, zero missing Sprint values, correct native and display issue types, and unchanged pre-existing parent/sub-issue relationships.
+- Added a red `Bug` option to the Project `Item Type` display field and synchronized it with native GitHub issue types.
+- Retained the historic `Phase`, `Slice`, `Epic`, and `Delivery Priority` fields because they hold unique historical classification data.
+- Supporting migration task: [`.github#17`](https://github.com/digital-bank-java/.github/issues/17).
 
 ### 2026-07-09
 
