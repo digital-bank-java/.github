@@ -1,0 +1,930 @@
+{
+  "generatedAt": "2026-08-02",
+  "relationships": [
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 2,
+      "url": "https://github.com/digital-bank-java/config-server/issues/2",
+      "id": "I_kwDOS2ATXc8AAAABF33aUw",
+      "parent": null,
+      "subIssues": {
+        "nodes": [
+          {
+            "id": "I_kwDOS2ATXc8AAAABF33hnA",
+            "url": "https://github.com/digital-bank-java/config-server/issues/8"
+          },
+          {
+            "id": "I_kwDOS2ATXc8AAAABF33bQw",
+            "url": "https://github.com/digital-bank-java/config-server/issues/6"
+          }
+        ]
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 3,
+      "url": "https://github.com/digital-bank-java/config-server/issues/3",
+      "id": "I_kwDOS2ATXc8AAAABF33akw",
+      "parent": {
+        "id": "I_kwDOS2ATXc8AAAABF33hnA",
+        "url": "https://github.com/digital-bank-java/config-server/issues/8"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 4,
+      "url": "https://github.com/digital-bank-java/config-server/issues/4",
+      "id": "I_kwDOS2ATXc8AAAABF33a1A",
+      "parent": {
+        "id": "I_kwDOS2ATXc8AAAABF33hnA",
+        "url": "https://github.com/digital-bank-java/config-server/issues/8"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 5,
+      "url": "https://github.com/digital-bank-java/config-server/issues/5",
+      "id": "I_kwDOS2ATXc8AAAABF33bBA",
+      "parent": {
+        "id": "I_kwDOS2ATXc8AAAABF33hnA",
+        "url": "https://github.com/digital-bank-java/config-server/issues/8"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 6,
+      "url": "https://github.com/digital-bank-java/config-server/issues/6",
+      "id": "I_kwDOS2ATXc8AAAABF33bQw",
+      "parent": {
+        "id": "I_kwDOS2ATXc8AAAABF33aUw",
+        "url": "https://github.com/digital-bank-java/config-server/issues/2"
+      },
+      "subIssues": {
+        "nodes": [
+          {
+            "id": "I_kwDOS2ATXc8AAAABF33h6g",
+            "url": "https://github.com/digital-bank-java/config-server/issues/9"
+          },
+          {
+            "id": "I_kwDOS2ATXc8AAAABF33iVQ",
+            "url": "https://github.com/digital-bank-java/config-server/issues/10"
+          }
+        ]
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 7,
+      "url": "https://github.com/digital-bank-java/config-server/issues/7",
+      "id": "I_kwDOS2ATXc8AAAABF33bdw",
+      "parent": {
+        "id": "I_kwDOS2ATXc8AAAABF33hnA",
+        "url": "https://github.com/digital-bank-java/config-server/issues/8"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 8,
+      "url": "https://github.com/digital-bank-java/config-server/issues/8",
+      "id": "I_kwDOS2ATXc8AAAABF33hnA",
+      "parent": {
+        "id": "I_kwDOS2ATXc8AAAABF33aUw",
+        "url": "https://github.com/digital-bank-java/config-server/issues/2"
+      },
+      "subIssues": {
+        "nodes": [
+          {
+            "id": "I_kwDOS2ATXc8AAAABF33akw",
+            "url": "https://github.com/digital-bank-java/config-server/issues/3"
+          },
+          {
+            "id": "I_kwDOS2ATXc8AAAABF33a1A",
+            "url": "https://github.com/digital-bank-java/config-server/issues/4"
+          },
+          {
+            "id": "I_kwDOS2ATXc8AAAABF33bBA",
+            "url": "https://github.com/digital-bank-java/config-server/issues/5"
+          },
+          {
+            "id": "I_kwDOS2ATXc8AAAABF33bdw",
+            "url": "https://github.com/digital-bank-java/config-server/issues/7"
+          }
+        ]
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 9,
+      "url": "https://github.com/digital-bank-java/config-server/issues/9",
+      "id": "I_kwDOS2ATXc8AAAABF33h6g",
+      "parent": {
+        "id": "I_kwDOS2ATXc8AAAABF33bQw",
+        "url": "https://github.com/digital-bank-java/config-server/issues/6"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 10,
+      "url": "https://github.com/digital-bank-java/config-server/issues/10",
+      "id": "I_kwDOS2ATXc8AAAABF33iVQ",
+      "parent": {
+        "id": "I_kwDOS2ATXc8AAAABF33bQw",
+        "url": "https://github.com/digital-bank-java/config-server/issues/6"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 14,
+      "url": "https://github.com/digital-bank-java/config-server/issues/14",
+      "id": "I_kwDOS2ATXc8AAAABGLCB5Q",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 1,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/1",
+      "id": "I_kwDOTBIRzc8AAAABGNQp1g",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 4,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/4",
+      "id": "I_kwDOTBIRzc8AAAABGWykAg",
+      "parent": null,
+      "subIssues": {
+        "nodes": [
+          {
+            "id": "I_kwDOTBIRzc8AAAABGWykTQ",
+            "url": "https://github.com/digital-bank-java/customer-service/issues/5"
+          },
+          {
+            "id": "I_kwDOTBIRzc8AAAABGWylHQ",
+            "url": "https://github.com/digital-bank-java/customer-service/issues/6"
+          },
+          {
+            "id": "I_kwDOTBIRzc8AAAABGWylYQ",
+            "url": "https://github.com/digital-bank-java/customer-service/issues/7"
+          },
+          {
+            "id": "I_kwDOTBIRzc8AAAABGWymPQ",
+            "url": "https://github.com/digital-bank-java/customer-service/issues/8"
+          },
+          {
+            "id": "I_kwDOTBIRzc8AAAABGWymhA",
+            "url": "https://github.com/digital-bank-java/customer-service/issues/9"
+          }
+        ]
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 5,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/5",
+      "id": "I_kwDOTBIRzc8AAAABGWykTQ",
+      "parent": {
+        "id": "I_kwDOTBIRzc8AAAABGWykAg",
+        "url": "https://github.com/digital-bank-java/customer-service/issues/4"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 6,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/6",
+      "id": "I_kwDOTBIRzc8AAAABGWylHQ",
+      "parent": {
+        "id": "I_kwDOTBIRzc8AAAABGWykAg",
+        "url": "https://github.com/digital-bank-java/customer-service/issues/4"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 7,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/7",
+      "id": "I_kwDOTBIRzc8AAAABGWylYQ",
+      "parent": {
+        "id": "I_kwDOTBIRzc8AAAABGWykAg",
+        "url": "https://github.com/digital-bank-java/customer-service/issues/4"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 8,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/8",
+      "id": "I_kwDOTBIRzc8AAAABGWymPQ",
+      "parent": {
+        "id": "I_kwDOTBIRzc8AAAABGWykAg",
+        "url": "https://github.com/digital-bank-java/customer-service/issues/4"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 9,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/9",
+      "id": "I_kwDOTBIRzc8AAAABGWymhA",
+      "parent": {
+        "id": "I_kwDOTBIRzc8AAAABGWykAg",
+        "url": "https://github.com/digital-bank-java/customer-service/issues/4"
+      },
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 1,
+      "url": "https://github.com/digital-bank-java/.github/issues/1",
+      "id": "I_kwDOTBGSts8AAAABGjS9FQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 2,
+      "url": "https://github.com/digital-bank-java/.github/issues/2",
+      "id": "I_kwDOTBGSts8AAAABGjTT2Q",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 3,
+      "url": "https://github.com/digital-bank-java/.github/issues/3",
+      "id": "I_kwDOTBGSts8AAAABGjTUcQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 4,
+      "url": "https://github.com/digital-bank-java/.github/issues/4",
+      "id": "I_kwDOTBGSts8AAAABGjTUhA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 5,
+      "url": "https://github.com/digital-bank-java/.github/issues/5",
+      "id": "I_kwDOTBGSts8AAAABGjTVyg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 1,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/1",
+      "id": "I_kwDOTFRnCc8AAAABGuqm-w",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 1,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/1",
+      "id": "I_kwDOTFWcSM8AAAABGvUm4g",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 3,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/3",
+      "id": "I_kwDOTFWcSM8AAAABGvuxUA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 4,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/4",
+      "id": "I_kwDOTFWcSM8AAAABGvuyAg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 5,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/5",
+      "id": "I_kwDOTFWcSM8AAAABGvuykA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 6,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/6",
+      "id": "I_kwDOTFWcSM8AAAABGvuzVA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 7,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/7",
+      "id": "I_kwDOTFWcSM8AAAABGw3p1A",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 1,
+      "url": "https://github.com/digital-bank-java/account-service/issues/1",
+      "id": "I_kwDOTFldJc8AAAABGxNNWA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 2,
+      "url": "https://github.com/digital-bank-java/account-service/issues/2",
+      "id": "I_kwDOTFldJc8AAAABGxNNvg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 3,
+      "url": "https://github.com/digital-bank-java/account-service/issues/3",
+      "id": "I_kwDOTFldJc8AAAABGxNOIA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 4,
+      "url": "https://github.com/digital-bank-java/account-service/issues/4",
+      "id": "I_kwDOTFldJc8AAAABGxNOeg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 5,
+      "url": "https://github.com/digital-bank-java/account-service/issues/5",
+      "id": "I_kwDOTFldJc8AAAABGxNO8A",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 6,
+      "url": "https://github.com/digital-bank-java/account-service/issues/6",
+      "id": "I_kwDOTFldJc8AAAABGxNPWQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 7,
+      "url": "https://github.com/digital-bank-java/account-service/issues/7",
+      "id": "I_kwDOTFldJc8AAAABGxNPyg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 8,
+      "url": "https://github.com/digital-bank-java/account-service/issues/8",
+      "id": "I_kwDOTFldJc8AAAABGxNQQQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 13,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/13",
+      "id": "I_kwDOTBIRzc8AAAABG3x_Sw",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 15,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/15",
+      "id": "I_kwDOTBIRzc8AAAABG4N16g",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-repo",
+      "number": 6,
+      "url": "https://github.com/digital-bank-java/config-repo/issues/6",
+      "id": "I_kwDOTAmJiM8AAAABG5Z_0A",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 8,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/8",
+      "id": "I_kwDOTFWcSM8AAAABG5i9vQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 16,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/16",
+      "id": "I_kwDOTBIRzc8AAAABG5i-KQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 14,
+      "url": "https://github.com/digital-bank-java/account-service/issues/14",
+      "id": "I_kwDOTFldJc8AAAABG5i-cw",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-repo",
+      "number": 8,
+      "url": "https://github.com/digital-bank-java/config-repo/issues/8",
+      "id": "I_kwDOTAmJiM8AAAABG5i-wA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 3,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/3",
+      "id": "I_kwDOTFRnCc8AAAABG5n2Bw",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 9,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/9",
+      "id": "I_kwDOTFWcSM8AAAABG65O8g",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 10,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/10",
+      "id": "I_kwDOTFWcSM8AAAABG65P4g",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-repo",
+      "number": 9,
+      "url": "https://github.com/digital-bank-java/config-repo/issues/9",
+      "id": "I_kwDOTAmJiM8AAAABG65QMw",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-repo",
+      "number": 11,
+      "url": "https://github.com/digital-bank-java/config-repo/issues/11",
+      "id": "I_kwDOTAmJiM8AAAABG7AV3w",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-repo",
+      "number": 13,
+      "url": "https://github.com/digital-bank-java/config-repo/issues/13",
+      "id": "I_kwDOTAmJiM8AAAABG7NvhA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 15,
+      "url": "https://github.com/digital-bank-java/account-service/issues/15",
+      "id": "I_kwDOTFldJc8AAAABG7X3iA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 17,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/17",
+      "id": "I_kwDOTBIRzc8AAAABG7X3hw",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 19,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/19",
+      "id": "I_kwDOTBIRzc8AAAABG8P9Ww",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 17,
+      "url": "https://github.com/digital-bank-java/account-service/issues/17",
+      "id": "I_kwDOTFldJc8AAAABG8P9Yg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 5,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/5",
+      "id": "I_kwDOTFRnCc8AAAABG8dVkQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 6,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/6",
+      "id": "I_kwDOTFRnCc8AAAABG8dWbA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 7,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/7",
+      "id": "I_kwDOTFRnCc8AAAABG8dW0Q",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 8,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/8",
+      "id": "I_kwDOTFRnCc8AAAABG8dXOQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 10,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/10",
+      "id": "I_kwDOTFRnCc8AAAABG8m4UQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 23,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/23",
+      "id": "I_kwDOTBIRzc8AAAABG_AznQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-repo",
+      "number": 17,
+      "url": "https://github.com/digital-bank-java/config-repo/issues/17",
+      "id": "I_kwDOTAmJiM8AAAABG_AzjQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 21,
+      "url": "https://github.com/digital-bank-java/account-service/issues/21",
+      "id": "I_kwDOTFldJc8AAAABG_5eFg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/ledger-service",
+      "number": 1,
+      "url": "https://github.com/digital-bank-java/ledger-service/issues/1",
+      "id": "I_kwDOTIKG0s8AAAABHAbwmQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-repo",
+      "number": 19,
+      "url": "https://github.com/digital-bank-java/config-repo/issues/19",
+      "id": "I_kwDOTAmJiM8AAAABHAgsDw",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/ledger-service",
+      "number": 3,
+      "url": "https://github.com/digital-bank-java/ledger-service/issues/3",
+      "id": "I_kwDOTIKG0s8AAAABHBP0rQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 12,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/12",
+      "id": "I_kwDOTFRnCc8AAAABHBUsjg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 25,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/25",
+      "id": "I_kwDOTBIRzc8AAAABHBWE2g",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-repo",
+      "number": 21,
+      "url": "https://github.com/digital-bank-java/config-repo/issues/21",
+      "id": "I_kwDOTAmJiM8AAAABHBccUA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/config-server",
+      "number": 16,
+      "url": "https://github.com/digital-bank-java/config-server/issues/16",
+      "id": "I_kwDOS2ATXc8AAAABHBeJxw",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/api-gateway",
+      "number": 12,
+      "url": "https://github.com/digital-bank-java/api-gateway/issues/12",
+      "id": "I_kwDOTFWcSM8AAAABHBeKMg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 6,
+      "url": "https://github.com/digital-bank-java/.github/issues/6",
+      "id": "I_kwDOTBGSts8AAAABHJma8A",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 7,
+      "url": "https://github.com/digital-bank-java/.github/issues/7",
+      "id": "I_kwDOTBGSts8AAAABHJms-A",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 27,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/27",
+      "id": "I_kwDOTBIRzc8AAAABHJmuXQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 24,
+      "url": "https://github.com/digital-bank-java/account-service/issues/24",
+      "id": "I_kwDOTFldJc8AAAABHJmvyQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 8,
+      "url": "https://github.com/digital-bank-java/.github/issues/8",
+      "id": "I_kwDOTBGSts8AAAABHJmwmg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/customer-service",
+      "number": 29,
+      "url": "https://github.com/digital-bank-java/customer-service/issues/29",
+      "id": "I_kwDOTBIRzc8AAAABHhMnxg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/account-service",
+      "number": 26,
+      "url": "https://github.com/digital-bank-java/account-service/issues/26",
+      "id": "I_kwDOTFldJc8AAAABHhcjEA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 15,
+      "url": "https://github.com/digital-bank-java/.github/issues/15",
+      "id": "I_kwDOTBGSts8AAAABKggx7Q",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 17,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/17",
+      "id": "I_kwDOTFRnCc8AAAABKspUNg",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/infra-sit",
+      "number": 19,
+      "url": "https://github.com/digital-bank-java/infra-sit/issues/19",
+      "id": "I_kwDOTFRnCc8AAAABKvktfA",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/ledger-service",
+      "number": 4,
+      "url": "https://github.com/digital-bank-java/ledger-service/issues/4",
+      "id": "I_kwDOTIKG0s8AAAABHk6RVQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/transaction-service",
+      "number": 1,
+      "url": "https://github.com/digital-bank-java/transaction-service/issues/1",
+      "id": "I_kwDOTqioJc8AAAABLGAILQ",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    },
+    {
+      "repository": "digital-bank-java/.github",
+      "number": 17,
+      "url": "https://github.com/digital-bank-java/.github/issues/17",
+      "id": "I_kwDOTBGSts8AAAABLGZ05g",
+      "parent": null,
+      "subIssues": {
+        "nodes": []
+      }
+    }
+  ]
+}

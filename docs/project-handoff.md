@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-07-28
+Last updated: 2026-08-02
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -231,6 +231,27 @@ Deferred or intentionally not first:
 
 Use GitHub Issues and Projects as the source of executable work.
 
+### Outcome-Based Sprints
+
+GitHub Project #1 is organized around outcome-based, rather than calendar-based, sprints. A sprint closes only when its required implementation, verification, documentation, and SIT demonstration evidence are complete.
+
+The current delivery sequence is:
+
+1. [Sprint 0 - Platform Foundation and Local SIT](https://github.com/digital-bank-java/.github/issues/18)
+2. [Sprint 1 - Customer and Account Foundation](https://github.com/digital-bank-java/.github/issues/19)
+3. [Sprint 2 - Ledger Foundation](https://github.com/digital-bank-java/.github/issues/20)
+4. [Sprint 3 - Internal Transfers and Event Consistency](https://github.com/digital-bank-java/.github/issues/21)
+5. [Sprint 4 - Secure Customer Access and Step-Up Authorization](https://github.com/digital-bank-java/.github/issues/22)
+6. [Sprint 5 - Payment Rails and Notifications](https://github.com/digital-bank-java/.github/issues/23)
+7. [Sprint 6 - Operational Resilience and Observability](https://github.com/digital-bank-java/.github/issues/24)
+8. [Sprint 7 - AWS UAT and Production Readiness](https://github.com/digital-bank-java/.github/issues/25)
+
+The Project `Sprint` field is the authoritative cross-repository delivery grouping. The eight Sprint epics are the only root planning items. Historic epics are children of their owning Sprint, and every other item is below a parent in the same Sprint. This makes the GitHub issue hierarchy the visible delivery structure while the Sprint field remains the cross-repository filter and audit key. The full parent mapping is recorded in `docs/project-inventory/2026-08-02-sprint-hierarchy-mapping.csv`.
+
+Keep the native `Item Type`, `Status`, `Service`, `Priority`, `Size`, and linked pull requests intact. Historic DraftIssues are converted into `.github` issues before native type assignment so every planning item has a colored GitHub type.
+
+The historic `Phase`, `Slice`, `Epic`, and `Delivery Priority` fields are intentionally retained. They contain prior planning classifications that are not duplicated by the new Sprint model. The native GitHub type remains the source of truth for issue classification; the Project `Item Type` field is synchronized to provide a board-friendly colored display.
+
 Issue title prefixes:
 
 - `EPIC:`
@@ -298,6 +319,27 @@ This sequence keeps infrastructure and contracts ahead of event-driven financial
 - Added this project handoff document as the durable resume point for AI agents and contributors.
 - Confirmed that `AGENTS.md` remains the working-rules source of truth, while this document tracks current project state and next work.
 - Established that future updates should append dated entries here after major architecture decisions, cross-repo changes, new service creation, or completed story-level work.
+
+### 2026-08-02
+
+- Reconciled deferred work from Sprint 0 under [task #107](https://github.com/digital-bank-java/.github/issues/107): quality-gate and SonarQube work [#1](https://github.com/digital-bank-java/.github/issues/1), [#3](https://github.com/digital-bank-java/.github/issues/3), and [#4](https://github.com/digital-bank-java/.github/issues/4) now belong to Sprint 6 under Observability & Resilience #34.
+- Moved UAT/PROD environment validation [#40](https://github.com/digital-bank-java/.github/issues/40) and production documentation [#67](https://github.com/digital-bank-java/.github/issues/67) to Sprint 7 under Production Documentation #37.
+- Created [Sprint 0 reconciliation task #107](https://github.com/digital-bank-java/.github/issues/107) under the Sprint 0 epic.
+- Closed delivered draft-promotion story [#71](https://github.com/digital-bank-java/.github/issues/71) with evidence that all Project drafts are now native issues beneath the eight Sprint roots.
+- Created the Sprint 0 local-SIT guide task [#108](https://github.com/digital-bank-java/.github/issues/108) beneath the Local Deployment epic; UAT and production instructions remain Sprint 7 work.
+- Approved the strict Sprint 0 boundary: reproducible, operable, and verifiable local Kubernetes SIT only. UAT/production readiness, security, and observability outcomes must be owned by their later Sprints.
+- Completed [Sprint 0 reconciliation task #107](https://github.com/digital-bank-java/.github/issues/107) after auditing 173 Project issues: exactly eight Sprint roots, all 173 issues reachable, and zero missing parents, cycles, missing Sprint values, or cross-Sprint direct relationships. The final active Sprint 0 scope contains 23 platform-foundation and local-SIT outcomes.
+- Implementation and audit trail: [`.github` PR #106](https://github.com/digital-bank-java/.github/pull/106).
+- Adopted outcome-based Sprint 0 through Sprint 7 delivery structure for GitHub Project #1.
+- Created the eight sprint epics in `.github` and added the Project `Sprint` field.
+- Captured pre-migration Project and relationship inventories before the migration.
+- Converted Project DraftIssues to `.github` issues so native Issue Types can be applied consistently.
+- Mapped historic and active work to a single Sprint without changing existing structured parent/sub-issue relationships.
+- Verified 171 Project items, zero remaining DraftIssues, zero missing Sprint values, correct native and display issue types, and unchanged pre-existing parent/sub-issue relationships.
+- Added a red `Bug` option to the Project `Item Type` display field and synchronized it with native GitHub issue types.
+- Retained the historic `Phase`, `Slice`, `Epic`, and `Delivery Priority` fields because they hold unique historical classification data.
+- Rebuilt the parent/sub-issue hierarchy so Sprint epics #18 through #25 are the only roots. Verified all 171 Project issues have the recorded intended parent, with no cross-Sprint parent relationship.
+- Supporting migration task: [`.github#17`](https://github.com/digital-bank-java/.github/issues/17).
 
 ### 2026-07-09
 
