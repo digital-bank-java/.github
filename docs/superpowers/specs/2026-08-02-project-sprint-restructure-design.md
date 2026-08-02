@@ -40,8 +40,11 @@ The migration will retire manual fields that duplicate this model, including `Ph
 ### Issue Hierarchy
 
 - Each sprint is represented by one cross-repository `EPIC:` issue in `digital-bank-java/.github`.
-- Sprint epics contain `STORY:` issues that deliver a coherent user, business, or platform outcome.
-- Stories contain small, independently reviewable `TASK:` issues in the owning repository.
+- Sprint epics are the only root planning items in the Project hierarchy.
+- A historic platform or domain `EPIC:` issue is a child of the Sprint epic that owns its primary outcome.
+- An issue may remain below a historic epic only when its Sprint matches that epic's Sprint. A later-Sprint item that shares a historic classification is a direct child of its own Sprint epic rather than a child of a cross-Sprint epic.
+- Existing `STORY:` and `TASK:` parent/sub-issue links are preserved when both ends belong to the same Sprint.
+- Previously unparented items are attached to the matching historic epic when that epic is in the same Sprint; otherwise they become direct Sprint children.
 - Defects are `BUG:` issues, labeled `bug`, assigned to the sprint in which they were discovered, and linked to the affected story where applicable.
 
 ### Sprint Completion
@@ -71,7 +74,7 @@ A sprint remains active until all mandatory stories meet their acceptance criter
 1. Add the `Sprint` single-select Project field with Sprint 0 through Sprint 7 values.
 2. Create the eight sprint epic issues in `digital-bank-java/.github` with objective and exit criteria.
 3. Convert existing draft items to issues in `digital-bank-java/.github` and correct native Issue Type where missing.
-4. Map existing work to the appropriate sprint while retaining parent/sub-issue relationships.
+4. Map existing work to the appropriate sprint and establish the Sprint-rooted hierarchy while retaining same-Sprint parent/sub-issue relationships.
 5. Move items to Backlog, Ready, In progress, In review, or Done based on real delivery state.
 6. Verify filters by Sprint, Status, Item Type, Service, and Priority.
 7. Retire duplicate Project fields only after the verified mapping is complete.
