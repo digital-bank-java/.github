@@ -28,11 +28,11 @@
 
 **Produces:** A recoverable record of current and desired parent relationships for every Project issue.
 
-- [ ] **Step 1: Export the current Project items and live parent links**
+- [x] **Step 1: Export the current Project items and live parent links**
 
 Run the Project item export and a GraphQL query that returns each issue ID, title, native type, current parent, Sprint, and manual historic Epic classification.
 
-- [ ] **Step 2: Calculate every desired parent**
+- [x] **Step 2: Calculate every desired parent**
 
 Apply these deterministic rules:
 
@@ -42,7 +42,7 @@ Apply these deterministic rules:
 4. An unparented Story, Task, or Bug becomes a child of the matching same-Sprint historic Epic when one exists.
 5. If no same-Sprint historic Epic exists, the item becomes a direct child of its Sprint epic.
 
-- [ ] **Step 3: Save the candidate mapping and verify it before mutation**
+- [x] **Step 3: Save the candidate mapping and verify it before mutation**
 
 The CSV must contain issue URL, current parent URL, desired parent URL, Sprint, reason, and whether the relationship changes. Confirm that exactly eight candidate roots remain and that every other Project issue has a desired parent.
 
@@ -55,15 +55,15 @@ The CSV must contain issue URL, current parent URL, desired parent URL, Sprint, 
 
 **Produces:** A Project hierarchy with only Sprint epics at the root.
 
-- [ ] **Step 1: Attach historic Epics to their Sprint parents**
+- [x] **Step 1: Attach historic Epics to their Sprint parents**
 
 Use the GitHub GraphQL parent/sub-issue mutation. Reparent only historic epics, leaving Sprint epics as roots.
 
-- [ ] **Step 2: Attach remaining unparented or cross-Sprint items**
+- [x] **Step 2: Attach remaining unparented or cross-Sprint items**
 
 Apply the candidate desired parent relation. Do not mutate items whose current parent already equals the desired parent.
 
-- [ ] **Step 3: Capture a post-mutation relationship snapshot**
+- [x] **Step 3: Capture a post-mutation relationship snapshot**
 
 Export the relationship tree after all changes, including parent URLs and the immediate sub-issues for each issue.
 
@@ -76,15 +76,15 @@ Export the relationship tree after all changes, including parent URLs and the im
 
 **Produces:** Evidence that the Project is a Sprint-rooted hierarchy.
 
-- [ ] **Step 1: Verify the root set**
+- [x] **Step 1: Verify the root set**
 
 Confirm the only root issue titles are the eight Sprint epics #18 through #25.
 
-- [ ] **Step 2: Verify relationship safety**
+- [x] **Step 2: Verify relationship safety**
 
 Confirm every non-root issue has a parent in the same Sprint, and no cycle exists.
 
-- [ ] **Step 3: Append the hierarchy result to the handoff**
+- [x] **Step 3: Append the hierarchy result to the handoff**
 
 Record the hierarchy rules, root-count verification, and the link to the hierarchy mapping CSV.
 
