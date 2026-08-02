@@ -59,17 +59,18 @@ A sprint remains active until all mandatory stories meet their acceptance criter
 1. Do not delete existing issues or pull requests merely because their title or current grouping is outdated.
 2. Preserve native Issue Type for every issue, including closed work.
 3. Preserve `Parent issue` and `Sub-issues progress`; do not replace GitHub relationships with duplicate text fields.
-4. Assign every item in Backlog, Ready, In progress, In review, and Done to exactly one sprint where it has a meaningful delivery role.
-5. Assign exploratory or platform-wide governance work to Sprint 0 unless it is explicitly required by a later sprint.
-6. Assign existing completed work retrospectively; its original completion date remains historical evidence.
-7. Put all active work in `In progress` only when there is a real owner and active implementation. Assign active tasks to `ramioooz`.
-8. Cross-repository PR descriptions must link related PRs and state merge order or lack of ordering dependency.
+4. Convert Project draft issues to issues in `digital-bank-java/.github` before assigning a native Issue Type. Preserve their title, body, Project item identity, and field values during conversion.
+5. Assign every item in Backlog, Ready, In progress, In review, and Done to exactly one sprint where it has a meaningful delivery role.
+6. Assign exploratory or platform-wide governance work to Sprint 0 unless it is explicitly required by a later sprint.
+7. Assign existing completed work retrospectively; its original completion date remains historical evidence.
+8. Put all active work in `In progress` only when there is a real owner and active implementation. Assign active tasks to `ramioooz`.
+9. Cross-repository PR descriptions must link related PRs and state merge order or lack of ordering dependency.
 
 ## Migration Sequence
 
 1. Add the `Sprint` single-select Project field with Sprint 0 through Sprint 7 values.
 2. Create the eight sprint epic issues in `digital-bank-java/.github` with objective and exit criteria.
-3. Audit every existing Project item and correct native Issue Type where missing.
+3. Convert existing draft items to issues in `digital-bank-java/.github` and correct native Issue Type where missing.
 4. Map existing work to the appropriate sprint while retaining parent/sub-issue relationships.
 5. Move items to Backlog, Ready, In progress, In review, or Done based on real delivery state.
 6. Verify filters by Sprint, Status, Item Type, Service, and Priority.

@@ -88,7 +88,7 @@ Verify that its colored native Epic type and Sprint field are visible in the Pro
 
 **Consumes:** Pre-migration snapshot and sprint definitions.
 
-**Produces:** Complete mapping audit and Project Sprint assignments.
+**Produces:** Complete mapping audit, converted planning issues, correct native Issue Types, and Project Sprint assignments.
 
 - [ ] **Step 1: Create the mapping table before modifying Project items**
 
@@ -98,19 +98,23 @@ Use exactly these CSV columns:
 project_item_id,issue_url,repository,title,item_type_before,item_type_after,status_before,status_after,sprint,parent_issue,reason
 ```
 
-- [ ] **Step 2: Correct missing or incorrect native Issue Type**
+- [ ] **Step 2: Convert every Project DraftIssue to `digital-bank-java/.github`**
+
+Use GitHub GraphQL mutation `convertProjectV2DraftIssueItemToIssue` with the Project item ID and `.github` repository ID. Preserve the title, body, Project item identity, and field values. The conversion is required because DraftIssues cannot hold a native GitHub Issue Type.
+
+- [ ] **Step 3: Correct missing or incorrect native Issue Type**
 
 Use this mapping: `EPIC:` to `Epic`, `STORY:` to `Story`, `TASK:` to `Task`, and `BUG:` to `Bug`. For historic unprefixed issues, preserve the title unless a correction is needed for clarity, and assign type based on its actual role.
 
-- [ ] **Step 3: Assign a Sprint and accurate Status to every Project item**
+- [ ] **Step 4: Assign a Sprint and accurate Status to every Project item**
 
 Use `Backlog` for unselected work, `Ready` for defined startable work, `In progress` for active owned work, `In review` for open reviewable PR work, and `Done` for accepted closed deliverables.
 
-- [ ] **Step 4: Verify parent relationships survived**
+- [ ] **Step 5: Verify parent relationships survived**
 
 Export Project items again and compare each retained issue URL, repository, and `Parent issue` to the pre-migration snapshot.
 
-- [ ] **Step 5: Commit the mapping**
+- [ ] **Step 6: Commit the mapping**
 
 Run `git add docs/project-inventory/2026-08-02-sprint-mapping.csv && git commit -m "docs: map project work to outcome-based sprints"`.
 
