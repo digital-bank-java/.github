@@ -322,6 +322,9 @@ This sequence keeps infrastructure and contracts ahead of event-driven financial
 
 ### 2026-08-02
 
+- Created [Sprint 0 reconciliation task #107](https://github.com/digital-bank-java/.github/issues/107) under the Sprint 0 epic.
+- Approved the strict Sprint 0 boundary: reproducible, operable, and verifiable local Kubernetes SIT only. UAT/production readiness, security, and observability outcomes must be owned by their later Sprints.
+- Implementation and audit trail: [`.github` PR #106](https://github.com/digital-bank-java/.github/pull/106).
 - Adopted outcome-based Sprint 0 through Sprint 7 delivery structure for GitHub Project #1.
 - Created the eight sprint epics in `.github` and added the Project `Sprint` field.
 - Captured pre-migration Project and relationship inventories before the migration.
