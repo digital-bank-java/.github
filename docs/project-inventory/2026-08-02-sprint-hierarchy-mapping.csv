@@ -170,3 +170,5 @@
 "https://github.com/digital-bank-java/.github/issues/23","","","Sprint 5 - Payment Rails and Notifications","Sprint epic root","false"
 "https://github.com/digital-bank-java/.github/issues/24","","","Sprint 6 - Operational Resilience and Observability","Sprint epic root","false"
 "https://github.com/digital-bank-java/.github/issues/25","","","Sprint 7 - AWS UAT and Production Readiness","Sprint epic root","false"
+"https://github.com/digital-bank-java/.github/issues/107","https://github.com/digital-bank-java/.github/issues/18","https://github.com/digital-bank-java/.github/issues/18","Sprint 0 - Platform Foundation and Local SIT","Created under the intended Sprint root","false"
+"https://github.com/digital-bank-java/.github/issues/108","https://github.com/digital-bank-java/.github/issues/35","https://github.com/digital-bank-java/.github/issues/35","Sprint 0 - Platform Foundation and Local SIT","Created under the intended same-Sprint historic epic","false"
