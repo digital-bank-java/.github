@@ -24,7 +24,7 @@ Install and verify:
 - `kubectl` configured for the `docker-desktop` context.
 - Helm 3 or Helm 4.
 - Java 21 for Maven-based service checks and image builds.
-- GitHub CLI authentication only when creating the Config Server Kubernetes Secret for private `config-repo` access.
+- A dedicated repository-scoped, read-only GitHub token for private `config-repo` access when creating the Config Server Kubernetes Secret.
 
 ```bash
 docker version
@@ -32,12 +32,11 @@ kubectl config current-context
 kubectl get nodes
 helm version --short
 java -version
-gh auth status
 ```
 
 The expected Kubernetes context is `docker-desktop`. Stop if a different context is selected.
 
-Do not put GitHub tokens, database passwords, or other secrets in shell history, Helm values, repository files, screenshots, or this guide. The Config Server and Infra SIT READMEs describe interactive, local-only secret creation using existing Kubernetes Secrets.
+Do not put GitHub tokens, database passwords, or other secrets in Helm values, repository files, screenshots, or this guide. This guide deliberately does not prescribe credential entry mechanics. Follow the current credential procedures in the Config Server and Infra SIT READMEs instead; the local PostgreSQL procedure is owned by [bug #114](https://github.com/digital-bank-java/.github/issues/114). GitHub CLI authentication is not required for the Config Server Secret flow: it uses the dedicated token and `kubectl`.
 
 ## Deployment Order
 
