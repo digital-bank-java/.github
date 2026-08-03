@@ -1,0 +1,40 @@
+name: Feature or Story
+description: Propose a user, platform, or operational outcome.
+title: "STORY: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for a deliverable outcome. Do not include credentials, tokens, private endpoints, or customer data.
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: State the outcome and who benefits from it.
+      placeholder: As a ..., I need ..., so that ...
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: List the intended behavior, affected services, and explicitly excluded work.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: List observable conditions that must be true before the issue is complete.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and Rollout Notes
+      description: List related issues, repositories, API contracts, merge order, or deployment considerations. Write None when there are no dependencies.
+    validations:
+      required: true
