@@ -1,0 +1,12 @@
+{
+  "name": "Java Maven service CI",
+  "description": "Run the Digital Bank Java Maven verification standard.",
+  "iconName": "octicon beaker",
+  "categories": [
+    "Java"
+  ],
+  "filePatterns": [
+    "^pom\\.xml$",
+    "^mvnw$"
+  ]
+}
