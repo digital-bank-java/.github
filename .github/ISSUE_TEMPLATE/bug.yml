@@ -1,0 +1,57 @@
+name: Bug report
+description: Report an unexpected behavior or regression.
+title: "BUG: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report security vulnerabilities with this public form. Follow SECURITY.md instead. Remove credentials, tokens, private URLs, and personal or customer data from all reproduction details and logs.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the unexpected behavior and its impact.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Provide the smallest safe sequence that demonstrates the issue.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: Include sanitized errors, logs, screenshots, or API responses where useful.
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      options:
+        - Blocks development or deployment
+        - Breaks a documented workflow
+        - Incorrect behavior with a workaround
+        - Minor or cosmetic
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Identify the safe, non-sensitive context, such as SIT, UAT, or a test fixture.
+    validations:
+      required: true
