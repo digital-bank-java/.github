@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-08-02
+Last updated: 2026-08-03
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -33,18 +33,19 @@ The working style is:
 | `customer-service` | Customer identity and profile management |
 | `account-service` | Account lifecycle, account lookup, admin account search |
 | `ledger-service` | Immutable ledger entry posting and lookup |
-| `infra-sit` | Local SIT infrastructure, currently shared PostgreSQL |
+| `infra-sit` | Local SIT infrastructure: shared PostgreSQL, Kafka, and AKHQ tooling |
 
 ## Environment Model
 
 | Environment | Meaning |
 | --- | --- |
-| `local` | Individual service execution from IDE or terminal |
-| `sit` | Integrated local Kubernetes environment on Docker Desktop |
+| `sit` | Lowest integrated development and testing environment on Docker Desktop Kubernetes |
 | `uat` | Future AWS-hosted pre-production environment |
 | `prod` | Future AWS production environment |
 
-Local SIT should resemble production shape where practical, but production should prefer managed AWS services rather than manually operated local-style containers.
+`LOCAL-DEV` is retired as a formal environment and Spring profile. Running a single service from VS Code or Eclipse remains supported for debugging, but the process uses the `sit` profile and temporary property overrides to connect to forwarded SIT dependencies. It is not a second deployment topology.
+
+SIT should resemble production shape where practical, but production should prefer managed AWS services rather than manually operated local-style containers.
 
 Expected AWS direction:
 
@@ -198,7 +199,7 @@ Implemented or substantially started:
 - `customer-service` customer registration/profile APIs, persistence, tests, Dockerfile, Helm chart, CI
 - `account-service` account opening/lookup/admin query APIs, persistence, tests, Dockerfile, Helm chart, CI
 - `ledger-service` initial immutable ledger entry posting/lookup, persistence, tests, Dockerfile, Helm chart, CI
-- `infra-sit` shared PostgreSQL Helm chart for local SIT
+- `infra-sit` shared PostgreSQL, Kafka, and AKHQ deployment for local SIT
 - org-level and repo-level `AGENTS.md` files
 - Java test phase convention documentation
 
@@ -207,7 +208,7 @@ Implemented or substantially started:
 High-priority missing capabilities:
 
 - project handoff maintenance discipline after major changes
-- Kafka infrastructure in local SIT
+- Kafka application integration, AsyncAPI contracts, and topic governance
 - AsyncAPI event contracts
 - Transaction Service repository and bootstrap
 - saga/process-manager implementation in Transaction Service
@@ -303,7 +304,7 @@ done
 
 Recommended immediate sequence:
 
-1. Add Kafka to `infra-sit` as shared local SIT infrastructure.
+1. Consolidate configuration and developer workflow around SIT, UAT, and PROD.
 2. Define event contract conventions and initial AsyncAPI layout.
 3. Create and bootstrap `transaction-service`.
 4. Implement account reservation model in `account-service`.
@@ -313,6 +314,14 @@ Recommended immediate sequence:
 This sequence keeps infrastructure and contracts ahead of event-driven financial behavior.
 
 ## Update Log
+
+### 2026-08-03
+
+- Adopted the formal three-environment model: `sit`, `uat`, and `prod`.
+- Retired `LOCAL-DEV` as a platform environment and supported Spring profile. IDE execution is now explicitly a workstation debugging technique connected to SIT through temporary port-forwards and property overrides.
+- Closed the Docker Compose LOCAL-DEV story as superseded. Docker remains the image packaging mechanism; Kubernetes SIT remains the only local integrated deployment topology.
+- Created [story #115](https://github.com/digital-bank-java/.github/issues/115) and its child tasks for configuration migration, workstation debugging guidance, and Insomnia environment alignment.
+- Added `docs/workstation-debugging-against-sit.md` as the repeatable procedure for debugging one database-backed service without duplicate Kubernetes processing.
 
 ### 2026-07-28
 

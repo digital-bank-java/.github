@@ -60,14 +60,14 @@ Current service direction:
 
 The platform uses these environments:
 
-- `local`: direct developer execution from the workstation
-- `sit`: integrated local Kubernetes environment
+- `sit`: integrated local Kubernetes environment for development and testing
 - `uat`: cloud-hosted pre-production environment
 - `prod`: production environment
 
 Rules:
 
-- Local SIT runs on Kubernetes and should resemble production structure where practical.
+- `LOCAL-DEV` is not a deployment environment or supported Spring profile. A workstation process uses the `sit` profile with temporary overrides and forwarded SIT dependencies.
+- SIT runs on Kubernetes and should resemble production structure where practical.
 - Runtime configuration belongs in `config-repo`, not in service repositories.
 - Infrastructure manifests for local SIT belong in `infra-sit`.
 - Do not commit real secrets into any repository.
