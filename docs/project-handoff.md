@@ -346,6 +346,7 @@ Finish the remaining Sprint 0 foundation and governance work before starting the
 
 ### 2026-08-04
 
+- Sprint 1 closeout work started: customer/account OpenAPI metadata, gateway documentation resilience verification, and removal of active `local`/direct-service documentation references are being aligned before the Sprint 1 epic is closed.
 - Consolidated formal runtime environments to `sit`, `uat`, and `prod`. `LOCAL-DEV` and the `local` Spring profile are retired; workstation runs are debugging against SIT.
 - Removed local-profile configuration from `config-repo`, added SIT profile configuration, and verified Config Server precedence for `customer-service/sit`.
 - Rolled out and verified Config Server, API Gateway, Customer Service, Account Service, and Ledger Service in `digital-bank-sit`.
