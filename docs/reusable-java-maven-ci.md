@@ -66,3 +66,9 @@ jobs:
 ## Adoption
 
 Adopt this workflow through a separate service pull request. Preserve the repository's service-specific jobs and establish the reusable `Maven verify` job as the required Java quality check before removing equivalent inline setup.
+
+## Organization Workflow Template
+
+Java service repositories can start from the **Java Maven service CI** template in the GitHub Actions workflow chooser. The template creates `.github/workflows/ci.yml` with the shared Maven verification workflow pinned to an immutable `.github` commit.
+
+After creating the workflow, review it in a service pull request. Add service-specific jobs, such as Helm rendering or a container smoke test, in that repository's workflow rather than modifying the organization template for one service.
