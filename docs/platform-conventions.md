@@ -63,6 +63,9 @@ Use `sit`, `uat`, and `prod` only for runtime profile overrides. CI fixtures may
 - Platform-admin APIs use `/admin/v1/...` and must later be protected by authorization.
 - Gateway-routed health and documentation routes are internal/developer operations, not public customer surfaces.
 - OpenAPI contracts remain service-owned and are aggregated through the gateway below `/admin/docs/...`.
+- Each service contract must provide an explicit product-facing title, description, and semantic contract version. The version describes the API contract, not the Docker image or Helm chart version.
+- Service OpenAPI documents are available at `/v3/api-docs` inside the cluster. The gateway exposes them at `/admin/docs/{service}/v3/api-docs`; the central UI is `/admin/docs/swagger-ui.html`.
+- OpenAPI examples use synthetic data and document `application/problem+json` error responses, pagination, monetary values, and existing validation behavior.
 - Use RFC 9457-style `application/problem+json` responses for documented errors.
 
 ## Infrastructure Names
