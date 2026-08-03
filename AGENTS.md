@@ -39,6 +39,7 @@ Use repo-local `AGENTS.md` files for:
 | `customer-service` | Customer identity and profile management |
 | `account-service` | Account lifecycle and account lookup |
 | `ledger-service` | Immutable journal entry posting and lookup |
+| `transaction-service` | Transfer orchestration and saga/process-manager foundation |
 | `infra-sit` | Local SIT infrastructure for Kubernetes workloads |
 
 ## Architecture Rules
@@ -58,7 +59,7 @@ Current service direction:
 
 ## Environment Model
 
-The platform uses these environments:
+The platform uses these runtime environments:
 
 - `sit`: integrated local Kubernetes environment for development and testing
 - `uat`: cloud-hosted pre-production environment
@@ -66,11 +67,14 @@ The platform uses these environments:
 
 Rules:
 
-- `LOCAL-DEV` is not a deployment environment or supported Spring profile. A workstation process uses the `sit` profile with temporary overrides and forwarded SIT dependencies.
+- `LOCAL-DEV` and the Spring `local` profile are retired; they are not runtime environments.
+- A service run from an IDE is workstation debugging against SIT, using the `sit` profile and temporary property overrides.
 - SIT runs on Kubernetes and should resemble production structure where practical.
 - Runtime configuration belongs in `config-repo`, not in service repositories.
 - Infrastructure manifests for local SIT belong in `infra-sit`.
 - Do not commit real secrets into any repository.
+
+Read `docs/platform-conventions.md` for canonical service names, ports, configuration precedence, API paths, and infrastructure names.
 
 ## Configuration Rules
 

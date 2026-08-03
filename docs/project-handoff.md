@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -46,6 +46,8 @@ The working style is:
 `LOCAL-DEV` is retired as a formal environment and Spring profile. Running a single service from VS Code or Eclipse remains supported for debugging, but the process uses the `sit` profile and temporary property overrides to connect to forwarded SIT dependencies. It is not a second deployment topology.
 
 SIT should resemble production shape where practical, but production should prefer managed AWS services rather than manually operated local-style containers.
+
+Canonical naming, port, configuration, API-path, and infrastructure conventions are in `docs/platform-conventions.md`.
 
 Expected AWS direction:
 
@@ -302,16 +304,7 @@ done
 
 ## Recommended Next Work
 
-Recommended immediate sequence:
-
-1. Consolidate configuration and developer workflow around SIT, UAT, and PROD.
-2. Define event contract conventions and initial AsyncAPI layout.
-3. Create and bootstrap `transaction-service`.
-4. Implement account reservation model in `account-service`.
-5. Add ledger posting outcome events in `ledger-service`.
-6. Implement Transaction Service saga orchestration.
-
-This sequence keeps infrastructure and contracts ahead of event-driven financial behavior.
+Finish the remaining Sprint 0 foundation and governance work before starting the next banking-domain delivery item. Start with `.github#39`, the canonical platform-conventions story, then complete the Sprint 0 README, IDE workflow, and organization-engineering-workflow items. Consult GitHub Project #1 for the current native hierarchy and status.
 
 ## Update Log
 
@@ -350,6 +343,15 @@ This sequence keeps infrastructure and contracts ahead of event-driven financial
 - Retained the historic `Phase`, `Slice`, `Epic`, and `Delivery Priority` fields because they hold unique historical classification data.
 - Rebuilt the parent/sub-issue hierarchy so Sprint epics #18 through #25 are the only roots. Verified all 171 Project issues have the recorded intended parent, with no cross-Sprint parent relationship.
 - Supporting migration task: [`.github#17`](https://github.com/digital-bank-java/.github/issues/17).
+
+### 2026-08-04
+
+- Consolidated formal runtime environments to `sit`, `uat`, and `prod`. `LOCAL-DEV` and the `local` Spring profile are retired; workstation runs are debugging against SIT.
+- Removed local-profile configuration from `config-repo`, added SIT profile configuration, and verified Config Server precedence for `customer-service/sit`.
+- Rolled out and verified Config Server, API Gateway, Customer Service, Account Service, and Ledger Service in `digital-bank-sit`.
+- Verified gateway health, routed service health, central Swagger UI, representative customer/account APIs, and a workstation debugging session against port-forwarded SIT dependencies.
+- Completed and closed the SIT Deployment and Developer Workflow epic, API Testing With Insomnia epic, and Gateway/service-routing health story.
+- Began `.github#39` to establish this platform-conventions document and correct organization documentation drift.
 
 ### 2026-07-09
 
