@@ -68,6 +68,15 @@ Use `sit`, `uat`, and `prod` only for runtime profile overrides. CI fixtures may
 - OpenAPI examples use synthetic data and document `application/problem+json` error responses, pagination, monetary values, and existing validation behavior.
 - Use RFC 9457-style `application/problem+json` responses for documented errors.
 
+## Ledger Reconciliation
+
+Reconciliation compares the immutable ledger with account projections, reservations, and transfer state. It classifies missing postings, duplicate postings, stale projections, orphan reservations, and state divergence; it does not rewrite ledger history. The architecture and Sprint boundary are documented in [`docs/ledger-reconciliation.md`](ledger-reconciliation.md).
+
+- Sprint 2 owns ledger invariants, idempotent posting, append-only reversals, and the reconciliation design contract.
+- Sprint 3 owns event-driven consistency checks, outbox/inbox correlation, and transfer-state reconciliation.
+- Sprint 6 owns scheduled reports, alerting, dashboards, and operational runbooks.
+- Replay is allowed only through an idempotent workflow. Corrections use a new compensating reversal. Ambiguous cases are quarantined for authorized review.
+
 ## Infrastructure Names
 
 - Docker image: `digital-bank-java/<service>:<version>`.

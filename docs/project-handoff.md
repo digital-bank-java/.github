@@ -122,6 +122,8 @@ Each service owns its own database objects. Services must not directly query eac
 
 Schema migrations are managed with Flyway inside each service repository.
 
+Ledger reconciliation is an operational comparison across independently owned views, not a second ledger. The immutable ledger remains the financial posting authority; account projections and transaction state are compared against it using stable correlation identifiers. Sprint 2 defines the invariants and remediation boundaries in [`docs/ledger-reconciliation.md`](ledger-reconciliation.md). Event-driven checks remain Sprint 3 work, while scheduled reporting and alerting remain Sprint 6 work.
+
 ### Domain Boundaries
 
 `customer-service` owns:
@@ -223,6 +225,7 @@ High-priority missing capabilities:
 - centralized logging with OpenSearch direction
 - distributed tracing and correlation IDs
 - AWS infrastructure path for UAT and production
+- ledger idempotent replay, append-only reversals, and reconciliation controls
 
 Deferred or intentionally not first:
 
@@ -353,6 +356,14 @@ Finish the remaining Sprint 0 foundation and governance work before starting the
 - Verified gateway health, routed service health, central Swagger UI, representative customer/account APIs, and a workstation debugging session against port-forwarded SIT dependencies.
 - Completed and closed the SIT Deployment and Developer Workflow epic, API Testing With Insomnia epic, and Gateway/service-routing health story.
 - Began `.github#39` to establish this platform-conventions document and correct organization documentation drift.
+
+### 2026-08-04 - Sprint 2 ledger reconciliation boundary
+
+- Defined the Sprint 2 reconciliation architecture in [`docs/ledger-reconciliation.md`](ledger-reconciliation.md).
+- Confirmed that `ledger-service` remains responsible for immutable balanced postings, idempotent replay, and append-only reversals.
+- Kept event-driven consistency checks, account reservation consumption, and transfer saga correlation in Sprint 3.
+- Kept scheduled reconciliation reporting, alerting, dashboards, and operational runbooks in Sprint 6.
+- Separated operational reconciliation findings from immutable financial audit records; reconciliation may replay or create a compensating reversal but must never rewrite ledger history.
 
 ### 2026-07-09
 
