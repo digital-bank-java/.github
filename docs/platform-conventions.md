@@ -83,7 +83,11 @@ Reconciliation compares the immutable ledger with account projections, reservati
 - Helm release and Kubernetes Service: the service name, unless a documented `fullnameOverride` is needed.
 - Kubernetes namespace: `digital-bank-sit` for integrated platform workloads and `digital-bank-tooling` for developer tooling.
 - Each service owns one logical PostgreSQL database named with snake_case, for example `customer_service`.
-- Kafka topics use lowercase dot-separated event names, for example `ledger.posting.completed`; formal topic naming will be expanded with the AsyncAPI contract work.
+- Kafka topics use lowercase dot-separated names with a major-version suffix, for example `ledger.posting.completed.v1`. The topic name is a stable transport address and must match its AsyncAPI channel address.
+- Event type names use UpperCamelCase with the same major-version suffix, for example `LedgerPostingCompleted.v1`. The `eventType` field must match the message's declared event type exactly.
+- Produced events must include `eventId`, `eventType`, `occurredAt`, `aggregateId`, `correlationId`, and `causationId`. `eventId` uniquely identifies the immutable event; `correlationId` follows the end-to-end workflow; and `causationId` identifies the command or preceding event that caused publication. The initiating command or consumed event must carry both identifiers into the outbox record and published payload.
+- Consumers must be idempotent by `eventId`. Producers must retain the same event id and payload on retry, and write the event to their transactional outbox with the related business state change.
+- A major-version suffix represents a separate, incompatible topic and event type. Compatible changes are additive only: do not remove, rename, or change the meaning, type, or requiredness of existing fields within a major version. Versioned event schemas must permit additional fields, and consumers must ignore fields they do not understand. Publish an incremented major version for incompatible changes and support parallel consumption during migration.
 
 ## Required Service Baseline
 

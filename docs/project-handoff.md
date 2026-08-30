@@ -101,7 +101,7 @@ Each service owns its own OpenAPI contract.
 
 The gateway aggregates documentation behind admin/internal paths. Swagger UI should be treated as a developer/admin surface, not a public customer-facing endpoint.
 
-Future Kafka event contracts should use AsyncAPI, not OpenAPI.
+Kafka event contracts use AsyncAPI, not OpenAPI. The governed ledger posting outcome contract is [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml); it defines the versioned completion and failure topics and is the implementation dependency for Sprint 3 Tasks 2 through 4.
 
 ### Persistence
 
@@ -212,13 +212,13 @@ Implemented or substantially started:
 High-priority missing capabilities:
 
 - project handoff maintenance discipline after major changes
-- Kafka application integration, AsyncAPI contracts, and topic governance
-- AsyncAPI event contracts
-- Transaction Service repository and bootstrap
+- Kafka application integration
+- Transactional ledger outbox implementation and posting outcome publication, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
+- Account reservation persistence and event consumption boundary, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
+- Transaction Service process-manager bootstrap, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
 - saga/process-manager implementation in Transaction Service
 - account reservation tables and APIs
 - account outbox/inbox tables and publishers/consumers
-- ledger outbox and posting outcome event publication
 - service-to-service security
 - API Gateway rate limiting and resilience
 - admin API authentication/authorization
@@ -310,6 +310,12 @@ done
 Finish the remaining Sprint 0 foundation and governance work before starting the next banking-domain delivery item. Start with `.github#39`, the canonical platform-conventions story, then complete the Sprint 0 README, IDE workflow, and organization-engineering-workflow items. Consult GitHub Project #1 for the current native hierarchy and status.
 
 ## Update Log
+
+### 2026-08-30 - Sprint 3 ledger event contract
+
+- Published [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml) as the governed AsyncAPI contract for `LedgerPostingCompleted.v1` and `LedgerPostingFailed.v1`.
+- Established versioned topic naming, correlation and causation metadata, idempotency expectations, and additive-only compatibility rules for a major event version.
+- Made the contract the prerequisite for Sprint 3 Tasks 2 through 4: ledger outbox, account reservation/event consumption, and the Transaction Service process-manager foundation.
 
 ### 2026-08-03
 

@@ -31,7 +31,7 @@
 **Interfaces:**
 - Produces the versioned event names `LedgerPostingCompleted.v1` and `LedgerPostingFailed.v1`.
 - Defines required metadata: `eventId`, `eventType`, `occurredAt`, `aggregateId`, `correlationId`, and `causationId`.
-- Defines payload fields for posting id, posting request id, currency, debit/credit account references, amount, and failure reason.
+- Defines payload fields for posting id, posting request id, currency, multi-line debit/credit entries, decimal amounts, failure code, and failure reason.
 
 - [ ] **Step 1: Write the AsyncAPI contract with channels `ledger.posting.completed.v1` and `ledger.posting.failed.v1`, Kafka bindings, JSON schemas, and required metadata.**
 - [ ] **Step 2: Add conventions for topic names, event versioning, correlation, and compatibility.**
@@ -52,8 +52,8 @@
 - Test: `src/test/java/com/digitalbank/ledgerservice/LedgerPersistenceIT.java`
 
 **Interfaces:**
-- `LedgerEventPublisher.recordPostingCompleted(LedgerEntry entry, String correlationId, Instant occurredAt)`.
-- `LedgerEventPublisher.recordPostingFailed(String postingRequestId, String reason, String correlationId, Instant occurredAt)`.
+- `LedgerEventPublisher.recordPostingCompleted(LedgerEntry entry, String correlationId, String causationId, Instant occurredAt)`.
+- `LedgerEventPublisher.recordPostingFailed(String postingRequestId, String failureCode, String failureReason, String correlationId, String causationId, Instant occurredAt)`.
 - The publisher records an outbox row only; Kafka transport polling/publication is a later task.
 
 - [ ] **Step 1: Add a failing service test proving successful posting records one completion event intent in the same application operation.**

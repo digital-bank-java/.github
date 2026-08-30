@@ -1,0 +1,260 @@
+asyncapi: 3.0.0
+info:
+  title: Ledger Posting Outcome Events
+  version: 1.0.0
+  description: >-
+    Versioned ledger-owned facts published after a ledger posting reaches a
+    terminal outcome. Consumers must process each event idempotently. The
+    command or event that triggers publication must propagate correlationId
+    and causationId to the ledger outbox record.
+defaultContentType: application/json
+channels:
+  ledger.posting.completed.v1:
+    address: ledger.posting.completed.v1
+    description: Published when Ledger Service has persisted a balanced, immutable posting.
+    messages:
+      ledgerPostingCompleted:
+        $ref: '#/components/messages/LedgerPostingCompletedV1'
+    bindings:
+      kafka:
+        topic: ledger.posting.completed.v1
+        bindingVersion: 0.5.0
+  ledger.posting.failed.v1:
+    address: ledger.posting.failed.v1
+    description: Published when Ledger Service cannot complete a requested posting.
+    messages:
+      ledgerPostingFailed:
+        $ref: '#/components/messages/LedgerPostingFailedV1'
+    bindings:
+      kafka:
+        topic: ledger.posting.failed.v1
+        bindingVersion: 0.5.0
+operations:
+  publishLedgerPostingCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/ledger.posting.completed.v1'
+    messages:
+      - $ref: '#/channels/ledger.posting.completed.v1/messages/ledgerPostingCompleted'
+  publishLedgerPostingFailed:
+    action: send
+    channel:
+      $ref: '#/channels/ledger.posting.failed.v1'
+    messages:
+      - $ref: '#/channels/ledger.posting.failed.v1/messages/ledgerPostingFailed'
+components:
+  messages:
+    LedgerPostingCompletedV1:
+      name: LedgerPostingCompleted.v1
+      title: Ledger posting completed
+      summary: Immutable ledger posting completed successfully.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/LedgerPostingCompletedV1'
+      examples:
+        - name: multiLinePosting
+          summary: Completed posting with one debit and two credit lines.
+          payload:
+            eventId: 'fbd2e85a-bc91-4dc0-a1b3-9509d0d6c241'
+            eventType: LedgerPostingCompleted.v1
+            occurredAt: '2026-08-30T08:15:30Z'
+            aggregateId: 'posting-83e01c22'
+            correlationId: 'transfer-58e271cd'
+            causationId: 'command-63ca8eb6'
+            postingId: 'posting-83e01c22'
+            postingRequestId: 'posting-request-4d93c803'
+            currency: USD
+            lines:
+              - accountId: 'account-source-001'
+                lineType: DEBIT
+                amount: '125.5000'
+              - accountId: 'account-destination-002'
+                lineType: CREDIT
+                amount: '100.0000'
+              - accountId: 'account-fee-003'
+                lineType: CREDIT
+                amount: '25.5000'
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+    LedgerPostingFailedV1:
+      name: LedgerPostingFailed.v1
+      title: Ledger posting failed
+      summary: Requested ledger posting could not be completed.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/LedgerPostingFailedV1'
+      examples:
+        - name: rejectedPosting
+          summary: Posting rejected because the requested lines are invalid.
+          payload:
+            eventId: '3b814775-7756-456d-87ed-fbf7be2a5868'
+            eventType: LedgerPostingFailed.v1
+            occurredAt: '2026-08-30T08:16:14Z'
+            aggregateId: 'posting-request-4d93c803'
+            correlationId: 'transfer-58e271cd'
+            causationId: 'command-63ca8eb6'
+            postingRequestId: 'posting-request-4d93c803'
+            failureCode: VALIDATION_ERROR
+            failureReason: 'Posting lines must contain at least one debit and one credit.'
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+  schemas:
+    LedgerPostingCompletedV1:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - occurredAt
+        - aggregateId
+        - correlationId
+        - causationId
+        - postingId
+        - postingRequestId
+        - currency
+        - lines
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique immutable identifier for this event instance.
+        eventType:
+          type: string
+          const: LedgerPostingCompleted.v1
+          description: Versioned event name.
+        occurredAt:
+          type: string
+          format: date-time
+          description: UTC timestamp at which the posting outcome occurred.
+        aggregateId:
+          type: string
+          minLength: 1
+          description: Ledger posting aggregate identifier; equal to postingId for this event.
+        correlationId:
+          type: string
+          minLength: 1
+          description: Identifier propagated from the initiating command or event across the transfer workflow.
+        causationId:
+          type: string
+          minLength: 1
+          description: Identifier propagated from the command or event that caused this outcome.
+        postingId:
+          type: string
+          minLength: 1
+          description: Immutable ledger posting identifier.
+        postingRequestId:
+          type: string
+          minLength: 1
+          description: Idempotency key supplied with the posting request.
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: ISO 4217 currency code.
+        lines:
+          type: array
+          minItems: 2
+          description: Immutable debit and credit lines that make up the balanced posting.
+          allOf:
+            - contains:
+                type: object
+                required:
+                  - lineType
+                properties:
+                  lineType:
+                    const: DEBIT
+              minContains: 1
+            - contains:
+                type: object
+                required:
+                  - lineType
+                properties:
+                  lineType:
+                    const: CREDIT
+              minContains: 1
+          items:
+            $ref: '#/components/schemas/LedgerPostingLine'
+    LedgerPostingFailedV1:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - occurredAt
+        - aggregateId
+        - correlationId
+        - causationId
+        - postingRequestId
+        - failureCode
+        - failureReason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique immutable identifier for this event instance.
+        eventType:
+          type: string
+          const: LedgerPostingFailed.v1
+          description: Versioned event name.
+        occurredAt:
+          type: string
+          format: date-time
+          description: UTC timestamp at which the posting outcome occurred.
+        aggregateId:
+          type: string
+          minLength: 1
+          description: Posting request identifier because no completed posting aggregate exists.
+        correlationId:
+          type: string
+          minLength: 1
+          description: Identifier propagated from the initiating command or event across the transfer workflow.
+        causationId:
+          type: string
+          minLength: 1
+          description: Identifier propagated from the command or event that caused this outcome.
+        postingRequestId:
+          type: string
+          minLength: 1
+          description: Idempotency key supplied with the posting request.
+        failureCode:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+            - CONFLICT
+            - ACCOUNTING_ERROR
+            - INTERNAL_ERROR
+          description: Stable, machine-readable classification of the posting failure.
+        failureReason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Sanitized human-readable detail that must not expose secrets or internal implementation data.
+    LedgerPostingLine:
+      type: object
+      required:
+        - accountId
+        - lineType
+        - amount
+      properties:
+        accountId:
+          type: string
+          minLength: 1
+          description: Account identifier for this ledger line.
+        lineType:
+          type: string
+          enum:
+            - DEBIT
+            - CREDIT
+          description: Direction of the ledger line.
+        amount:
+          $ref: '#/components/schemas/PositiveDecimalAmount'
+    PositiveDecimalAmount:
+      type: string
+      pattern: '^(?:0|[1-9][0-9]*)(?:\.[0-9]{1,4})?$'
+      not:
+        enum:
+          - '0'
+          - '0.0'
+          - '0.00'
+          - '0.000'
+          - '0.0000'
+      description: Decimal amount encoded as a string. It must be at least 0.0001 and have no more than four fractional digits.
