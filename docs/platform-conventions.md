@@ -26,6 +26,8 @@ Use lowercase kebab-case names for service repositories, Docker images, Helm cha
 | Account Service | `account-service` | `account-service` | `account-service` | `8082` |
 | Ledger Service | `ledger-service` | `ledger-service` | `ledger-service` | `8083` |
 | Transaction Service | `transaction-service` | `transaction-service` | `transaction-service` | `8084` |
+| Auth Service | `auth-service` | `auth-service` | `auth-service` | `8086` |
+| MFA Service | `mfa-service` | `mfa-service` | `mfa-service` | `8087` |
 
 New service ports must be allocated here before implementation. Do not reuse a port already assigned to a platform service.
 
