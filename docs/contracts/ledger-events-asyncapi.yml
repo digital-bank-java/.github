@@ -4,16 +4,37 @@ info:
   version: 1.0.0
   description: >-
     Versioned ledger-owned facts published after a ledger posting reaches a
-    terminal outcome. Consumers must process each event idempotently. The
-    internal HTTP posting and reversal commands require X-Correlation-Id and
-    X-Causation-Id headers. Their inbound adapters map both headers to
-    PostLedgerEntryCommand or PostLedgerReversalCommand, and the application
-    service propagates them unchanged to the ledger outbox record.
+    terminal outcome. Ledger Service is the only producer. Account Service
+    settles the reservation and account projection idempotently, while
+    Transaction Service owns transfer status and saga state. Consumers must
+    process each event idempotently. The internal HTTP posting and reversal
+    commands require X-Correlation-Id and X-Causation-Id headers. Their
+    inbound adapters map both headers to PostLedgerEntryCommand or
+    PostLedgerReversalCommand, and the application service propagates them
+    unchanged to the ledger outbox record.
 defaultContentType: application/json
+x-data-classification: confidential-financial
+x-schema-registry:
+  boundary: AsyncAPI payload schemas are the organization contract; the Schema Registry stores the registered serialized schemas and enforces compatibility.
+  subjectStrategy: TopicNameStrategy
+  subjects:
+    ledger.posting.completed.v1: ledger.posting.completed.v1-value
+    ledger.posting.failed.v1: ledger.posting.failed.v1-value
+  compatibility: BACKWARD_TRANSITIVE
+  provisioning: Platform infrastructure owns registry subjects and Kafka topic provisioning. This document contains no registry URL, credential, or schema id.
 channels:
   ledger.posting.completed.v1:
     address: ledger.posting.completed.v1
-    description: Published when Ledger Service has persisted a balanced, immutable posting.
+    description: >-
+      Ledger Service publishes this fact after the balanced, immutable posting
+      and its outbox row are durable. Account Service consumes it to commit
+      the debit reservation and apply credit or reversal projections.
+      Transaction Service consumes it to advance the transfer saga. The Kafka
+      partition key is aggregateId; ordering is guaranteed only per key on
+      this topic, not across the completion and failure topics.
+    x-partition-key: aggregateId
+    x-delivery-semantics: at-least-once; consumers use an inbox keyed by eventId.
+    x-dead-letter-topic: ledger.posting.completed.v1.dlq
     messages:
       ledgerPostingCompleted:
         $ref: '#/components/messages/LedgerPostingCompletedV1'
@@ -23,7 +44,17 @@ channels:
         bindingVersion: 0.5.0
   ledger.posting.failed.v1:
     address: ledger.posting.failed.v1
-    description: Published when Ledger Service cannot complete a requested posting.
+    description: >-
+      Ledger Service publishes this fact for a durably classified terminal
+      business failure. Account Service consumes it to release the related
+      reservation. Transaction Service consumes it to fail the transfer saga.
+      Transient persistence or broker failures are retried and are not
+      represented as business failure facts. The Kafka partition key is
+      aggregateId; ordering is guaranteed only per key on this topic, not
+      across the completion and failure topics.
+    x-partition-key: aggregateId
+    x-delivery-semantics: at-least-once; consumers use an inbox keyed by eventId.
+    x-dead-letter-topic: ledger.posting.failed.v1.dlq
     messages:
       ledgerPostingFailed:
         $ref: '#/components/messages/LedgerPostingFailedV1'
@@ -34,12 +65,14 @@ channels:
 operations:
   publishLedgerPostingCompleted:
     action: send
+    description: Ledger Service publishes a durable completion fact; it does not orchestrate the transfer saga.
     channel:
       $ref: '#/channels/ledger.posting.completed.v1'
     messages:
       - $ref: '#/channels/ledger.posting.completed.v1/messages/ledgerPostingCompleted'
   publishLedgerPostingFailed:
     action: send
+    description: Ledger Service publishes a durable terminal business-failure fact; it does not mutate account balances or transfer state.
     channel:
       $ref: '#/channels/ledger.posting.failed.v1'
     messages:
@@ -59,10 +92,14 @@ components:
           payload:
             eventId: 'fbd2e85a-bc91-4dc0-a1b3-9509d0d6c241'
             eventType: LedgerPostingCompleted.v1
+            schemaVersion: 1.0.0
+            producer: ledger-service
             occurredAt: '2026-08-30T08:15:30Z'
             aggregateId: 'dd480939-2dde-49b7-aa22-c8f22a7789ad'
             correlationId: 'transfer-58e271cd'
             causationId: 'command-63ca8eb6'
+            transactionId: 'transfer-58e271cd'
+            reservationRequestId: 'reservation-58e271cd'
             postingId: 'dd480939-2dde-49b7-aa22-c8f22a7789ad'
             postingRequestId: 'posting-request-4d93c803'
             currency: USD
@@ -81,10 +118,14 @@ components:
           payload:
             eventId: 'ce6c3f8f-3123-4d10-a6e6-53a3d351b5b8'
             eventType: LedgerPostingCompleted.v1
+            schemaVersion: 1.0.0
+            producer: ledger-service
             occurredAt: '2026-08-30T08:17:02Z'
             aggregateId: '13dc863f-30f4-4ed4-b9a6-3035d310d7ae'
             correlationId: 'transfer-58e271cd'
             causationId: 'command-2a794f84'
+            transactionId: 'transfer-58e271cd'
+            reservationRequestId: 'reservation-58e271cd'
             postingId: '13dc863f-30f4-4ed4-b9a6-3035d310d7ae'
             postingRequestId: 'posting-request-8ebae790'
             reversalOfLedgerEntryId: 'dd480939-2dde-49b7-aa22-c8f22a7789ad'
@@ -112,10 +153,14 @@ components:
           payload:
             eventId: '3b814775-7756-456d-87ed-fbf7be2a5868'
             eventType: LedgerPostingFailed.v1
+            schemaVersion: 1.0.0
+            producer: ledger-service
             occurredAt: '2026-08-30T08:16:14Z'
             aggregateId: 'posting-request-4d93c803'
             correlationId: 'transfer-58e271cd'
             causationId: 'command-63ca8eb6'
+            transactionId: 'transfer-58e271cd'
+            reservationRequestId: 'reservation-58e271cd'
             postingRequestId: 'posting-request-4d93c803'
             failureCode: VALIDATION_ERROR
             failureReason: 'Posting lines must contain at least one debit and one credit.'
@@ -125,13 +170,18 @@ components:
   schemas:
     LedgerPostingCompletedV1:
       type: object
+      additionalProperties: true
       required:
         - eventId
         - eventType
+        - schemaVersion
+        - producer
         - occurredAt
         - aggregateId
         - correlationId
         - causationId
+        - transactionId
+        - reservationRequestId
         - postingId
         - postingRequestId
         - currency
@@ -145,6 +195,14 @@ components:
           type: string
           const: LedgerPostingCompleted.v1
           description: Versioned event name.
+        schemaVersion:
+          type: string
+          const: 1.0.0
+          description: Semantic version of the registered payload schema; compatible additive changes may increment the minor or patch component within v1.
+        producer:
+          type: string
+          const: ledger-service
+          description: Canonical service name of the sole producer.
         occurredAt:
           type: string
           format: date-time
@@ -161,6 +219,14 @@ components:
           type: string
           minLength: 1
           description: Identifier propagated from the command or event that caused this outcome.
+        transactionId:
+          type: string
+          minLength: 1
+          description: Transfer identifier owned by Transaction Service and shared across the transfer saga.
+        reservationRequestId:
+          type: string
+          minLength: 1
+          description: Account Service reservation request identifier to settle or release idempotently.
         postingId:
           type: string
           format: uuid
@@ -200,13 +266,18 @@ components:
             $ref: '#/components/schemas/LedgerPostingLine'
     LedgerPostingFailedV1:
       type: object
+      additionalProperties: true
       required:
         - eventId
         - eventType
+        - schemaVersion
+        - producer
         - occurredAt
         - aggregateId
         - correlationId
         - causationId
+        - transactionId
+        - reservationRequestId
         - postingRequestId
         - failureCode
         - failureReason
@@ -219,6 +290,14 @@ components:
           type: string
           const: LedgerPostingFailed.v1
           description: Versioned event name.
+        schemaVersion:
+          type: string
+          const: 1.0.0
+          description: Semantic version of the registered payload schema; compatible additive changes may increment the minor or patch component within v1.
+        producer:
+          type: string
+          const: ledger-service
+          description: Canonical service name of the sole producer.
         occurredAt:
           type: string
           format: date-time
@@ -235,6 +314,14 @@ components:
           type: string
           minLength: 1
           description: Identifier propagated from the command or event that caused this outcome.
+        transactionId:
+          type: string
+          minLength: 1
+          description: Transfer identifier owned by Transaction Service and shared across the transfer saga.
+        reservationRequestId:
+          type: string
+          minLength: 1
+          description: Account Service reservation request identifier to settle or release idempotently.
         postingRequestId:
           type: string
           minLength: 1
@@ -262,7 +349,7 @@ components:
         accountId:
           type: string
           format: uuid
-          description: Account identifier for this ledger line.
+          description: Opaque account identifier for this ledger line; never place account numbers or customer PII here.
         lineType:
           type: string
           enum:

@@ -30,13 +30,13 @@
 
 **Interfaces:**
 - Produces the versioned event names `LedgerPostingCompleted.v1` and `LedgerPostingFailed.v1`.
-- Defines required metadata: `eventId`, `eventType`, `occurredAt`, `aggregateId`, `correlationId`, and `causationId`.
+- Defines required metadata: `eventId`, `eventType`, `schemaVersion`, `producer`, `occurredAt`, `aggregateId`, `correlationId`, `causationId`, `transactionId`, and `reservationRequestId`.
 - Defines payload fields for posting id, posting request id, currency, multi-line debit/credit entries, decimal amounts, failure code, and failure reason.
 
-- [ ] **Step 1: Write the AsyncAPI contract with channels `ledger.posting.completed.v1` and `ledger.posting.failed.v1`, Kafka bindings, JSON schemas, and required metadata.**
+- [ ] **Step 1: Write the AsyncAPI contract with channels `ledger.posting.completed.v1` and `ledger.posting.failed.v1`, Kafka bindings, producer/consumer ownership, partition keys, delivery semantics, Schema Registry boundaries, JSON schemas, and required metadata.**
 - [ ] **Step 2: Add conventions for topic names, event versioning, correlation, and compatibility.**
 - [ ] **Step 3: Update the handoff to record the contract as the dependency for Tasks 2-4.**
-- [ ] **Step 4: Validate the YAML parses and contains both channels, messages, and schemas.**
+- [ ] **Step 4: Validate the YAML parses and contains both channels, messages, schemas, identifiers, producer/consumer ownership, partition keys, delivery semantics, and Schema Registry subjects.**
 - [ ] **Step 5: Commit with `docs: define ledger event contracts`.**
 
 ### Task 2: Add Ledger Service transactional outbox and event publication boundary
@@ -54,16 +54,17 @@
 - Test: `src/test/java/com/digitalbank/ledgerservice/LedgerPersistenceIT.java`
 
 **Interfaces:**
-- `LedgerEventPublisher.recordPostingCompleted(LedgerEntry entry, UUID reversalOfLedgerEntryId, String correlationId, String causationId, Instant occurredAt)`; `reversalOfLedgerEntryId` is null for normal postings and contains the original entry UUID for reversals.
-- `LedgerEventPublisher.recordPostingFailed(String postingRequestId, String failureCode, String failureReason, String correlationId, String causationId, Instant occurredAt)`.
+- `LedgerEventPublisher.recordPostingCompleted(LedgerEntry entry, UUID reversalOfLedgerEntryId, String transactionId, String reservationRequestId, String correlationId, String causationId, Instant occurredAt)`; `reversalOfLedgerEntryId` is null for normal postings and contains the original entry UUID for reversals.
+- `LedgerEventPublisher.recordPostingFailed(String postingRequestId, String transactionId, String reservationRequestId, String failureCode, String failureReason, String correlationId, String causationId, Instant occurredAt)`.
 - The current internal HTTP ledger posting and reversal endpoints require non-blank `X-Correlation-Id` and `X-Causation-Id` headers. Their inbound adapters copy them into `PostLedgerEntryCommand` and `PostLedgerReversalCommand` respectively; `LedgerService` passes both identifiers unchanged to the publisher and transactional outbox, including on reversal completion. Missing or blank headers are rejected with `400`; Task 2 must not generate either identifier.
-- The publisher records an outbox row only; Kafka transport polling/publication is a later task.
+- The publisher records an outbox row only; Kafka transport polling/publication is a later task. It generates `eventId` once, stores the exact payload and schema version, and reuses both on delivery retry.
+- Terminal business failures (`VALIDATION_ERROR`, `CONFLICT`, and `ACCOUNTING_ERROR`) record a failure fact durably with the posting request and do not publish a failure fact for transient database or broker outages. The failure record is written transactionally with the durable classification.
 
-- [ ] **Step 1: Add a failing service test proving successful posting records one completion event intent in the same application operation.**
-- [ ] **Step 2: Add a failing persistence test proving the outbox table stores the event type, aggregate id, payload, correlation id, and unpublished state.**
-- [ ] **Step 3: Add the Flyway migration with unique event id, aggregate index, status, attempts, and timestamps.**
-- [ ] **Step 4: Implement the port and JPA adapter with JSON payload serialization using the existing service conventions.**
-- [ ] **Step 5: Invoke the publisher from the posting transaction after the immutable ledger entry is persisted.**
+- [ ] **Step 1: Add failing service tests proving successful posting records one completion event intent and a terminal business rejection records one failure event intent.**
+- [ ] **Step 2: Add failing persistence tests proving the outbox table stores the event type, schema version, aggregate id, transfer/reservation identifiers, payload, correlation id, and unpublished state.**
+- [ ] **Step 3: Add the Flyway migration with unique event id, one terminal outcome per posting request, aggregate/transfer/reservation indexes, status, attempts, and timestamps.**
+- [ ] **Step 4: Implement the port and JPA adapter with JSON payload serialization using the existing service conventions; schema registration and compatibility validation remain a build/platform concern, not runtime credentials in the service.**
+- [ ] **Step 5: Invoke the publisher from the posting transaction after the immutable ledger entry is persisted, or after a terminal business failure is durably classified; never publish from the HTTP handler.**
 - [ ] **Step 6: Run `./mvnw verify` and confirm the existing idempotency/reversal tests still pass.**
 - [ ] **Step 7: Commit with `feat: record ledger posting events in an outbox`.**
 
@@ -120,6 +121,7 @@
 ## Integration Verification
 
 - Validate Task 1 contract syntax and required fields.
+- Validate Schema Registry subject names, compatibility policy, producer/consumer ownership, partition keys, at-least-once delivery, retry/DLQ behavior, security classification, and absence of PII/secrets.
 - Run `./mvnw verify` in ledger, account, and transaction services.
 - Run Helm lint/template validation for affected charts before rollout.
 - Do not claim Kafka behavior until a publisher/consumer integration test proves it.
