@@ -5,8 +5,10 @@ info:
   description: >-
     Versioned ledger-owned facts published after a ledger posting reaches a
     terminal outcome. Consumers must process each event idempotently. The
-    command or event that triggers publication must propagate correlationId
-    and causationId to the ledger outbox record.
+    internal HTTP posting command requires X-Correlation-Id and X-Causation-Id
+    headers. Its inbound adapter maps both headers to PostLedgerEntryCommand,
+    and the application service propagates them unchanged to the ledger outbox
+    record.
 defaultContentType: application/json
 channels:
   ledger.posting.completed.v1:
@@ -58,22 +60,42 @@ components:
             eventId: 'fbd2e85a-bc91-4dc0-a1b3-9509d0d6c241'
             eventType: LedgerPostingCompleted.v1
             occurredAt: '2026-08-30T08:15:30Z'
-            aggregateId: 'posting-83e01c22'
+            aggregateId: 'dd480939-2dde-49b7-aa22-c8f22a7789ad'
             correlationId: 'transfer-58e271cd'
             causationId: 'command-63ca8eb6'
-            postingId: 'posting-83e01c22'
+            postingId: 'dd480939-2dde-49b7-aa22-c8f22a7789ad'
             postingRequestId: 'posting-request-4d93c803'
             currency: USD
             lines:
-              - accountId: 'account-source-001'
+              - accountId: 'f5aa4b14-6616-4c84-b0d5-3f178cb50864'
                 lineType: DEBIT
                 amount: '125.5000'
-              - accountId: 'account-destination-002'
+              - accountId: '68bc664d-75f7-46b7-82bf-659e733eb653'
                 lineType: CREDIT
                 amount: '100.0000'
-              - accountId: 'account-fee-003'
+              - accountId: 'db49e9df-89ee-43f4-9db5-483a69f7dd63'
                 lineType: CREDIT
                 amount: '25.5000'
+        - name: reversalPosting
+          summary: Completed posting that reverses an earlier immutable ledger entry.
+          payload:
+            eventId: 'ce6c3f8f-3123-4d10-a6e6-53a3d351b5b8'
+            eventType: LedgerPostingCompleted.v1
+            occurredAt: '2026-08-30T08:17:02Z'
+            aggregateId: '13dc863f-30f4-4ed4-b9a6-3035d310d7ae'
+            correlationId: 'transfer-58e271cd'
+            causationId: 'command-2a794f84'
+            postingId: '13dc863f-30f4-4ed4-b9a6-3035d310d7ae'
+            postingRequestId: 'posting-request-8ebae790'
+            reversalOfLedgerEntryId: 'dd480939-2dde-49b7-aa22-c8f22a7789ad'
+            currency: USD
+            lines:
+              - accountId: '68bc664d-75f7-46b7-82bf-659e733eb653'
+                lineType: DEBIT
+                amount: '125.5000'
+              - accountId: 'f5aa4b14-6616-4c84-b0d5-3f178cb50864'
+                lineType: CREDIT
+                amount: '125.5000'
       bindings:
         kafka:
           bindingVersion: 0.5.0
@@ -129,7 +151,7 @@ components:
           description: UTC timestamp at which the posting outcome occurred.
         aggregateId:
           type: string
-          minLength: 1
+          format: uuid
           description: Ledger posting aggregate identifier; equal to postingId for this event.
         correlationId:
           type: string
@@ -141,7 +163,7 @@ components:
           description: Identifier propagated from the command or event that caused this outcome.
         postingId:
           type: string
-          minLength: 1
+          format: uuid
           description: Immutable ledger posting identifier.
         postingRequestId:
           type: string
@@ -151,6 +173,10 @@ components:
           type: string
           pattern: '^[A-Z]{3}$'
           description: ISO 4217 currency code.
+        reversalOfLedgerEntryId:
+          type: string
+          format: uuid
+          description: Optional immutable ledger entry identifier that this posting reverses.
         lines:
           type: array
           minItems: 2
@@ -163,7 +189,6 @@ components:
                 properties:
                   lineType:
                     const: DEBIT
-              minContains: 1
             - contains:
                 type: object
                 required:
@@ -171,7 +196,6 @@ components:
                 properties:
                   lineType:
                     const: CREDIT
-              minContains: 1
           items:
             $ref: '#/components/schemas/LedgerPostingLine'
     LedgerPostingFailedV1:
@@ -237,7 +261,7 @@ components:
       properties:
         accountId:
           type: string
-          minLength: 1
+          format: uuid
           description: Account identifier for this ledger line.
         lineType:
           type: string

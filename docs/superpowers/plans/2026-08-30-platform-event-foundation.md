@@ -54,6 +54,7 @@
 **Interfaces:**
 - `LedgerEventPublisher.recordPostingCompleted(LedgerEntry entry, String correlationId, String causationId, Instant occurredAt)`.
 - `LedgerEventPublisher.recordPostingFailed(String postingRequestId, String failureCode, String failureReason, String correlationId, String causationId, Instant occurredAt)`.
+- The current internal HTTP ledger posting endpoint requires non-blank `X-Correlation-Id` and `X-Causation-Id` headers. Its inbound adapter copies them into `PostLedgerEntryCommand`; `LedgerService` passes them unchanged to the publisher and transactional outbox. Missing or blank headers are rejected with `400`; Task 2 must not generate either identifier.
 - The publisher records an outbox row only; Kafka transport polling/publication is a later task.
 
 - [ ] **Step 1: Add a failing service test proving successful posting records one completion event intent in the same application operation.**
