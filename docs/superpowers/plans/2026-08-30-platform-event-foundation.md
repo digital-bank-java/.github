@@ -48,13 +48,15 @@
 - Create: `src/main/java/com/digitalbank/ledgerservice/adapter/out/events/SpringDataLedgerOutboxEventRepository.java`
 - Create: `src/main/java/com/digitalbank/ledgerservice/adapter/out/events/PostgresLedgerEventPublisher.java`
 - Modify: `src/main/java/com/digitalbank/ledgerservice/application/service/LedgerService.java`
+- Modify: `src/main/java/com/digitalbank/ledgerservice/application/port/in/PostLedgerEntryCommand.java`
+- Modify: `src/main/java/com/digitalbank/ledgerservice/application/port/in/PostLedgerReversalCommand.java`
 - Test: `src/test/java/com/digitalbank/ledgerservice/application/service/LedgerServiceTest.java`
 - Test: `src/test/java/com/digitalbank/ledgerservice/LedgerPersistenceIT.java`
 
 **Interfaces:**
-- `LedgerEventPublisher.recordPostingCompleted(LedgerEntry entry, String correlationId, String causationId, Instant occurredAt)`.
+- `LedgerEventPublisher.recordPostingCompleted(LedgerEntry entry, UUID reversalOfLedgerEntryId, String correlationId, String causationId, Instant occurredAt)`; `reversalOfLedgerEntryId` is null for normal postings and contains the original entry UUID for reversals.
 - `LedgerEventPublisher.recordPostingFailed(String postingRequestId, String failureCode, String failureReason, String correlationId, String causationId, Instant occurredAt)`.
-- The current internal HTTP ledger posting endpoint requires non-blank `X-Correlation-Id` and `X-Causation-Id` headers. Its inbound adapter copies them into `PostLedgerEntryCommand`; `LedgerService` passes them unchanged to the publisher and transactional outbox. Missing or blank headers are rejected with `400`; Task 2 must not generate either identifier.
+- The current internal HTTP ledger posting and reversal endpoints require non-blank `X-Correlation-Id` and `X-Causation-Id` headers. Their inbound adapters copy them into `PostLedgerEntryCommand` and `PostLedgerReversalCommand` respectively; `LedgerService` passes both identifiers unchanged to the publisher and transactional outbox, including on reversal completion. Missing or blank headers are rejected with `400`; Task 2 must not generate either identifier.
 - The publisher records an outbox row only; Kafka transport polling/publication is a later task.
 
 - [ ] **Step 1: Add a failing service test proving successful posting records one completion event intent in the same application operation.**

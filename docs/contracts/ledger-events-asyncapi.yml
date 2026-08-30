@@ -5,10 +5,10 @@ info:
   description: >-
     Versioned ledger-owned facts published after a ledger posting reaches a
     terminal outcome. Consumers must process each event idempotently. The
-    internal HTTP posting command requires X-Correlation-Id and X-Causation-Id
-    headers. Its inbound adapter maps both headers to PostLedgerEntryCommand,
-    and the application service propagates them unchanged to the ledger outbox
-    record.
+    internal HTTP posting and reversal commands require X-Correlation-Id and
+    X-Causation-Id headers. Their inbound adapters map both headers to
+    PostLedgerEntryCommand or PostLedgerReversalCommand, and the application
+    service propagates them unchanged to the ledger outbox record.
 defaultContentType: application/json
 channels:
   ledger.posting.completed.v1:
