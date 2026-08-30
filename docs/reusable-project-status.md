@@ -4,6 +4,8 @@ The organization workflow at `.github/workflows/project-status.yml` updates a pu
 
 ## Caller Contract
 
+For the repository-side adoption procedure, see [`project-status-caller-template.md`](project-status-caller-template.md). The workflow template is deliberately small: it delegates to the pinned organization workflow and passes only the Project credential required by that workflow.
+
 Repositories can start with the **GitHub Project status** workflow template. It creates a caller that listens to `pull_request_target` lifecycle events without checking out or executing pull request code:
 
 ```yaml
