@@ -1,0 +1,231 @@
+name: Reusable GitHub Project status
+
+on:
+  workflow_call:
+    inputs:
+      project_owner:
+        description: GitHub organization that owns the Project.
+        required: false
+        default: digital-bank-java
+        type: string
+      project_number:
+        description: Organization Project number to update.
+        required: false
+        default: 1
+        type: number
+      status_field_name:
+        description: Single-select Project field that contains lifecycle statuses.
+        required: false
+        default: Status
+        type: string
+    secrets:
+      project_token:
+        description: Token with Projects read/write access for the project owner.
+        required: false
+
+permissions: {}
+
+concurrency:
+  group: project-status-${{ github.repository }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  update-status:
+    name: Update GitHub Project status
+    if: >-
+      ${{ github.event_name == 'pull_request_target' &&
+          (github.event.action == 'opened' || github.event.action == 'reopened' ||
+           github.event.action == 'ready_for_review' || github.event.action == 'closed') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Determine Project status
+        id: lifecycle
+        env:
+          PR_ACTION: ${{ github.event.action }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+        run: |
+          set -euo pipefail
+
+          case "$PR_ACTION" in
+            opened|reopened)
+              target_status="In progress"
+              ;;
+            ready_for_review)
+              target_status="In review"
+              ;;
+            closed)
+              if [[ "$PR_MERGED" == "true" ]]; then
+                target_status="Done"
+              else
+                echo "::notice::Pull request closed without a merge; leave the current Project status unchanged."
+                echo "skip=true" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              ;;
+            *)
+              echo "::notice::Pull request action '$PR_ACTION' is outside the Project lifecycle contract."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+
+          echo "target_status=$target_status" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Check Project credentials
+        id: credentials
+        if: ${{ steps.lifecycle.outputs.skip != 'true' }}
+        env:
+          PROJECT_TOKEN: ${{ secrets.project_token }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$PROJECT_TOKEN" ]]; then
+            echo "::warning::Project credentials are unavailable; no Project status will be changed. Configure the caller's PROJECT_STATUS_TOKEN secret."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
+      - name: Update Project status
+        if: ${{ steps.lifecycle.outputs.skip != 'true' && steps.credentials.outputs.available == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.project_token }}
+          PROJECT_OWNER: ${{ inputs.project_owner }}
+          PROJECT_NUMBER: ${{ inputs.project_number }}
+          STATUS_FIELD_NAME: ${{ inputs.status_field_name }}
+          TARGET_STATUS: ${{ steps.lifecycle.outputs.target_status }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          query='query($projectOwner: String!, $projectNumber: Int!, $repositoryOwner: String!, $repositoryName: String!, $pullRequestNumber: Int!, $cursor: String) {
+            repository(owner: $repositoryOwner, name: $repositoryName) {
+              pullRequest(number: $pullRequestNumber) {
+                id
+              }
+            }
+            organization(login: $projectOwner) {
+              projectV2(number: $projectNumber) {
+                id
+                fields(first: 100) {
+                  nodes {
+                    __typename
+                    ... on ProjectV2SingleSelectField {
+                      id
+                      name
+                      options {
+                        id
+                        name
+                      }
+                    }
+                  }
+                }
+                items(first: 100, after: $cursor) {
+                  nodes {
+                    id
+                    content {
+                      __typename
+                      ... on PullRequest {
+                        id
+                      }
+                    }
+                  }
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+                }
+              }
+            }
+          }'
+
+          cursor=null
+          item_id=""
+          project_id=""
+          field_id=""
+          option_id=""
+          pull_request_id=""
+
+          while [[ -z "$item_id" ]]; do
+            response=$(gh api graphql \
+              -f query="$query" \
+              -F projectOwner="$PROJECT_OWNER" \
+              -F projectNumber="$PROJECT_NUMBER" \
+              -F repositoryOwner="$REPOSITORY_OWNER" \
+              -F repositoryName="$REPOSITORY_NAME" \
+              -F pullRequestNumber="$PR_NUMBER" \
+              -F cursor="$cursor")
+
+            if jq -e '.errors? and (.errors | length > 0)' >/dev/null <<<"$response"; then
+              echo "GitHub Project lookup failed." >&2
+              jq -r '.errors[]?.message' <<<"$response" >&2
+              exit 1
+            fi
+
+            project_id=$(jq -er '.data.organization.projectV2.id' <<<"$response")
+            pull_request_id=$(jq -er '.data.repository.pullRequest.id' <<<"$response")
+            field_id=$(jq -er --arg field "$STATUS_FIELD_NAME" '
+              .data.organization.projectV2.fields.nodes[]
+              | select(.__typename == "ProjectV2SingleSelectField" and .name == $field)
+              | .id
+            ' <<<"$response")
+            option_id=$(jq -er --arg field "$STATUS_FIELD_NAME" --arg status "$TARGET_STATUS" '
+              .data.organization.projectV2.fields.nodes[]
+              | select(.__typename == "ProjectV2SingleSelectField" and .name == $field)
+              | .options[]
+              | select(.name == $status)
+              | .id
+            ' <<<"$response")
+            item_id=$(jq -r --arg pull_request_id "$pull_request_id" '
+              .data.organization.projectV2.items.nodes[]
+              | select(.content.__typename == "PullRequest" and .content.id == $pull_request_id)
+              | .id
+            ' <<<"$response")
+
+            if [[ -n "$item_id" ]]; then
+              break
+            fi
+
+            has_next_page=$(jq -r '.data.organization.projectV2.items.pageInfo.hasNextPage' <<<"$response")
+            if [[ "$has_next_page" != "true" ]]; then
+              echo "Pull request #$PR_NUMBER is not an item in Project #$PROJECT_NUMBER." >&2
+              exit 1
+            fi
+
+            cursor=$(jq -er '.data.organization.projectV2.items.pageInfo.endCursor' <<<"$response")
+          done
+
+          mutation='mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+            updateProjectV2ItemFieldValue(input: {
+              projectId: $projectId
+              itemId: $itemId
+              fieldId: $fieldId
+              value: { singleSelectOptionId: $optionId }
+            }) {
+              projectV2Item {
+                id
+              }
+            }
+          }'
+
+          mutation_response=$(gh api graphql \
+            -f query="$mutation" \
+            -F projectId="$project_id" \
+            -F itemId="$item_id" \
+            -F fieldId="$field_id" \
+            -F optionId="$option_id")
+
+          if jq -e '.errors? and (.errors | length > 0)' >/dev/null <<<"$mutation_response"; then
+            echo "GitHub Project status update failed." >&2
+            jq -r '.errors[]?.message' <<<"$mutation_response" >&2
+            exit 1
+          fi
+
+          jq -e '.data.updateProjectV2ItemFieldValue.projectV2Item.id' >/dev/null <<<"$mutation_response"
+          echo "Set Project #$PROJECT_NUMBER status to '$TARGET_STATUS' for pull request #$PR_NUMBER."
