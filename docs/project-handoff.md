@@ -33,6 +33,7 @@ The working style is:
 | `customer-service` | Customer identity and profile management |
 | `account-service` | Account lifecycle, account lookup, admin account search |
 | `ledger-service` | Immutable ledger entry posting and lookup |
+| `transaction-service` | Transfer orchestration and saga/process-manager foundation |
 | `infra-sit` | Local SIT infrastructure: shared PostgreSQL, Kafka, and AKHQ tooling |
 
 ## Environment Model
@@ -40,8 +41,8 @@ The working style is:
 | Environment | Meaning |
 | --- | --- |
 | `sit` | Lowest integrated development and testing environment on Docker Desktop Kubernetes |
-| `uat` | Future AWS-hosted pre-production environment |
-| `prod` | Future AWS production environment |
+| `uat` | Formal cloud-hosted pre-production environment |
+| `prod` | Formal production environment |
 
 `LOCAL-DEV` is retired as a formal environment and Spring profile. Running a single service from VS Code or Eclipse remains supported for debugging, but the process uses the `sit` profile and temporary property overrides to connect to forwarded SIT dependencies. It is not a second deployment topology.
 
@@ -155,6 +156,8 @@ Ledger reconciliation is an operational comparison across independently owned vi
 
 No service should expose naive public balance mutation APIs.
 
+`transaction-service` is now a repository and has an open bootstrap PR, but it is not yet a completed transfer workflow. The bootstrap scope is limited to the Spring Boot service shell, Config Client, health endpoints, container/Helm delivery, and CI. Transfer APIs, persistence, Kafka transport, reservations, and saga orchestration remain follow-on work.
+
 ## Event-Driven Direction
 
 The platform is moving toward eventual consistency for financial workflows.
@@ -201,7 +204,7 @@ Ledger Service should not orchestrate sagas. Transaction Service should own saga
 
 ## Current Implementation Snapshot
 
-Implemented or substantially started:
+The following baseline is merged on the repository default branches or was already established before this update:
 
 - `config-server` bootstrap, tests, Dockerfile, Helm chart, CI, Git-backed config
 - `config-repo` externalized service configuration
@@ -213,6 +216,27 @@ Implemented or substantially started:
 - `infra-sit` shared PostgreSQL, Kafka, and AKHQ deployment for local SIT
 - org-level and repo-level `AGENTS.md` files
 - Java test phase convention documentation
+- ledger reconciliation architecture and the independent-view reconciliation model
+- shared local SIT Kafka and AKHQ tooling
+- ledger database credential injection for SIT
+
+The following reviewable wave is open and non-draft as of 2026-08-30. Open PRs are not merged, deployed, or complete until their PRs are accepted and the required rollout verification is recorded:
+
+| Repository / PR | Reviewable scope | Current state |
+| --- | --- | --- |
+| [`.github#137`](https://github.com/digital-bank-java/.github/pull/137) | AsyncAPI 3.0.0 ledger posting outcome contracts, event metadata, failure codes, and reversal provenance | Open; contract prerequisite for ledger outbox, account reservations, and transaction workflow work |
+| [`.github#138`](https://github.com/digital-bank-java/.github/pull/138) | Structured JSON logging, correlation/trace fields, and redaction contract | Open; self-contained documentation |
+| [`.github#139`](https://github.com/digital-bank-java/.github/pull/139) | `sit`/`uat`/`prod` API documentation access and safe interactive execution policy | Open; self-contained documentation |
+| [`transaction-service#5`](https://github.com/digital-bank-java/transaction-service/pull/5) | Transaction Service Spring Boot, Config Client, health, container, Helm, and CI bootstrap | Open; service shell only, with no transfer workflow |
+| [`infra-sit#23`](https://github.com/digital-bank-java/infra-sit/pull/23) | Shared Redis StatefulSet, persistence, service, probes, and SIT Helm validation | Open; prerequisite for a later Redis-backed gateway rate limiter |
+| [`api-gateway#20`](https://github.com/digital-bank-java/api-gateway/pull/20) | Resilience4j circuit breaker, GET-only safe retries, and controlled `503` fallback | Open; can merge independently of Redis |
+| [`ledger-service#14`](https://github.com/digital-bank-java/ledger-service/pull/14) | Transactional ledger outbox persistence and posting-event metadata | Open; depends on [`.github#137`](https://github.com/digital-bank-java/.github/pull/137); Kafka dispatch remains deferred |
+| [`account-service#33`](https://github.com/digital-bank-java/account-service/pull/33) | Account reservation persistence boundary, commands, status, and optimistic-concurrency rules | Open; depends on [`.github#137`](https://github.com/digital-bank-java/.github/pull/137); event transport remains deferred |
+| [`config-repo#30`](https://github.com/digital-bank-java/config-repo/pull/30) | Config Server defaults and `sit` profile for `transaction-service` on port `8084` | Open; required with `transaction-service#5` before a SIT rollout |
+
+`account-service#27` (quality-gate follow-up) is also open and reviewable, but it is outside the current event/transaction implementation wave. The implementation PRs report focused unit/integration, Helm, container, schema, or configuration verification in their PR descriptions; that evidence does not establish a merged or deployed state.
+
+Current verification evidence is review evidence only: transaction-service#5 reports Maven `verify`, strict SIT Helm lint/template checks, and a non-root/read-only-container smoke test; infra-sit#23 reports Redis/PostgreSQL/Kafka/AKHQ/Redis Helm lint and render checks plus a Kubernetes dry run; api-gateway#20 reports Maven `verify`, strict SIT Helm validation/rendering, and container smoke coverage; ledger-service#14 reports `./mvnw verify` with 8 unit and 15 integration tests plus Flyway V1-V5 Testcontainers coverage; account-service#33 has green Maven, Helm, and container CI checks; config-repo#30 reports YAML parsing and `git diff --check`; and `.github#137`-`.github#139` report focused contract/Markdown checks. SIT rollout, UAT deployment, and production deployment still require separate evidence.
 
 Prepared local/SIT event-delivery work that is verified on dedicated review branches but is still awaiting non-draft PR publication:
 
@@ -230,13 +254,15 @@ Prepared local/SIT event-delivery work that is verified on dedicated review bran
 
 High-priority missing capabilities:
 
-- Kafka application integration
-- Transactional ledger outbox implementation and posting outcome publication, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
-- Account reservation persistence and event consumption boundary, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
-- Transaction Service process-manager bootstrap, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
-- saga/process-manager implementation in Transaction Service
-- account reservation tables and APIs
-- account outbox/inbox tables and publishers/consumers
+- complete governed account/transfer event-contract documentation and compatibility checks
+- integrated SIT rollout and end-to-end transfer verification across Transaction, Account, and Ledger services
+- gateway routing and SIT configuration for the newly bootstrapped services
+- service-to-service security and admin API authentication/authorization
+- API Gateway rate limiting and resilience rollout
+- centralized logging with OpenSearch, Fluent Bit, dashboards, and alerts
+- distributed tracing and correlation IDs
+- event-driven reconciliation checks and scheduled reconciliation reporting
+- production documentation and the later AWS UAT/PROD delivery path
 - service-to-service security
 - API Gateway rate limiting and resilience
 - admin API authentication/authorization
@@ -317,17 +343,34 @@ Before doing work:
 Useful local command:
 
 ```bash
-for repo in .github config-server config-repo api-gateway customer-service account-service ledger-service infra-sit; do
+for repo in .github config-server config-repo api-gateway customer-service account-service ledger-service transaction-service infra-sit; do
   printf "\n== %s ==\n" "$repo"
   git -C "$repo" status -sb
 done
 ```
 
-## Recommended Next Work
+## Next Dependency-Aware Work
 
-Finish and verify any remaining local SIT event-driven domain work before starting AWS delivery. Keep saga completion, reconciliation execution, and later security/resilience work in their assigned Sprint 3 or Sprint 6 items. Consult GitHub Project #1 for the current native hierarchy and status; Sprint 7 remains the later AWS/UAT/PROD boundary.
+The implementation wave is merged. The next work is review and rollout, in this
+order:
+
+1. Merge the governance/documentation PRs [`.github#173`](https://github.com/digital-bank-java/.github/pull/173) and [`.github#176`](https://github.com/digital-bank-java/.github/pull/176). No waiting period is required, but dependent service configuration should use the accepted contract.
+2. Merge the service configuration PRs [`config-repo#30`](https://github.com/digital-bank-java/config-repo/pull/30), [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32), [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33), and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34). Restart Config Server or refresh its Git checkout before service rollout.
+3. Merge [`infra-sit#23`](https://github.com/digital-bank-java/infra-sit/pull/23) before enabling the Redis-backed gateway limiter. OpenSearch and Fluent Bit can merge independently after review.
+4. Roll out Auth, MFA, Transaction, Payment, Notification, Account, and Ledger services in SIT. Verify migrations, Kafka topics, gateway routes, health, authentication, transfer acceptance, reservation events, ledger outcomes, and notification consumption.
+5. Record the SIT evidence in the supporting issues and update Sprint 3, 4, and 5 statuses. Keep UAT/PROD cloud deployment deferred to Sprint 7.
+
+Consult GitHub Project #1 for the authoritative Sprint hierarchy and current issue status.
 
 ## Update Log
+
+### 2026-09-01
+
+- Merged the event-driven implementation wave: Ledger Service PRs #14-#16, Account Service PRs #33-#36, Transaction Service PRs #6-#12, Auth Service PRs #1-#4, MFA Service PRs #1-#6, Payment Service PRs #1-#5, Notification Service PRs #1-#5, organization event contracts PR #137, and SIT Kafka topics PR #27.
+- Closed and recorded evidence for the completed Sprint 3 implementation issues #101, #102, #103, #170, #171, #182, and #183, plus the completed auth, MFA, payment, notification, and transfer implementation tasks.
+- Corrected the native parent hierarchy: payment resource contract task #167 is now under payment lifecycle task #161; transfer authorization task #169 is now under transfer HTTP task #165.
+- Audited GitHub Project #1 after authentication refresh: 223 tracked issues, exactly eight root Sprint epics, and no unparented non-Epic issue. Closed issue state and Project status are synchronized for the completed implementation items.
+- AWS/UAT/PROD deployment remains deferred; the current focus is local SIT rollout and verification.
 
 ### 2026-08-30 - Sprint 3 ledger event contract
 
