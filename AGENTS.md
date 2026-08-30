@@ -42,6 +42,7 @@ Use repo-local `AGENTS.md` files for:
 | `transaction-service` | Transfer orchestration and saga/process-manager foundation |
 | `auth-service` | Authentication and identity access management |
 | `mfa-service` | Multi-factor authentication |
+| `notification-service` | Notification delivery and messaging |
 | `infra-sit` | Local SIT infrastructure for Kubernetes workloads |
 
 ## Architecture Rules
