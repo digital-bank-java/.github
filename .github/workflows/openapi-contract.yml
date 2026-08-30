@@ -1,0 +1,198 @@
+name: Reusable OpenAPI Contract Check
+
+on:
+  workflow_call:
+    inputs:
+      working_directory:
+        description: Repository directory containing the generated OpenAPI document.
+        required: false
+        default: .
+        type: string
+      contract_path:
+        description: OpenAPI document path relative to working_directory.
+        required: true
+        type: string
+      generate_command:
+        description: Optional command that deterministically creates contract_path.
+        required: false
+        default: ""
+        type: string
+      artifact_name:
+        description: Base name for the versioned OpenAPI contract artifact.
+        required: false
+        default: openapi-contract
+        type: string
+      breaking_change_approval_label:
+        description: Pull request label required alongside a major version bump for an intentional breaking change.
+        required: false
+        default: api-breaking-change-approved
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate OpenAPI contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Generate OpenAPI contract
+        working-directory: ${{ inputs.working_directory }}
+        env:
+          GENERATE_COMMAND: ${{ inputs.generate_command }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$GENERATE_COMMAND" ]]; then
+            bash -euo pipefail -c "$GENERATE_COMMAND"
+          fi
+
+      - name: Validate OpenAPI syntax and semantics
+        env:
+          CONTRACT_FILE: ${{ inputs.working_directory }}/${{ inputs.contract_path }}
+        run: |
+          set -euo pipefail
+          test -f "$CONTRACT_FILE"
+          npx --yes --package "@redocly/cli@2.49.0" -- redocly lint "$CONTRACT_FILE"
+
+      - name: Upload versioned OpenAPI contract
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ inputs.artifact_name }}-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 30
+          path: ${{ inputs.working_directory }}/${{ inputs.contract_path }}
+
+  breaking-change:
+    name: Detect OpenAPI breaking changes
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Generate pull request contract
+        working-directory: ${{ inputs.working_directory }}
+        env:
+          GENERATE_COMMAND: ${{ inputs.generate_command }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$GENERATE_COMMAND" ]]; then
+            bash -euo pipefail -c "$GENERATE_COMMAND"
+          fi
+
+      - name: Check out base contract
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: .openapi-base
+          clean: true
+          fetch-depth: 1
+
+      - name: Generate base contract
+        env:
+          BASE_WORKING_DIRECTORY: .openapi-base/${{ inputs.working_directory }}
+          GENERATE_COMMAND: ${{ inputs.generate_command }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$GENERATE_COMMAND" ]]; then
+            (cd "$BASE_WORKING_DIRECTORY" && bash -euo pipefail -c "$GENERATE_COMMAND")
+          fi
+
+      - name: Install verified oasdiff
+        env:
+          OASDIFF_VERSION: 1.29.1
+          OASDIFF_ARCHIVE: oasdiff_1.29.1_linux_amd64.tar.gz
+          OASDIFF_SHA256: 541f7c66c933495fceef24eaf5c48aa66c19069f366f7bd0a60a6a4820c5e533
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/$OASDIFF_ARCHIVE"
+          install_dir="$RUNNER_TEMP/oasdiff"
+          curl --fail --silent --show-error --location --retry 3 \
+            --output "$archive" \
+            "https://github.com/oasdiff/oasdiff/releases/download/v${OASDIFF_VERSION}/${OASDIFF_ARCHIVE}"
+          printf '%s  %s\n' "$OASDIFF_SHA256" "$archive" | sha256sum --check --status
+          mkdir -p "$install_dir"
+          tar --extract --gzip --file "$archive" --directory "$install_dir"
+          chmod +x "$install_dir/oasdiff"
+          echo "$install_dir" >> "$GITHUB_PATH"
+
+      - name: Compare contracts for breaking changes
+        env:
+          BASE_CONTRACT_FILE: .openapi-base/${{ inputs.working_directory }}/${{ inputs.contract_path }}
+          CONTRACT_FILE: ${{ inputs.working_directory }}/${{ inputs.contract_path }}
+          APPROVAL_LABEL: ${{ inputs.breaking_change_approval_label }}
+          APPROVAL_LABEL_PRESENT: ${{ contains(github.event.pull_request.labels.*.name, inputs.breaking_change_approval_label) }}
+          REPORT_FILE: ${{ runner.temp }}/openapi-breaking-report.txt
+        run: |
+          set -euo pipefail
+          test -f "$BASE_CONTRACT_FILE"
+          test -f "$CONTRACT_FILE"
+
+          set +e
+          oasdiff breaking --fail-on WARN --format text \
+            "$BASE_CONTRACT_FILE" "$CONTRACT_FILE" > "$REPORT_FILE" 2>&1
+          comparison_status=$?
+          set -e
+
+          cat "$REPORT_FILE" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "$comparison_status" -eq 0 ]]; then
+            echo "No breaking OpenAPI changes detected."
+            exit 0
+          fi
+
+          if [[ "$comparison_status" -ne 1 ]]; then
+            echo "oasdiff failed with status $comparison_status."
+            cat "$REPORT_FILE"
+            exit "$comparison_status"
+          fi
+
+          if [[ "$APPROVAL_LABEL_PRESENT" != "true" ]]; then
+            echo "Breaking changes require the '$APPROVAL_LABEL' pull request label and a major info.version bump."
+            cat "$REPORT_FILE"
+            exit 1
+          fi
+
+          versions=$(ruby -ryaml - "$BASE_CONTRACT_FILE" "$CONTRACT_FILE" <<'RUBY'
+          def major_version(path)
+            document = YAML.safe_load(File.read(path), aliases: true)
+            version = document.fetch("info").fetch("version").to_s
+            match = /\A(\d+)\./.match(version)
+            raise "info.version must use semantic versioning: #{version}" unless match
+
+            match[1]
+          end
+
+          puts major_version(ARGV.fetch(0))
+          puts major_version(ARGV.fetch(1))
+          RUBY
+          )
+          base_major=$(printf '%s\n' "$versions" | sed -n '1p')
+          current_major=$(printf '%s\n' "$versions" | sed -n '2p')
+
+          if [[ "$base_major" == "$current_major" ]]; then
+            echo "The approval label is present, but info.version did not receive a major version bump (${base_major} -> ${current_major})."
+            cat "$REPORT_FILE"
+            exit 1
+          fi
+
+          echo "Breaking changes approved by '$APPROVAL_LABEL' with major version bump (${base_major} -> ${current_major})."
+          cat "$REPORT_FILE"
+
+      - name: Upload breaking-change report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: openapi-breaking-report-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: ${{ runner.temp }}/openapi-breaking-report.txt
