@@ -1,0 +1,9 @@
+{
+  "name": "GitHub Project status",
+  "description": "Update GitHub Project status from pull request lifecycle events.",
+  "iconName": "octicon project",
+  "categories": [
+    "Project management"
+  ],
+  "filePatterns": []
+}

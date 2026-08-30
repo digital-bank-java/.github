@@ -11,6 +11,7 @@ This repository is not a deployable application. It provides shared contributor 
 - [Platform naming, ports, configuration, API, and infrastructure conventions](docs/platform-conventions.md)
 - [Workstation debugging against SIT](docs/workstation-debugging-against-sit.md)
 - [README documentation baseline](docs/readme-standard.md)
+- [Reusable GitHub Project status workflow](docs/reusable-project-status.md)
 
 ## Contribution Workflow
 
