@@ -32,9 +32,18 @@ channels:
       Transaction Service consumes it to advance the transfer saga. The Kafka
       partition key is aggregateId; ordering is guaranteed only per key on
       this topic, not across the completion and failure topics.
+    x-producer: ledger-service
+    x-consumers:
+      - account-service
+      - transaction-service
     x-partition-key: aggregateId
     x-delivery-semantics: at-least-once; consumers use an inbox keyed by eventId.
     x-dead-letter-topic: ledger.posting.completed.v1.dlq
+    x-dead-letter-policy: >-
+      Retry transient consumer failures with bounded backoff. After the attempt
+      limit, preserve the original event and failure metadata in this
+      topic-specific DLQ or quarantine topic. Replay is explicit, authorized,
+      and idempotent; a DLQ record is never a new business fact.
     messages:
       ledgerPostingCompleted:
         $ref: '#/components/messages/LedgerPostingCompletedV1'
@@ -52,9 +61,18 @@ channels:
       represented as business failure facts. The Kafka partition key is
       aggregateId; ordering is guaranteed only per key on this topic, not
       across the completion and failure topics.
+    x-producer: ledger-service
+    x-consumers:
+      - account-service
+      - transaction-service
     x-partition-key: aggregateId
     x-delivery-semantics: at-least-once; consumers use an inbox keyed by eventId.
     x-dead-letter-topic: ledger.posting.failed.v1.dlq
+    x-dead-letter-policy: >-
+      Retry transient consumer failures with bounded backoff. After the attempt
+      limit, preserve the original event and failure metadata in this
+      topic-specific DLQ or quarantine topic. Replay is explicit, authorized,
+      and idempotent; a DLQ record is never a new business fact.
     messages:
       ledgerPostingFailed:
         $ref: '#/components/messages/LedgerPostingFailedV1'
@@ -86,6 +104,8 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/LedgerPostingCompletedV1'
+      headers:
+        $ref: '#/components/schemas/LedgerEventHeaders'
       examples:
         - name: multiLinePosting
           summary: Completed posting with one debit and two credit lines.
@@ -147,6 +167,8 @@ components:
       contentType: application/json
       payload:
         $ref: '#/components/schemas/LedgerPostingFailedV1'
+      headers:
+        $ref: '#/components/schemas/LedgerEventHeaders'
       examples:
         - name: rejectedPosting
           summary: Posting rejected because the requested lines are invalid.
@@ -168,6 +190,45 @@ components:
         kafka:
           bindingVersion: 0.5.0
   schemas:
+    LedgerEventHeaders:
+      type: object
+      description: >-
+        Required Kafka headers. Header names use kebab-case on the wire; the
+        payload repeats the same identity and timing facts in camelCase for
+        consumers that persist or replay the event body.
+      additionalProperties: false
+      required:
+        - event-id
+        - correlation-id
+        - causation-id
+        - producer
+        - schema-version
+        - occurred-at
+      properties:
+        event-id:
+          type: string
+          format: uuid
+          description: Stable event identifier reused for every delivery retry.
+        correlation-id:
+          type: string
+          minLength: 1
+          description: End-to-end workflow correlation identifier.
+        causation-id:
+          type: string
+          minLength: 1
+          description: Command or preceding event that caused this event.
+        producer:
+          type: string
+          const: ledger-service
+          description: Canonical service name of the producer.
+        schema-version:
+          type: string
+          const: 1.0.0
+          description: Registered payload schema version.
+        occurred-at:
+          type: string
+          format: date-time
+          description: UTC event occurrence timestamp.
     LedgerPostingCompletedV1:
       type: object
       additionalProperties: true

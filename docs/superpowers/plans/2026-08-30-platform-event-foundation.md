@@ -33,11 +33,11 @@
 - Defines required metadata: `eventId`, `eventType`, `schemaVersion`, `producer`, `occurredAt`, `aggregateId`, `correlationId`, `causationId`, `transactionId`, and `reservationRequestId`.
 - Defines payload fields for posting id, posting request id, currency, multi-line debit/credit entries, decimal amounts, failure code, and failure reason.
 
-- [ ] **Step 1: Write the AsyncAPI contract with channels `ledger.posting.completed.v1` and `ledger.posting.failed.v1`, Kafka bindings, producer/consumer ownership, partition keys, delivery semantics, Schema Registry boundaries, JSON schemas, and required metadata.**
-- [ ] **Step 2: Add conventions for topic names, event versioning, correlation, and compatibility.**
-- [ ] **Step 3: Update the handoff to record the contract as the dependency for Tasks 2-4.**
-- [ ] **Step 4: Validate the YAML parses and contains both channels, messages, schemas, identifiers, producer/consumer ownership, partition keys, delivery semantics, and Schema Registry subjects.**
-- [ ] **Step 5: Commit with `docs: define ledger event contracts`.**
+- [x] **Step 1: Write the AsyncAPI contract with channels `ledger.posting.completed.v1` and `ledger.posting.failed.v1`, Kafka bindings, producer/consumer ownership, partition keys, delivery semantics, Schema Registry boundaries, JSON schemas, and required metadata.**
+- [x] **Step 2: Add conventions for topic names, event versioning, correlation, and compatibility.**
+- [x] **Step 3: Update the handoff to record the contract as the dependency for Tasks 2-4.**
+- [x] **Step 4: Validate the YAML parses and contains both channels, messages, schemas, identifiers, producer/consumer ownership, partition keys, delivery semantics, and Schema Registry subjects.**
+- [x] **Step 5: Commit with `docs: define ledger event contracts`.**
 
 ### Task 2: Add Ledger Service transactional outbox and event publication boundary
 
