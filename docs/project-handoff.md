@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-08-04
+Last updated: 2026-08-31
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -379,3 +379,12 @@ Finish the remaining Sprint 0 foundation and governance work before starting the
 - Chose `config-repo` as the Git-backed runtime configuration repository.
 - Chose ledger-driven balance posting and rejected direct public balance mutation APIs.
 - Chose Transaction Service as the future saga/process manager.
+
+### 2026-08-31 - Deferred AWS and Cloud Deployment
+
+- Deferred AWS/UAT/PROD deployment implementation until the remaining local SIT and core-domain work is complete.
+- Kept `Sprint 7 - AWS UAT and Production Readiness` and its related production documentation, AWS migration, managed-service, and SonarQube Cloud items in the Backlog.
+- Closed the unmerged Amazon OpenSearch UAT/PROD architecture PR as deferred; its issue and discussion remain available as future planning history.
+- No AWS infrastructure, cloud deployment, or UAT/PROD rollout work should start in the current delivery wave.
+- Continue local SIT implementation and verification for transaction, ledger, account, payment, notification, auth, MFA, gateway, and observability capabilities.
+- Revisit the AWS target architecture after the local SIT/core-domain wave, with EKS, RDS/Aurora, MSK, AWS OpenSearch, and AWS Secrets Manager or Parameter Store remaining the planned direction.
