@@ -1,0 +1,194 @@
+asyncapi: 3.0.0
+info:
+  title: Transfer Workflow Events
+  version: 1.0.0
+  description: >-
+    Internal transfer-workflow events owned by Transaction Service. The
+    TransferCreated.v1 event announces that a transfer request and its initial
+    workflow state were durably accepted. It does not move money, settle an
+    account reservation, or replace the ledger posting outcome events.
+defaultContentType: application/json
+x-data-classification: confidential-financial
+x-schema-registry:
+  boundary: AsyncAPI payload schemas are the organization contract; the Schema Registry stores serialized schemas and enforces compatibility.
+  subjectStrategy: TopicNameStrategy
+  subjects:
+    events.transfer.created.v1: events.transfer.created.v1-value
+  compatibility: BACKWARD_TRANSITIVE
+  provisioning: Platform infrastructure owns topic and registry provisioning. This contract contains no registry URL, credential, or schema id.
+channels:
+  events.transfer.created.v1:
+    address: events.transfer.created.v1
+    description: >-
+      Transaction Service publishes this event after the transfer and initial
+      workflow state are durable. Notification Service may consume it to start
+      delivery work. Account and Ledger Services do not treat this event as a
+      balance mutation command.
+    x-producer: transaction-service
+    x-consumers:
+      - notification-service
+    x-partition-key: aggregateId
+    x-delivery-semantics: at-least-once; consumers use a durable inbox keyed by eventId before production enablement.
+    x-dead-letter-topic: events.transfer.created.v1.dlq
+    x-dead-letter-policy: >-
+      Retry transient consumer failures with bounded backoff. After the
+      attempt limit, preserve the original event and failure metadata in the
+      topic-specific DLQ or quarantine topic. Replay is explicit, authorized,
+      and idempotent; a DLQ record is never a new business fact.
+    messages:
+      transferCreated:
+        $ref: '#/components/messages/TransferCreatedV1'
+    bindings:
+      kafka:
+        topic: events.transfer.created.v1
+        bindingVersion: 0.5.0
+operations:
+  publishTransferCreated:
+    action: send
+    description: Transaction Service publishes a durable transfer-created fact; it does not publish final balance effects.
+    channel:
+      $ref: '#/channels/events.transfer.created.v1'
+    messages:
+      - $ref: '#/channels/events.transfer.created.v1/messages/transferCreated'
+components:
+  messages:
+    TransferCreatedV1:
+      name: TransferCreated.v1
+      title: Transfer created
+      summary: A transfer request and its initial workflow state were durably accepted.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TransferCreatedV1'
+      headers:
+        $ref: '#/components/schemas/TransferEventHeaders'
+      examples:
+        - name: acceptedTransfer
+          summary: Synthetic transfer accepted for workflow processing.
+          payload:
+            eventId: '0f5f6d4c-2f26-4e12-9dd4-6dbb94240b77'
+            eventType: TransferCreated.v1
+            schemaVersion: 1.0.0
+            producer: transaction-service
+            occurredAt: '2026-08-31T10:15:30Z'
+            aggregateId: '4f5f6d4c-2f26-4e12-9dd4-6dbb94240b77'
+            correlationId: 'transfer-correlation-001'
+            causationId: 'transfer-command-001'
+            transactionId: '4f5f6d4c-2f26-4e12-9dd4-6dbb94240b77'
+            sourceAccountId: '11111111-1111-1111-1111-111111111111'
+            destinationAccountId: '22222222-2222-2222-2222-222222222222'
+            amount: '125.5000'
+            currency: USD
+            transferRequestId: 'transfer-request-001'
+            reservationRequestId: 'reservation-request-001'
+            postingRequestId: 'posting-request-001'
+            status: PENDING
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+  schemas:
+    TransferEventHeaders:
+      type: object
+      description: Required Kafka headers. Header names use kebab-case on the wire.
+      additionalProperties: false
+      required:
+        - event-id
+        - correlation-id
+        - causation-id
+        - producer
+        - schema-version
+        - occurred-at
+      properties:
+        event-id:
+          type: string
+          format: uuid
+          description: Stable event identifier reused for every delivery retry.
+        correlation-id:
+          type: string
+          minLength: 1
+          description: End-to-end workflow correlation identifier.
+        causation-id:
+          type: string
+          minLength: 1
+          description: Command or preceding event that caused this event.
+        producer:
+          type: string
+          const: transaction-service
+        schema-version:
+          type: string
+          const: 1.0.0
+        occurred-at:
+          type: string
+          format: date-time
+    TransferCreatedV1:
+      type: object
+      additionalProperties: true
+      required:
+        - eventId
+        - eventType
+        - schemaVersion
+        - producer
+        - occurredAt
+        - aggregateId
+        - correlationId
+        - causationId
+        - transactionId
+        - sourceAccountId
+        - destinationAccountId
+        - amount
+        - currency
+        - transferRequestId
+        - reservationRequestId
+        - postingRequestId
+        - status
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          const: TransferCreated.v1
+        schemaVersion:
+          type: string
+          const: 1.0.0
+        producer:
+          type: string
+          const: transaction-service
+        occurredAt:
+          type: string
+          format: date-time
+        aggregateId:
+          type: string
+          format: uuid
+        correlationId:
+          type: string
+          minLength: 1
+        causationId:
+          type: string
+          minLength: 1
+        transactionId:
+          type: string
+          format: uuid
+        sourceAccountId:
+          type: string
+          format: uuid
+        destinationAccountId:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          pattern: '^[0-9]+(\\.[0-9]+)?$'
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        transferRequestId:
+          type: string
+          minLength: 1
+        reservationRequestId:
+          type: string
+          minLength: 1
+        postingRequestId:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          const: PENDING
