@@ -331,6 +331,14 @@ Finish the remaining local SIT event-driven domain work before starting AWS deli
 - Kept local Docker Desktop Kubernetes SIT as the active development and integrated-verification environment.
 - Added an explicit delivery boundary so current event-driven domain work does not introduce AWS-specific manifests, credentials, or deployment dependencies prematurely.
 
+### 2026-09-01 - Local SIT event transport wave
+
+- Reviewed the prepared Account Service reservation transport, Ledger Service outbox delivery, and Transaction Service Kafka transport work.
+- Pushed Account Service transport hardening on `feature/177-account-reservation-transport`; it preserves stored outbox JSON, uses the event aggregate ID as the Kafka key, and keeps reservation and ledger Kafka client configuration isolated.
+- Pushed Ledger Service outbox hardening on `fix/176-ledger-outbox-safety`; it rejects incomplete governed metadata, quarantines exhausted post-crash claims, and covers the recovery rules with focused tests.
+- Pushed Transaction Service Kafka consumer hardening on `feature/103-transaction-ledger-transport`; it selects explicit Spring constructors and validates reservation topic/event-type alignment before dispatch.
+- These branches are review-ready but GitHub Project status and PR creation are pending restoration of the organization GitHub CLI authentication. No AWS implementation was added.
+
 ### 2026-07-28
 
 - Added this project handoff document as the durable resume point for AI agents and contributors.
