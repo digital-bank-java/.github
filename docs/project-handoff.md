@@ -47,6 +47,12 @@ The working style is:
 
 SIT should resemble production shape where practical, but production should prefer managed AWS services rather than manually operated local-style containers.
 
+## Current Delivery Boundary
+
+The active delivery boundary is local Docker Desktop Kubernetes SIT. AWS infrastructure, AWS-hosted UAT, AWS-hosted production, cloud networking, managed AWS data services, cloud secret integration, and production deployment runbooks remain deferred to Sprint 7. They are backlog scope, not current implementation work.
+
+Until the local SIT domain and event-driven workflows are complete, do not add AWS-specific manifests, cloud credentials, UAT/PROD rollout steps, or cloud-only service dependencies. Local SIT should continue to prove the service contracts and operational behavior that the later AWS deployment will host.
+
 Canonical naming, port, configuration, API-path, and infrastructure conventions are in `docs/platform-conventions.md`.
 
 Expected AWS direction:
@@ -307,7 +313,7 @@ done
 
 ## Recommended Next Work
 
-Finish the remaining Sprint 0 foundation and governance work before starting the next banking-domain delivery item. Start with `.github#39`, the canonical platform-conventions story, then complete the Sprint 0 README, IDE workflow, and organization-engineering-workflow items. Consult GitHub Project #1 for the current native hierarchy and status.
+Finish the remaining local SIT event-driven domain work before starting AWS delivery. The current order is governed event contracts, Ledger outbox and posting outcomes, Account reservation transport and state handling, Transaction Service process management, then local SIT resilience and verification. Consult GitHub Project #1 for the current native hierarchy and status; Sprint 7 remains the later AWS/UAT/PROD boundary.
 
 ## Update Log
 
@@ -318,6 +324,12 @@ Finish the remaining Sprint 0 foundation and governance work before starting the
 - Closed the Docker Compose LOCAL-DEV story as superseded. Docker remains the image packaging mechanism; Kubernetes SIT remains the only local integrated deployment topology.
 - Created [story #115](https://github.com/digital-bank-java/.github/issues/115) and its child tasks for configuration migration, workstation debugging guidance, and Insomnia environment alignment.
 - Added `docs/workstation-debugging-against-sit.md` as the repeatable procedure for debugging one database-backed service without duplicate Kubernetes processing.
+
+### 2026-09-01 - AWS delivery deferred
+
+- Confirmed that AWS infrastructure, AWS-hosted UAT/PROD deployment, cloud networking, managed AWS services, and cloud-specific operational runbooks remain deferred to Sprint 7.
+- Kept local Docker Desktop Kubernetes SIT as the active development and integrated-verification environment.
+- Added an explicit delivery boundary so current event-driven domain work does not introduce AWS-specific manifests, credentials, or deployment dependencies prematurely.
 
 ### 2026-07-28
 
