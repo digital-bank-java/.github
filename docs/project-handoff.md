@@ -215,7 +215,10 @@ Prepared local/SIT event-delivery work that is verified on dedicated review bran
 - account reservation transport: `account-service` `feature/177-account-reservation-transport`, latest commit `71cfe80`
 - transaction reservation transport: `transaction-service` `feature/178-transfer-kafka-transport`, latest commit `8922c06`
 - transaction SIT transport configuration: `config-repo` `fix/transaction-service-sit-config`, latest commit `8152613`
-- ledger outbox SIT configuration: `config-repo` `feature/23-ledger-service-sit-config`, latest commit `dbea1c2`
+- ledger outbox SIT configuration: `config-repo` `feature/23-ledger-service-sit-config`, latest commit `3549b7c`
+- SIT Kafka topic provisioning: `infra-sit` `feature/103-sit-kafka-topics`, latest commit `c3dcd16`
+- Ledger posting command consumer: `ledger-service` `feature/103-ledger-posting-consumer`, latest commit `76c11a5`
+- Transaction-to-Ledger Kafka transport: `transaction-service` `feature/103-transaction-ledger-transport`, latest commit `f2092f3`
 
 ## Known Missing Work
 
@@ -414,3 +417,12 @@ Finish the local/SIT Kafka event foundation before starting AWS work. Publish an
 - Recorded the transaction-service bootstrap as implemented and removed it from the missing-work list.
 - Replaced the stale Sprint 0 recommendation with the current local/SIT Kafka event-foundation sequence.
 - Project status, parent, assignee, and native issue-type updates remain pending until GitHub API authentication is restored.
+
+### 2026-09-01 - Local SIT Kafka Transport Wave
+
+- Provisioned the `ledger.posting.requested.v1` command topic and dead-letter topic in the local SIT Kafka chart, with topic auto-creation disabled for SIT.
+- Added the Ledger Service inbound posting consumer with durable inbox protection and mapping to the existing immutable posting port.
+- Added the Transaction Service Ledger command outbox, Kafka publisher, and Ledger outcome consumer.
+- Aligned the Transaction-to-Ledger command payload with the approved contract: envelope metadata, transaction and reservation identifiers, description, effective time, currency, and explicit debit/credit lines.
+- Verified the Ledger consumer branch with `./mvnw verify` (28 tests, zero failures) and the Transaction transport branch with `./mvnw -q verify` (zero exit status).
+- Pushed the four local/SIT branches; non-draft PR creation and Project item updates remain pending until GitHub authentication is restored.
