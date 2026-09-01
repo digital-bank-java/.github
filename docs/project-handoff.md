@@ -47,6 +47,12 @@ The working style is:
 
 SIT should resemble production shape where practical, but production should prefer managed AWS services rather than manually operated local-style containers.
 
+## Current Delivery Boundary
+
+The active delivery boundary is local Docker Desktop Kubernetes SIT. AWS infrastructure, AWS-hosted UAT, AWS-hosted production, cloud networking, managed AWS data services, cloud secret integration, and production deployment runbooks remain deferred to Sprint 7. They are backlog scope, not current implementation work.
+
+Until the local SIT domain and event-driven workflows are complete, do not add AWS-specific manifests, cloud credentials, UAT/PROD rollout steps, or cloud-only service dependencies. Local SIT should continue to prove the service contracts and operational behavior that the later AWS deployment will host.
+
 Canonical naming, port, configuration, API-path, and infrastructure conventions are in `docs/platform-conventions.md`.
 
 Expected AWS direction:
@@ -319,7 +325,7 @@ done
 
 ## Recommended Next Work
 
-Finish the local/SIT Kafka event foundation before starting AWS work. Publish and review the prepared event-contract, ledger-outbox, account-reservation, transaction-transport, and configuration PRs in their dependency order, then roll them out and verify the real local SIT broker through the service tests and AKHQ. Keep saga completion, reconciliation execution, and later security/resilience work in their assigned Sprint 3 or Sprint 6 items. Consult GitHub Project #1 for the current native hierarchy and status; Project mutations are pending restored GitHub API authentication.
+Finish and verify any remaining local SIT event-driven domain work before starting AWS delivery. Keep saga completion, reconciliation execution, and later security/resilience work in their assigned Sprint 3 or Sprint 6 items. Consult GitHub Project #1 for the current native hierarchy and status; Sprint 7 remains the later AWS/UAT/PROD boundary.
 
 ## Update Log
 
@@ -336,6 +342,20 @@ Finish the local/SIT Kafka event foundation before starting AWS work. Publish an
 - Closed the Docker Compose LOCAL-DEV story as superseded. Docker remains the image packaging mechanism; Kubernetes SIT remains the only local integrated deployment topology.
 - Created [story #115](https://github.com/digital-bank-java/.github/issues/115) and its child tasks for configuration migration, workstation debugging guidance, and Insomnia environment alignment.
 - Added `docs/workstation-debugging-against-sit.md` as the repeatable procedure for debugging one database-backed service without duplicate Kubernetes processing.
+
+### 2026-09-01 - AWS delivery deferred
+
+- Confirmed that AWS infrastructure, AWS-hosted UAT/PROD deployment, cloud networking, managed AWS services, and cloud-specific operational runbooks remain deferred to Sprint 7.
+- Kept local Docker Desktop Kubernetes SIT as the active development and integrated-verification environment.
+- Added an explicit delivery boundary so current event-driven domain work does not introduce AWS-specific manifests, credentials, or deployment dependencies prematurely.
+
+### 2026-09-01 - Local SIT event transport wave
+
+- Reviewed the prepared Account Service reservation transport, Ledger Service outbox delivery, and Transaction Service Kafka transport work.
+- Pushed Account Service transport hardening on `feature/177-account-reservation-transport`; it preserves stored outbox JSON, uses the event aggregate ID as the Kafka key, and keeps reservation and ledger Kafka client configuration isolated.
+- Pushed Ledger Service outbox hardening on `fix/176-ledger-outbox-safety`; it rejects incomplete governed metadata, quarantines exhausted post-crash claims, and covers the recovery rules with focused tests.
+- Pushed Transaction Service Kafka consumer hardening on `feature/103-transaction-ledger-transport`; it selects explicit Spring constructors and validates reservation topic/event-type alignment before dispatch.
+- These branches are review-ready but GitHub Project status and PR creation are pending restoration of the organization GitHub CLI authentication. No AWS implementation was added.
 
 ### 2026-07-28
 
