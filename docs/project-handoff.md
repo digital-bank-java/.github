@@ -426,3 +426,12 @@ Finish the local/SIT Kafka event foundation before starting AWS work. Publish an
 - Aligned the Transaction-to-Ledger command payload with the approved contract: envelope metadata, transaction and reservation identifiers, description, effective time, currency, and explicit debit/credit lines.
 - Verified the Ledger consumer branch with `./mvnw verify` (28 tests, zero failures) and the Transaction transport branch with `./mvnw -q verify` (zero exit status).
 - Pushed the four local/SIT branches; non-draft PR creation and Project item updates remain pending until GitHub authentication is restored.
+
+### 2026-09-01 - Local SIT Domain Wave Audit
+
+- Confirmed that the next local/SIT delivery wave is already prepared in task-backed branches; no AWS implementation is included.
+- Auth Service is ready in dependency order: bootstrap, JWT/session foundation, then later durable session and gateway security work.
+- MFA is prepared in dependency order: HTTP API, principal binding, TOTP enrollment, then challenge lifecycle. Its current stores are intentionally in-memory and remain a later durability/security concern.
+- Payment Service is prepared in dependency order: HTTP lifecycle, PostgreSQL/idempotency/authorization, then resource-contract documentation. SIT configuration is available in `config-repo` on `feature/162-payment-service-sit-config`, but the service is not yet deployed in the SIT baseline.
+- Notification transfer-consumer verification reports 15 passing tests; the transfer-saga branch reports passing domain, persistence, and Spring integration suites. Their PR publication and Project updates remain blocked by expired GitHub CLI authentication.
+- GitHub Project status, parent, assignee, and native issue-type changes must be applied after authentication is restored; no item is to be treated as updated based only on local branch state.
