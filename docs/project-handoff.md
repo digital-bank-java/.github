@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-08-31
+Last updated: 2026-09-01
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -388,3 +388,15 @@ Finish the remaining Sprint 0 foundation and governance work before starting the
 - No AWS infrastructure, cloud deployment, or UAT/PROD rollout work should start in the current delivery wave.
 - Continue local SIT implementation and verification for transaction, ledger, account, payment, notification, auth, MFA, gateway, and observability capabilities.
 - Revisit the AWS target architecture after the local SIT/core-domain wave, with EKS, RDS/Aurora, MSK, AWS OpenSearch, and AWS Secrets Manager or Parameter Store remaining the planned direction.
+
+### 2026-09-01 - Local SIT Delivery Priority
+
+- Confirmed that AWS/UAT/PROD deployment implementation remains deferred until the local SIT and core-domain delivery wave is complete.
+- Implemented and verified the local SIT transport configuration needed for the current Kafka workflow:
+  - Account Service reservation transport: `71cfe80` on `feature/177-account-reservation-transport`.
+  - Transaction Service reservation transport: `8922c06` on `feature/178-transfer-kafka-transport`.
+  - Transaction Service SIT configuration: `8152613` on `fix/transaction-service-sit-config`.
+  - Ledger Service outbox SIT configuration: `dbea1c2` on `feature/23-ledger-service-sit-config`.
+- Full Maven `verify` and strict Helm lint/render checks passed for Account Service and Transaction Service with the local Docker runtime available.
+- Ledger outbox delivery remains on the local/SIT track; its current review branch is `fix/176-ledger-outbox-safety` at `1dc0f81`.
+- The next implementation wave should finish local/SIT Kafka integration, real-broker verification, topic governance, and event-contract work before AWS infrastructure is started.
