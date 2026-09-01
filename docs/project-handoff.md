@@ -144,17 +144,30 @@ Ledger reconciliation is an operational comparison across independently owned vi
 - account opening
 - account lookup
 - account listing/search
-- future available-balance reservations
-- future account balance projection updates driven by ledger events
+- available-balance reservations and reservation lifecycle
+- account balance projection updates driven by ledger events
 
 `ledger-service` owns:
 
 - immutable ledger entries
 - balanced debit/credit posting rules
 - ledger lookup
-- future ledger posting outcome events
+- governed ledger posting outcome events
+- transactional outbox delivery with retry, lease, and quarantine semantics
 
 No service should expose naive public balance mutation APIs.
+
+`transaction-service` owns:
+
+- internal transfer workflow state and lifecycle
+- saga/process-manager decisions
+- reservation and ledger command transport
+- transfer outcome handling and transactional outboxes
+
+`auth-service`, `mfa-service`, `payment-service`, and `notification-service` have
+their initial runtime and core HTTP/event foundations merged. Their remaining
+SIT configuration, contract documentation, and hardening tasks remain tracked in
+later Sprint 4 and Sprint 5 work.
 
 `transaction-service` is now a repository and has an open bootstrap PR, but it is not yet a completed transfer workflow. The bootstrap scope is limited to the Spring Boot service shell, Config Client, health endpoints, container/Helm delivery, and CI. Transfer APIs, persistence, Kafka transport, reservations, and saga orchestration remain follow-on work.
 
@@ -182,7 +195,7 @@ Transaction Service
 Account Service
   -> validate available balance
   -> reserve funds
-  -> publish AccountReservationCreated through outbox
+  -> publish reservation outcome facts through outbox
 
 Transaction Service
   -> request Ledger Service posting
@@ -219,12 +232,31 @@ The following baseline is merged on the repository default branches or was alrea
 - ledger reconciliation architecture and the independent-view reconciliation model
 - shared local SIT Kafka and AKHQ tooling
 - ledger database credential injection for SIT
+ - governed ledger event contracts and AsyncAPI documentation
+ - ledger transactional outbox publication, retry, lease, and quarantine behavior
+ - account reservation persistence, ledger-event consumption, and reservation transport
+ - transaction transfer lifecycle, saga/process manager, HTTP workflow API, authorization, and Kafka transport
+ - auth-service session/JWT foundations and configurable single-session policy
+ - mfa-service provider, TOTP, challenge, authenticated HTTP API, and principal binding foundations
+ - payment-service lifecycle, internal HTTP API, idempotency, authorization, and resource contract
+ - notification-service delivery lifecycle, TransferCreated consumer, and durable inbox
+ - SIT ledger Kafka topic provisioning
 
-The following reviewable wave is open and non-draft as of 2026-08-30. Open PRs are not merged, deployed, or complete until their PRs are accepted and the required rollout verification is recorded:
+The implementation wave above is merged on the service default branches as of
+2026-09-01. Its PRs report the required Maven, Helm, and PostgreSQL/Testcontainers
+verification. SIT rollout and end-to-end transfer demonstration remain separate
+operational evidence and are not inferred from merged PRs.
 
-| Repository / PR | Reviewable scope | Current state |
-| --- | --- | --- |
-| [`.github#137`](https://github.com/digital-bank-java/.github/pull/137) | AsyncAPI 3.0.0 ledger posting outcome contracts, event metadata, failure codes, and reversal provenance | Open; contract prerequisite for ledger outbox, account reservations, and transaction workflow work |
+The remaining reviewable PRs are non-draft and are not merged or deployed until
+accepted and verified:
+
+| Repository / PR | Reviewable scope |
+| --- | --- |
+| [`.github#173`](https://github.com/digital-bank-java/.github/pull/173) and [`.github#176`](https://github.com/digital-bank-java/.github/pull/176) | Transfer and account reservation event-contract governance |
+| [`.github#178`](https://github.com/digital-bank-java/.github/pull/178), [`.github#179`](https://github.com/digital-bank-java/.github/pull/179), [`.github#180`](https://github.com/digital-bank-java/.github/pull/180), [`.github#181`](https://github.com/digital-bank-java/.github/pull/181) | Auth, AsyncAPI, transfer Insomnia, and layered-debugging documentation |
+| [`config-repo#30`](https://github.com/digital-bank-java/config-repo/pull/30), [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32), [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33), [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34), [`config-repo#35`](https://github.com/digital-bank-java/config-repo/pull/35), [`config-repo#36`](https://github.com/digital-bank-java/config-repo/pull/36) | Transaction, auth/MFA, notification/payment, gateway resilience, and rate-limit SIT configuration |
+| [`infra-sit#23`](https://github.com/digital-bank-java/infra-sit/pull/23), [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24), [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25) | Redis, OpenSearch, and Fluent Bit local-SIT infrastructure |
+| [`account-service#27`](https://github.com/digital-bank-java/account-service/pull/27) | Account-service Maven quality gate follow-up |
 | [`.github#138`](https://github.com/digital-bank-java/.github/pull/138) | Structured JSON logging, correlation/trace fields, and redaction contract | Open; self-contained documentation |
 | [`.github#139`](https://github.com/digital-bank-java/.github/pull/139) | `sit`/`uat`/`prod` API documentation access and safe interactive execution policy | Open; self-contained documentation |
 | [`transaction-service#5`](https://github.com/digital-bank-java/transaction-service/pull/5) | Transaction Service Spring Boot, Config Client, health, container, Helm, and CI bootstrap | Open; service shell only, with no transfer workflow |
@@ -263,13 +295,6 @@ High-priority missing capabilities:
 - distributed tracing and correlation IDs
 - event-driven reconciliation checks and scheduled reconciliation reporting
 - production documentation and the later AWS UAT/PROD delivery path
-- service-to-service security
-- API Gateway rate limiting and resilience
-- admin API authentication/authorization
-- centralized logging with OpenSearch direction
-- distributed tracing and correlation IDs
-- AWS infrastructure path for UAT and production
-- ledger idempotent replay, append-only reversals, and reconciliation controls
 
 Deferred or intentionally not first:
 
