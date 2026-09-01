@@ -203,18 +203,25 @@ Implemented or substantially started:
 - `customer-service` customer registration/profile APIs, persistence, tests, Dockerfile, Helm chart, CI
 - `account-service` account opening/lookup/admin query APIs, persistence, tests, Dockerfile, Helm chart, CI
 - `ledger-service` initial immutable ledger entry posting/lookup, persistence, tests, Dockerfile, Helm chart, CI
+- `transaction-service` process-manager bootstrap, CI, configuration, and health baseline
 - `infra-sit` shared PostgreSQL, Kafka, and AKHQ deployment for local SIT
 - org-level and repo-level `AGENTS.md` files
 - Java test phase convention documentation
+
+Prepared local/SIT event-delivery work that is verified on dedicated review branches but is still awaiting non-draft PR publication:
+
+- governed ledger event contracts: `.github` `feature/104-event-contracts`, latest commit `e37a717`
+- ledger outbox delivery and safety: `ledger-service` `fix/176-ledger-outbox-safety`, latest commit `1dc0f81`
+- account reservation transport: `account-service` `feature/177-account-reservation-transport`, latest commit `71cfe80`
+- transaction reservation transport: `transaction-service` `feature/178-transfer-kafka-transport`, latest commit `8922c06`
+- transaction SIT transport configuration: `config-repo` `fix/transaction-service-sit-config`, latest commit `8152613`
+- ledger outbox SIT configuration: `config-repo` `feature/23-ledger-service-sit-config`, latest commit `dbea1c2`
 
 ## Known Missing Work
 
 High-priority missing capabilities:
 
-- project handoff maintenance discipline after major changes
 - Kafka application integration, AsyncAPI contracts, and topic governance
-- AsyncAPI event contracts
-- Transaction Service repository and bootstrap
 - saga/process-manager implementation in Transaction Service
 - account reservation tables and APIs
 - account outbox/inbox tables and publishers/consumers
@@ -307,7 +314,7 @@ done
 
 ## Recommended Next Work
 
-Finish the remaining Sprint 0 foundation and governance work before starting the next banking-domain delivery item. Start with `.github#39`, the canonical platform-conventions story, then complete the Sprint 0 README, IDE workflow, and organization-engineering-workflow items. Consult GitHub Project #1 for the current native hierarchy and status.
+Finish the local/SIT Kafka event foundation before starting AWS work. Publish and review the prepared event-contract, ledger-outbox, account-reservation, transaction-transport, and configuration PRs in their dependency order, then roll them out and verify the real local SIT broker through the service tests and AKHQ. Keep saga completion, reconciliation execution, and later security/resilience work in their assigned Sprint 3 or Sprint 6 items. Consult GitHub Project #1 for the current native hierarchy and status; Project mutations are pending restored GitHub API authentication.
 
 ## Update Log
 
@@ -400,3 +407,10 @@ Finish the remaining Sprint 0 foundation and governance work before starting the
 - Full Maven `verify` and strict Helm lint/render checks passed for Account Service and Transaction Service with the local Docker runtime available.
 - Ledger outbox delivery remains on the local/SIT track; its current review branch is `fix/176-ledger-outbox-safety` at `1dc0f81`.
 - The next implementation wave should finish local/SIT Kafka integration, real-broker verification, topic governance, and event-contract work before AWS infrastructure is started.
+
+### 2026-09-01 - Handoff State Correction
+
+- Updated the implementation snapshot to distinguish merged platform capabilities from verified local/SIT event-delivery branches awaiting PR publication.
+- Recorded the transaction-service bootstrap as implemented and removed it from the missing-work list.
+- Replaced the stale Sprint 0 recommendation with the current local/SIT Kafka event-foundation sequence.
+- Project status, parent, assignee, and native issue-type updates remain pending until GitHub API authentication is restored.
