@@ -101,7 +101,7 @@ Each service owns its own OpenAPI contract.
 
 The gateway aggregates documentation behind admin/internal paths. Swagger UI should be treated as a developer/admin surface, not a public customer-facing endpoint.
 
-Future Kafka event contracts should use AsyncAPI, not OpenAPI.
+Kafka event contracts use AsyncAPI, not OpenAPI. The governed ledger posting outcome contract is [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml); it defines the versioned completion and failure topics, producer/consumer ownership, delivery semantics, Schema Registry boundary, and is the implementation dependency for Sprint 3 Tasks 2 through 4.
 
 ### Persistence
 
@@ -224,11 +224,13 @@ Prepared local/SIT event-delivery work that is verified on dedicated review bran
 
 High-priority missing capabilities:
 
-- Kafka application integration, AsyncAPI contracts, and topic governance
+- Kafka application integration
+- Transactional ledger outbox implementation and posting outcome publication, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
+- Account reservation persistence and event consumption boundary, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
+- Transaction Service process-manager bootstrap, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
 - saga/process-manager implementation in Transaction Service
 - account reservation tables and APIs
 - account outbox/inbox tables and publishers/consumers
-- ledger outbox and posting outcome event publication
 - service-to-service security
 - API Gateway rate limiting and resilience
 - admin API authentication/authorization
@@ -320,6 +322,12 @@ done
 Finish the local/SIT Kafka event foundation before starting AWS work. Publish and review the prepared event-contract, ledger-outbox, account-reservation, transaction-transport, and configuration PRs in their dependency order, then roll them out and verify the real local SIT broker through the service tests and AKHQ. Keep saga completion, reconciliation execution, and later security/resilience work in their assigned Sprint 3 or Sprint 6 items. Consult GitHub Project #1 for the current native hierarchy and status; Project mutations are pending restored GitHub API authentication.
 
 ## Update Log
+
+### 2026-08-30 - Sprint 3 ledger event contract
+
+- Published [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml) as the governed AsyncAPI contract for `LedgerPostingCompleted.v1` and `LedgerPostingFailed.v1`.
+- Established versioned topic naming, required transfer/reservation identifiers, producer/consumer ownership, correlation and causation metadata, idempotency expectations, Schema Registry compatibility, delivery/DLQ semantics, and additive-only compatibility rules for a major event version.
+- Made the contract the prerequisite for Sprint 3 Tasks 2 through 4: ledger outbox, account reservation/event consumption, and the Transaction Service process-manager foundation.
 
 ### 2026-08-03
 
