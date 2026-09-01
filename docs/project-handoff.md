@@ -107,7 +107,7 @@ Each service owns its own OpenAPI contract.
 
 The gateway aggregates documentation behind admin/internal paths. Swagger UI should be treated as a developer/admin surface, not a public customer-facing endpoint.
 
-Future Kafka event contracts should use AsyncAPI, not OpenAPI.
+Kafka event contracts use AsyncAPI, not OpenAPI. The governed ledger posting outcome contract is [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml); it defines the versioned completion and failure topics, producer/consumer ownership, delivery semantics, Schema Registry boundary, and is the implementation dependency for Sprint 3 Tasks 2 through 4.
 
 ### Persistence
 
@@ -209,22 +209,34 @@ Implemented or substantially started:
 - `customer-service` customer registration/profile APIs, persistence, tests, Dockerfile, Helm chart, CI
 - `account-service` account opening/lookup/admin query APIs, persistence, tests, Dockerfile, Helm chart, CI
 - `ledger-service` initial immutable ledger entry posting/lookup, persistence, tests, Dockerfile, Helm chart, CI
+- `transaction-service` process-manager bootstrap, CI, configuration, and health baseline
 - `infra-sit` shared PostgreSQL, Kafka, and AKHQ deployment for local SIT
 - org-level and repo-level `AGENTS.md` files
 - Java test phase convention documentation
+
+Prepared local/SIT event-delivery work that is verified on dedicated review branches but is still awaiting non-draft PR publication:
+
+- governed ledger event contracts: `.github` `feature/104-event-contracts`, latest commit `e37a717`
+- ledger outbox delivery and safety: `ledger-service` `fix/176-ledger-outbox-safety`, latest commit `1dc0f81`
+- account reservation transport: `account-service` `feature/177-account-reservation-transport`, latest commit `71cfe80`
+- transaction reservation transport: `transaction-service` `feature/178-transfer-kafka-transport`, latest commit `8922c06`
+- transaction SIT transport configuration: `config-repo` `fix/transaction-service-sit-config`, latest commit `8152613`
+- ledger outbox SIT configuration: `config-repo` `feature/23-ledger-service-sit-config`, latest commit `3549b7c`
+- SIT Kafka topic provisioning: `infra-sit` `feature/103-sit-kafka-topics`, latest commit `c3dcd16`
+- Ledger posting command consumer: `ledger-service` `feature/103-ledger-posting-consumer`, latest commit `76c11a5`
+- Transaction-to-Ledger Kafka transport: `transaction-service` `feature/103-transaction-ledger-transport`, latest commit `f2092f3`
 
 ## Known Missing Work
 
 High-priority missing capabilities:
 
-- project handoff maintenance discipline after major changes
-- Kafka application integration, AsyncAPI contracts, and topic governance
-- AsyncAPI event contracts
-- Transaction Service repository and bootstrap
+- Kafka application integration
+- Transactional ledger outbox implementation and posting outcome publication, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
+- Account reservation persistence and event consumption boundary, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
+- Transaction Service process-manager bootstrap, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
 - saga/process-manager implementation in Transaction Service
 - account reservation tables and APIs
 - account outbox/inbox tables and publishers/consumers
-- ledger outbox and posting outcome event publication
 - service-to-service security
 - API Gateway rate limiting and resilience
 - admin API authentication/authorization
@@ -313,9 +325,15 @@ done
 
 ## Recommended Next Work
 
-Finish the remaining local SIT event-driven domain work before starting AWS delivery. The current order is governed event contracts, Ledger outbox and posting outcomes, Account reservation transport and state handling, Transaction Service process management, then local SIT resilience and verification. Consult GitHub Project #1 for the current native hierarchy and status; Sprint 7 remains the later AWS/UAT/PROD boundary.
+Finish and verify any remaining local SIT event-driven domain work before starting AWS delivery. Keep saga completion, reconciliation execution, and later security/resilience work in their assigned Sprint 3 or Sprint 6 items. Consult GitHub Project #1 for the current native hierarchy and status; Sprint 7 remains the later AWS/UAT/PROD boundary.
 
 ## Update Log
+
+### 2026-08-30 - Sprint 3 ledger event contract
+
+- Published [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml) as the governed AsyncAPI contract for `LedgerPostingCompleted.v1` and `LedgerPostingFailed.v1`.
+- Established versioned topic naming, required transfer/reservation identifiers, producer/consumer ownership, correlation and causation metadata, idempotency expectations, Schema Registry compatibility, delivery/DLQ semantics, and additive-only compatibility rules for a major event version.
+- Made the contract the prerequisite for Sprint 3 Tasks 2 through 4: ledger outbox, account reservation/event consumption, and the Transaction Service process-manager foundation.
 
 ### 2026-08-03
 
@@ -399,3 +417,49 @@ Finish the remaining local SIT event-driven domain work before starting AWS deli
 - Chose `config-repo` as the Git-backed runtime configuration repository.
 - Chose ledger-driven balance posting and rejected direct public balance mutation APIs.
 - Chose Transaction Service as the future saga/process manager.
+
+### 2026-08-31 - Deferred AWS and Cloud Deployment
+
+- Deferred AWS/UAT/PROD deployment implementation until the remaining local SIT and core-domain work is complete.
+- Kept `Sprint 7 - AWS UAT and Production Readiness` and its related production documentation, AWS migration, managed-service, and SonarQube Cloud items in the Backlog.
+- Closed the unmerged Amazon OpenSearch UAT/PROD architecture PR as deferred; its issue and discussion remain available as future planning history.
+- No AWS infrastructure, cloud deployment, or UAT/PROD rollout work should start in the current delivery wave.
+- Continue local SIT implementation and verification for transaction, ledger, account, payment, notification, auth, MFA, gateway, and observability capabilities.
+- Revisit the AWS target architecture after the local SIT/core-domain wave, with EKS, RDS/Aurora, MSK, AWS OpenSearch, and AWS Secrets Manager or Parameter Store remaining the planned direction.
+
+### 2026-09-01 - Local SIT Delivery Priority
+
+- Confirmed that AWS/UAT/PROD deployment implementation remains deferred until the local SIT and core-domain delivery wave is complete.
+- Implemented and verified the local SIT transport configuration needed for the current Kafka workflow:
+  - Account Service reservation transport: `71cfe80` on `feature/177-account-reservation-transport`.
+  - Transaction Service reservation transport: `8922c06` on `feature/178-transfer-kafka-transport`.
+  - Transaction Service SIT configuration: `8152613` on `fix/transaction-service-sit-config`.
+  - Ledger Service outbox SIT configuration: `dbea1c2` on `feature/23-ledger-service-sit-config`.
+- Full Maven `verify` and strict Helm lint/render checks passed for Account Service and Transaction Service with the local Docker runtime available.
+- Ledger outbox delivery remains on the local/SIT track; its current review branch is `fix/176-ledger-outbox-safety` at `1dc0f81`.
+- The next implementation wave should finish local/SIT Kafka integration, real-broker verification, topic governance, and event-contract work before AWS infrastructure is started.
+
+### 2026-09-01 - Handoff State Correction
+
+- Updated the implementation snapshot to distinguish merged platform capabilities from verified local/SIT event-delivery branches awaiting PR publication.
+- Recorded the transaction-service bootstrap as implemented and removed it from the missing-work list.
+- Replaced the stale Sprint 0 recommendation with the current local/SIT Kafka event-foundation sequence.
+- Project status, parent, assignee, and native issue-type updates remain pending until GitHub API authentication is restored.
+
+### 2026-09-01 - Local SIT Kafka Transport Wave
+
+- Provisioned the `ledger.posting.requested.v1` command topic and dead-letter topic in the local SIT Kafka chart, with topic auto-creation disabled for SIT.
+- Added the Ledger Service inbound posting consumer with durable inbox protection and mapping to the existing immutable posting port.
+- Added the Transaction Service Ledger command outbox, Kafka publisher, and Ledger outcome consumer.
+- Aligned the Transaction-to-Ledger command payload with the approved contract: envelope metadata, transaction and reservation identifiers, description, effective time, currency, and explicit debit/credit lines.
+- Verified the Ledger consumer branch with `./mvnw verify` (28 tests, zero failures) and the Transaction transport branch with `./mvnw -q verify` (zero exit status).
+- Pushed the four local/SIT branches; non-draft PR creation and Project item updates remain pending until GitHub authentication is restored.
+
+### 2026-09-01 - Local SIT Domain Wave Audit
+
+- Confirmed that the next local/SIT delivery wave is already prepared in task-backed branches; no AWS implementation is included.
+- Auth Service is ready in dependency order: bootstrap, JWT/session foundation, then later durable session and gateway security work.
+- MFA is prepared in dependency order: HTTP API, principal binding, TOTP enrollment, then challenge lifecycle. Its current stores are intentionally in-memory and remain a later durability/security concern.
+- Payment Service is prepared in dependency order: HTTP lifecycle, PostgreSQL/idempotency/authorization, then resource-contract documentation. SIT configuration is available in `config-repo` on `feature/162-payment-service-sit-config`, but the service is not yet deployed in the SIT baseline.
+- Notification transfer-consumer verification reports 15 passing tests; the transfer-saga branch reports passing domain, persistence, and Spring integration suites. Their PR publication and Project updates remain blocked by expired GitHub CLI authentication.
+- GitHub Project status, parent, assignee, and native issue-type changes must be applied after authentication is restored; no item is to be treated as updated based only on local branch state.
