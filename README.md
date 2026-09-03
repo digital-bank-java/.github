@@ -8,6 +8,7 @@ This repository is not a deployable application. It provides shared contributor 
 
 - [Java test convention and CI stage guidance](docs/testing/java-test-convention.md)
 - [Reproducible local Kubernetes SIT setup and verification](docs/local-sit.md)
+- [Shared Auth JWT Secret for local SIT](docs/sit-auth-jwt-secret.md)
 - [Platform naming, ports, configuration, API, and infrastructure conventions](docs/platform-conventions.md)
 - [Workstation debugging against SIT](docs/workstation-debugging-against-sit.md)
 - [README documentation baseline](docs/readme-standard.md)

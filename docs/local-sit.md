@@ -40,6 +40,12 @@ The expected Kubernetes context is `docker-desktop`. Stop if a different context
 
 Do not put GitHub tokens, database passwords, or other secrets in Helm values, repository files, screenshots, or this guide. This guide deliberately does not prescribe credential entry mechanics. Follow the current credential procedures in the Config Server and Infra SIT READMEs instead; the local PostgreSQL procedure is owned by [bug #114](https://github.com/digital-bank-java/.github/issues/114). GitHub CLI authentication is not required for the Config Server Secret flow: it uses the dedicated token and `kubectl`.
 
+Before deploying Auth Service or Transaction Service, follow the
+[`auth-service-secrets` runbook](sit-auth-jwt-secret.md). It generates the
+synthetic local-only `jwt-secret`, verifies only its name and decoded length,
+and defines the coordinated rollout and rotation procedure. Do not use that
+local procedure in UAT or PROD.
+
 ## Deployment Order
 
 Run each deployment from its repository root and use its README for the complete commands. The order below prevents a service from starting before the infrastructure and configuration it requires exist.

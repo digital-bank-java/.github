@@ -627,6 +627,13 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Confirmed that Notification Service has no notification HTTP endpoint in the current scope; no fabricated direct-service request or public notification API was added.
 - Kept duplicate delivery, retry, DLQ/quarantine, sensitive-data handling, and event/balance ownership boundaries explicit.
 
+### 2026-09-04 - Shared Auth JWT Secret Runbook
+
+- Added [`docs/sit-auth-jwt-secret.md`](sit-auth-jwt-secret.md) as the controlled local SIT procedure for generating, verifying, rotating, and removing the synthetic `auth-service-secrets/jwt-secret` value without exposing secret material.
+- Recorded the shared Helm contract for Auth Service and Transaction Service, including the current merge dependencies and ordered rollout checks.
+- Kept AWS Secrets Manager and External Secrets Operator delivery as deferred Sprint 7 scope for UAT and PROD; the local Kubernetes procedure must not be promoted to cloud environments.
+- Supporting task: [`.github#192`](https://github.com/digital-bank-java/.github/issues/192).
+
 ### 2026-09-05 - Current SIT rollout review wave
 
 - Merged the complete local SIT event-driven rollout guide in [`.github` PR #216](https://github.com/digital-bank-java/.github/pull/216), tracked by [task #215](https://github.com/digital-bank-java/.github/issues/215).
