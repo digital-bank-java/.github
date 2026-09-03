@@ -77,6 +77,20 @@ Reconciliation compares the immutable ledger with account projections, reservati
 - Sprint 6 owns scheduled reports, alerting, dashboards, and operational runbooks.
 - Replay is allowed only through an idempotent workflow. Corrections use a new compensating reversal. Ambiguous cases are quarantined for authorized review.
 
+## Transfer Risk And Step-Up
+
+The Sprint 4 transfer-risk decision contract is documented in
+[`docs/contracts/transfer-risk-step-up.md`](contracts/transfer-risk-step-up.md).
+Transaction Service owns transfer workflow state and orchestration, Auth
+Service owns identity and session authentication, and MFA Service owns
+challenge verification. Ledger Service must remain independent of risk and
+step-up decisions.
+
+The contract defines `ALLOW`, `REQUIRE_STEP_UP`, and `DECLINE` outcomes. A
+step-up decision is bound to the transfer intent, single-use, replay-protected,
+and time-limited. Business thresholds are policy-managed and are not embedded
+in clients or in Ledger Service.
+
 ## Infrastructure Names
 
 - Docker image: `digital-bank-java/<service>:<version>`.

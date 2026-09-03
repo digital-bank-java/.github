@@ -427,6 +427,13 @@ Finish and verify any remaining local SIT event-driven domain work before starti
 - Continue local SIT implementation and verification for transaction, ledger, account, payment, notification, auth, MFA, gateway, and observability capabilities.
 - Revisit the AWS target architecture after the local SIT/core-domain wave, with EKS, RDS/Aurora, MSK, AWS OpenSearch, and AWS Secrets Manager or Parameter Store remaining the planned direction.
 
+### 2026-09-04 - Sprint 4 transfer-risk contract
+
+- Created Task [`.github#194`](https://github.com/digital-bank-java/.github/issues/194) under Sprint 4 Story [`.github#55`](https://github.com/digital-bank-java/.github/issues/55) to define the versioned transfer-risk and step-up decision boundary.
+- Documented the `ALLOW`, `REQUIRE_STEP_UP`, and `DECLINE` outcomes, transfer binding, policy versioning, replay protection, expiry, failure handling, audit requirements, and stable reason codes in [`docs/contracts/transfer-risk-step-up.md`](contracts/transfer-risk-step-up.md).
+- Confirmed ownership boundaries: Transaction Service orchestrates transfer state, Auth Service owns identity/session assurance, MFA Service verifies challenges, and Ledger Service remains limited to immutable financial postings.
+- Kept risk thresholds, MFA implementation, and transfer execution as follow-up implementation work; no business policy threshold was introduced by this contract.
+
 ### 2026-09-01 - Local SIT Delivery Priority
 
 - Confirmed that AWS/UAT/PROD deployment implementation remains deferred until the local SIT and core-domain delivery wave is complete.
