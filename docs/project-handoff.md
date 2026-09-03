@@ -253,6 +253,27 @@ The implementation wave above is merged on the service default branches as of
 verification. SIT rollout and end-to-end transfer demonstration remain separate
 operational evidence and are not inferred from merged PRs.
 
+Current review and rollout state:
+
+- Transaction Service database configuration is merged in
+  [transaction-service#14](https://github.com/digital-bank-java/transaction-service/pull/14).
+- Transaction Service HMAC JWT validation is ready in
+  [transaction-service#15](https://github.com/digital-bank-java/transaction-service/pull/15);
+  it must be merged before the service can start in SIT with the current Auth
+  token contract.
+- The matching non-secret Config Repository settings are ready in
+  [config-repo#38](https://github.com/digital-bank-java/config-repo/pull/38).
+- Shared SIT Auth JWT Secret delivery is documented in
+  [infra-sit#28](https://github.com/digital-bank-java/infra-sit/pull/28).
+- Auth/MFA, Notification, and Payment Config Repository changes are reviewable
+  in [config-repo#32](https://github.com/digital-bank-java/config-repo/pull/32),
+  [config-repo#33](https://github.com/digital-bank-java/config-repo/pull/33),
+  and [config-repo#34](https://github.com/digital-bank-java/config-repo/pull/34).
+  Merge #32 before #33 and #34; no delay is required.
+- SIT currently runs the healthy account, customer, gateway, config-server,
+  Kafka, ledger, and PostgreSQL workloads. Transaction Service is not deployed
+  until its PRs and Secret prerequisite are available.
+
 The current reviewable implementation wave is non-draft and is not merged or
 deployed until accepted and verified:
 
@@ -414,6 +435,35 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Corrected the native parent hierarchy: payment resource contract task #167 is now under payment lifecycle task #161; transfer authorization task #169 is now under transfer HTTP task #165.
 - Audited GitHub Project #1 after authentication refresh: 223 tracked issues, exactly eight root Sprint epics, and no unparented non-Epic issue. Closed issue state and Project status are synchronized for the completed implementation items.
 - AWS/UAT/PROD deployment remains deferred; the current focus is local SIT rollout and verification.
+
+### 2026-09-04 - Transaction SIT rollout blocker and review wave
+
+- Confirmed that the merged Transaction Service database configuration now
+  reaches the SIT PostgreSQL database and Flyway schema successfully.
+- The first rollout then exposed a real security contract mismatch: the current
+  Auth foundation issues HMAC-SHA256 JWTs, while Transaction Service only had
+  issuer/JWK decoder configuration. Authentication remains fail-closed; it was
+  not disabled to make the deployment start.
+- Opened [transaction-service#15](https://github.com/digital-bank-java/transaction-service/pull/15)
+  to support the current SIT HMAC contract while preserving issuer/JWK support
+  for UAT/PROD. The PR passed 15 Maven tests, Helm lint/render validation, and
+  the container smoke check.
+- Opened [config-repo#38](https://github.com/digital-bank-java/config-repo/pull/38)
+  for the non-secret SIT issuer and runtime secret placeholder.
+- Created [bug #191](https://github.com/digital-bank-java/.github/issues/191)
+  and its child [task #192](https://github.com/digital-bank-java/.github/issues/192)
+  to track the blocker and shared SIT Secret delivery.
+- Opened [infra-sit#28](https://github.com/digital-bank-java/infra-sit/pull/28)
+  with the interactive Secret creation procedure. No secret value is stored in
+  Git or printed by the verification procedure.
+- Rebased the Auth/MFA, Notification, and Payment Config Repository PRs onto
+  current configuration history: [config-repo#32](https://github.com/digital-bank-java/config-repo/pull/32),
+  [config-repo#33](https://github.com/digital-bank-java/config-repo/pull/33),
+  and [config-repo#34](https://github.com/digital-bank-java/config-repo/pull/34).
+  Preferred order is #32 first, then #33/#34; no delay is required between
+  merges.
+- Current SIT has no Transaction Service Helm release because deployment is
+  intentionally waiting for the reviewed PRs and the Secret prerequisite.
 
 ### 2026-08-30 - Sprint 3 ledger event contract
 
