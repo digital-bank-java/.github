@@ -636,3 +636,12 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - After the PostgreSQL repair is merged, retry the PostgreSQL release first. Then merge Payment configuration, Kafka transfer topics, and ledger-driven SIT event configuration in that order before rolling out the affected services.
 - API Gateway Redis rate limiting and downstream resilience are complete for the current code scope through merged [api-gateway #21](https://github.com/digital-bank-java/api-gateway/pull/21) and [api-gateway #22](https://github.com/digital-bank-java/api-gateway/pull/22); the tracking task and parent story are closed. SIT rollout verification remains part of the pending environment wave.
 - Do not record the full Auth, Payment, Notification, or event-driven transfer rollout as complete until the merged configurations are served by Config Server and the workloads and representative flows are verified in `digital-bank-sit`.
+
+### 2026-09-03 - Mainline Integration PR Wave
+
+- Re-audited the service repositories and confirmed that several previously merged PRs were stacked into feature branches rather than present on `main`.
+- Opened non-draft integration PRs for the complete reviewed stacks: Auth Service #5, MFA Service #7, Payment Service #6, Account Service #37, Ledger Service #17, API Gateway #22, Transaction Service #13, and Notification Service #6.
+- Opened `.github` PR #186 to place the governed transfer-event contract on `main`; it should be available before enabling Notification Service transfer-event consumption.
+- All service integration PRs passed their existing Maven, Helm, and container checks. No PR was merged directly.
+- Added `.github#67` platform architecture documentation in PR #187, covering service ownership, local SIT topology, Kafka/outbox flow, ledger-driven transfer consistency, and the future AWS hosting direction.
+- The next state transition requires human review and merge of the prepared PRs, followed by local SIT rollout and cross-service verification. AWS/UAT/PROD implementation remains deferred.
