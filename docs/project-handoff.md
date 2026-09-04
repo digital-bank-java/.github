@@ -266,6 +266,7 @@ deployed until accepted and verified:
 | [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) | Notification and Payment SIT configuration |
 | [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) | Transfer-created Kafka topic and dead-letter topic provisioning |
 | [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) | Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries |
+| [`api-gateway#23`](https://github.com/digital-bank-java/api-gateway/pull/23) | Feature-flagged JWT validation and scope authorization at the gateway |
 
 The application PRs report focused Maven, Helm, and container verification. The
 configuration PRs report YAML parsing and diff checks. SIT rollout, end-to-end
@@ -282,6 +283,7 @@ High-priority missing capabilities:
 - complete governed account/transfer event-contract documentation and compatibility checks
 - integrated SIT rollout and end-to-end transfer verification across Transaction, Account, and Ledger services
 - rollout of the newly added gateway routes and SIT configuration for Auth, MFA, Transaction, and Payment
+- gateway security rollout after the shared SIT secret is provisioned and the dependent configuration PRs are merged
 - service-to-service security and admin API authentication/authorization
 - API Gateway rate limiting and resilience rollout
 - centralized logging with OpenSearch, Fluent Bit, dashboards, and alerts
@@ -390,6 +392,7 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Completed the Auth/MFA/Notification/Payment SIT configuration review wave in `config-repo#32`, `#33`, and `#34`, including shared issuer/scopes and README structure corrections.
 - Provisioned the transfer-created Kafka topic and dead-letter topic in [infra-sit#29](https://github.com/digital-bank-java/infra-sit/pull/29).
 - Added the missing Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries in [config-repo#39](https://github.com/digital-bank-java/config-repo/pull/39), tracked by [`.github#202`](https://github.com/digital-bank-java/.github/issues/202).
+- Added feature-flagged gateway JWT validation and scope authorization in [api-gateway#23](https://github.com/digital-bank-java/api-gateway/pull/23), tracked by [`.github#203`](https://github.com/digital-bank-java/.github/issues/203); updated config-repo#32 with `admin.internal` and config-repo#39 with the SIT enablement flag.
 - No pull request was merged directly by the implementation agent. The remaining boundary is user review/merge followed by local SIT rollout evidence.
 
 ### 2026-09-01
