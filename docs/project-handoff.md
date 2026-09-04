@@ -262,6 +262,8 @@ deployed until accepted and verified:
 | [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32) | Auth/MFA SIT configuration, shared issuer, and Auth scopes |
 | [`auth-service#6`](https://github.com/digital-bank-java/auth-service/pull/6) | Shared SIT JWT scope contract |
 | [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8) | HMAC/JWK JWT validation for SIT and cloud modes |
+| [`auth-service#7`](https://github.com/digital-bank-java/auth-service/pull/7) | PostgreSQL-backed Auth session persistence and replica-safe revocation |
+| [`mfa-service#9`](https://github.com/digital-bank-java/mfa-service/pull/9) | PostgreSQL-backed MFA enrollment/challenge persistence with encrypted TOTP secrets |
 | [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) | HMAC/JWK JWT validation and SIT deployment contract |
 | [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) | Notification and Payment SIT configuration |
 | [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) | Transfer-created Kafka topic and dead-letter topic provisioning |
@@ -375,10 +377,10 @@ The current implementation wave is ready for review and rollout, in this order:
 
 1. Merge [`.github#201`](https://github.com/digital-bank-java/.github/pull/201), the shared SIT Auth Secret runbook.
 2. Merge [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32), then [`auth-service#6`](https://github.com/digital-bank-java/auth-service/pull/6).
-3. Merge [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8) and [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) in parallel.
+3. Merge [`auth-service#7`](https://github.com/digital-bank-java/auth-service/pull/7) for durable sessions, then [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8), [`mfa-service#9`](https://github.com/digital-bank-java/mfa-service/pull/9), and [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) in parallel.
 4. Merge [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33), [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34), and [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29). The first two depend on config-repo#32; the Kafka topic PR can merge independently.
 5. Merge [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) after the corresponding service/configuration contracts are available.
-6. Provision the local SIT Auth Secret, roll out the services, and verify health, protected workflows, Kafka delivery, centralized Swagger, and database state.
+6. Provision the local SIT Auth Secret, MFA TOTP encryption Secret, and service databases; roll out the services and verify health, protected workflows, Kafka delivery, centralized Swagger, and database state.
 7. Record runtime evidence in the supporting issues and synchronize Sprint 3, 4, and 5 statuses. Keep UAT/PROD cloud deployment deferred to Sprint 7.
 
 Consult GitHub Project #1 for the authoritative Sprint hierarchy and current issue status.
@@ -394,6 +396,14 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Added the missing Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries in [config-repo#39](https://github.com/digital-bank-java/config-repo/pull/39), tracked by [`.github#202`](https://github.com/digital-bank-java/.github/issues/202).
 - Added feature-flagged gateway JWT validation and scope authorization in [api-gateway#23](https://github.com/digital-bank-java/api-gateway/pull/23), tracked by [`.github#203`](https://github.com/digital-bank-java/.github/issues/203); updated config-repo#32 with `admin.internal` and config-repo#39 with the SIT enablement flag.
 - No pull request was merged directly by the implementation agent. The remaining boundary is user review/merge followed by local SIT rollout evidence.
+
+### 2026-09-04 - Durable Auth and MFA persistence review wave
+
+- Added PostgreSQL/Flyway Auth session persistence with transaction-safe same-user revocation in [auth-service#7](https://github.com/digital-bank-java/auth-service/pull/7), linked to `.github#28` and `.github#45`.
+- Added PostgreSQL/Flyway MFA enrollment and challenge persistence with AES-256-GCM protected TOTP secrets in [mfa-service#9](https://github.com/digital-bank-java/mfa-service/pull/9), linked to `.github#29` and `.github#49`.
+- Updated both container smoke workflows to start disposable PostgreSQL instances and pass only CI-local credentials; all Auth and MFA Maven, Helm, and container checks passed.
+- SIT rollout requires the existing PostgreSQL Secret, separate `auth_service` and `mfa_service` databases, and an externally managed `mfa-service-secrets` key containing a base64-encoded 32-byte AES key. No secret material was committed.
+- These PRs are open, non-draft, and awaiting user review. No pull request was merged directly by the implementation agent.
 
 ### 2026-09-01
 
