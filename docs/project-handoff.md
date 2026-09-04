@@ -626,3 +626,13 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - The guide uses Insomnia to create a transfer through API Gateway, AKHQ to verify `TransferCreated.v1`, and read-only DBeaver checks for the Notification Service durable inbox and notification work records.
 - Confirmed that Notification Service has no notification HTTP endpoint in the current scope; no fabricated direct-service request or public notification API was added.
 - Kept duplicate delivery, retry, DLQ/quarantine, sensitive-data handling, and event/balance ownership boundaries explicit.
+
+### 2026-09-05 - Current SIT rollout review wave
+
+- Merged the complete local SIT event-driven rollout guide in [`.github` PR #216](https://github.com/digital-bank-java/.github/pull/216), tracked by [task #215](https://github.com/digital-bank-java/.github/issues/215).
+- A PostgreSQL Helm upgrade exposed an immutable StatefulSet `volumeClaimTemplates` label regression after the chart version changed. No PVCs were deleted and no data replacement was performed. The repair is tracked by [task #217](https://github.com/digital-bank-java/.github/issues/217) and [infra-sit PR #32](https://github.com/digital-bank-java/infra-sit/pull/32).
+- The current SIT rollout remains paused until the review prerequisites are merged: [infra-sit #32](https://github.com/digital-bank-java/infra-sit/pull/32), [config-repo #34](https://github.com/digital-bank-java/config-repo/pull/34), [infra-sit #29](https://github.com/digital-bank-java/infra-sit/pull/29), and [config-repo #41](https://github.com/digital-bank-java/config-repo/pull/41). All four are non-draft and currently clean.
+- [config-repo #39](https://github.com/digital-bank-java/config-repo/pull/39) is already merged; any earlier conflict indication for that PR is stale.
+- After the PostgreSQL repair is merged, retry the PostgreSQL release first. Then merge Payment configuration, Kafka transfer topics, and ledger-driven SIT event configuration in that order before rolling out the affected services.
+- API Gateway Redis rate limiting remains a separate ready task ([api-gateway #4](https://github.com/digital-bank-java/api-gateway/issues/4)); implementation is pending explicit approval of the documented design and has no PR yet.
+- Do not record the full Auth, Payment, Notification, or event-driven transfer rollout as complete until the merged configurations are served by Config Server and the workloads and representative flows are verified in `digital-bank-sit`.
