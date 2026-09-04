@@ -259,24 +259,20 @@ deployed until accepted and verified:
 | Repository / PR | Reviewable scope |
 | --- | --- |
 | [`.github#201`](https://github.com/digital-bank-java/.github/pull/201) | Shared SIT Auth JWT secret runbook |
-| [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32) | Auth/MFA SIT configuration, shared issuer, and Auth scopes |
-| [`auth-service#6`](https://github.com/digital-bank-java/auth-service/pull/6) | Shared SIT JWT scope contract |
-| [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8) | HMAC/JWK JWT validation for SIT and cloud modes |
-| [`auth-service#7`](https://github.com/digital-bank-java/auth-service/pull/7) | PostgreSQL-backed Auth session persistence and replica-safe revocation |
-| [`mfa-service#9`](https://github.com/digital-bank-java/mfa-service/pull/9) | PostgreSQL-backed MFA enrollment/challenge persistence with encrypted TOTP secrets |
-| [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) | HMAC/JWK JWT validation and SIT deployment contract |
 | [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) | Notification and Payment SIT configuration |
 | [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) | Transfer-created Kafka topic and dead-letter topic provisioning |
 | [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) | Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries |
-| [`api-gateway#23`](https://github.com/digital-bank-java/api-gateway/pull/23) | Feature-flagged JWT validation and scope authorization at the gateway |
+| [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41) | Account, Transaction, and Ledger event transport enablement in SIT |
+| [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24) | OpenSearch deployment for local SIT |
+| [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25) | Fluent Bit log collection for local SIT |
 
 The application PRs report focused Maven, Helm, and container verification. The
 configuration PRs report YAML parsing and diff checks. SIT rollout, end-to-end
 transfer demonstration, and secret provisioning still require separate evidence.
 
-Other local-SIT operational PRs remain independently reviewable: `infra-sit#23`
-(Redis), `infra-sit#24` (OpenSearch), `infra-sit#25` (Fluent Bit),
-`config-repo#35` (gateway resilience), and `config-repo#36` (gateway rate limits).
+The Auth, MFA, Payment, Gateway security, Redis, and gateway resilience/rate-limit
+PRs referenced in earlier handoff entries are merged. Their runtime rollout still
+requires the open Config Repo changes above and SIT verification.
 
 ## Known Missing Work
 
