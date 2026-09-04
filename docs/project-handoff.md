@@ -395,6 +395,14 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - The native GitHub sub-issue relationship is authoritative; a `Parent:` line in an issue body alone is not sufficient. New work must be assigned a Sprint, native Issue Type, parent, assignee, and Project status before implementation begins.
 - After the governance repair, the full 246-item audit reports zero parentless non-Epic issues and zero missing native Issue Types. Corrected the native types for [`.github#125`](https://github.com/digital-bank-java/.github/issues/125), [`.github#128`](https://github.com/digital-bank-java/.github/issues/128), [`.github#130`](https://github.com/digital-bank-java/.github/issues/130), [`.github#166`](https://github.com/digital-bank-java/.github/issues/166), [`.github#167`](https://github.com/digital-bank-java/.github/issues/167), [`.github#168`](https://github.com/digital-bank-java/.github/issues/168), [`.github#169`](https://github.com/digital-bank-java/.github/issues/169), [`.github#182`](https://github.com/digital-bank-java/.github/issues/182), [`.github#183`](https://github.com/digital-bank-java/.github/issues/183), and [`infra-sit#26`](https://github.com/digital-bank-java/infra-sit/issues/26).
 
+### 2026-09-05 - PostgreSQL prerequisite and current SIT event-flow state
+
+- Confirmed the merged PostgreSQL database-init password fix in [`infra-sit#33`](https://github.com/digital-bank-java/infra-sit/pull/33) and retried the local SIT release without changing the existing PVC or data.
+- Helm release `postgres` is now `deployed` at revision 5; the post-upgrade database-init hook completed successfully and was removed by its success policy.
+- Read-only verification confirmed all expected logical databases, including `auth_service`, and all 12 SIT workloads are currently Ready.
+- [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41), [`payment-service#9`](https://github.com/digital-bank-java/payment-service/pull/9), and the related infrastructure prerequisites are merged. The Notification Kafka fix is prepared in [`notification-service#9`](https://github.com/digital-bank-java/notification-service/pull/9), which was reopened because its code was previously validated only from a feature image and not merged to `main`.
+- Sprint 3 event-flow task [`.github#213`](https://github.com/digital-bank-java/.github/issues/213) remains open until the Notification fix is merged and a representative transfer is verified end to end through reservation, ledger posting, outcome handling, and transaction state. No AWS/UAT/PROD work is included in this SIT checkpoint.
+
 ### 2026-09-05 - Auth Service SIT database prerequisite
 
 - Created parented task [`.github#214`](https://github.com/digital-bank-java/.github/issues/214) under Auth session Story #46 and moved it to In review.
