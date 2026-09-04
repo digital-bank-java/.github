@@ -575,3 +575,10 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Added PostgreSQL Flyway migration 2 and persistence rehydration for the immutable binding; mismatched transfer/decision/subject verification returns a controlled conflict.
 - Verified focused controller coverage, persistence migration/rehydration, full Maven `verify` (42 unit-phase and 19 integration tests), Helm lint/render, and `git diff --check`.
 - API Gateway routing and Transaction Service continuation after MFA assurance remain follow-up integration work; no AWS/UAT/PROD work was started.
+
+### 2026-09-04 - Transfer Notification Verification Guide
+
+- Added the notification verification guide in [`docs/insomnia-transfer-notification-workflow.md`](insomnia-transfer-notification-workflow.md), tracked by [`.github#62`](https://github.com/digital-bank-java/.github/issues/62).
+- The guide uses Insomnia to create a transfer through API Gateway, AKHQ to verify `TransferCreated.v1`, and read-only DBeaver checks for the Notification Service durable inbox and notification work records.
+- Confirmed that Notification Service has no notification HTTP endpoint in the current scope; no fabricated direct-service request or public notification API was added.
+- Kept duplicate delivery, retry, DLQ/quarantine, sensitive-data handling, and event/balance ownership boundaries explicit.
