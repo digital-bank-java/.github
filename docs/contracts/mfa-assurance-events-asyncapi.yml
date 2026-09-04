@@ -84,7 +84,7 @@ components:
             destinationAccountId: '22222222-2222-2222-2222-222222222222'
             amount: '1250.7500'
             currency: USD
-            decisionId: 'risk-decision-001'
+            decisionId: '44444444-4444-4444-4444-444444444444'
             decisionRequestId: 'risk-req-001'
             policyVersion: transfer-risk-policy-2026-09
             challengeId: 'mfa-challenge-001'
@@ -211,11 +211,11 @@ components:
           description: Customer or authenticated principal identity bound to the MFA challenge.
         sourceAccountId:
           type: string
-          minLength: 1
+          format: uuid
           description: Source account reference from the normalized transfer intent.
         destinationAccountId:
           type: string
-          minLength: 1
+          format: uuid
           description: Destination account reference from the normalized transfer intent.
         amount:
           type: string
@@ -227,7 +227,7 @@ components:
           description: ISO 4217 currency code; it must match the risk decision binding.
         decisionId:
           type: string
-          minLength: 1
+          format: uuid
           description: Single-use risk decision identifier that required this step-up assurance.
         decisionRequestId:
           type: string
