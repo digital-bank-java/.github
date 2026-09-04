@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -259,24 +259,21 @@ deployed until accepted and verified:
 | Repository / PR | Reviewable scope |
 | --- | --- |
 | [`.github#201`](https://github.com/digital-bank-java/.github/pull/201) | Shared SIT Auth JWT secret runbook |
-| [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32) | Auth/MFA SIT configuration, shared issuer, and Auth scopes |
-| [`auth-service#6`](https://github.com/digital-bank-java/auth-service/pull/6) | Shared SIT JWT scope contract |
-| [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8) | HMAC/JWK JWT validation for SIT and cloud modes |
-| [`auth-service#7`](https://github.com/digital-bank-java/auth-service/pull/7) | PostgreSQL-backed Auth session persistence and replica-safe revocation |
-| [`mfa-service#9`](https://github.com/digital-bank-java/mfa-service/pull/9) | PostgreSQL-backed MFA enrollment/challenge persistence with encrypted TOTP secrets |
-| [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) | HMAC/JWK JWT validation and SIT deployment contract |
 | [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) | Notification and Payment SIT configuration |
 | [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) | Transfer-created Kafka topic and dead-letter topic provisioning |
 | [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) | Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries |
-| [`api-gateway#23`](https://github.com/digital-bank-java/api-gateway/pull/23) | Feature-flagged JWT validation and scope authorization at the gateway |
+| [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41) | Account, Transaction, and Ledger event transport enablement in SIT |
+| [`infra-sit#31`](https://github.com/digital-bank-java/infra-sit/pull/31) | Auth Service logical database reconciliation for existing SIT PVCs |
+| [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24) | OpenSearch deployment for local SIT |
+| [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25) | Fluent Bit log collection for local SIT |
 
 The application PRs report focused Maven, Helm, and container verification. The
 configuration PRs report YAML parsing and diff checks. SIT rollout, end-to-end
 transfer demonstration, and secret provisioning still require separate evidence.
 
-Other local-SIT operational PRs remain independently reviewable: `infra-sit#23`
-(Redis), `infra-sit#24` (OpenSearch), `infra-sit#25` (Fluent Bit),
-`config-repo#35` (gateway resilience), and `config-repo#36` (gateway rate limits).
+The Auth, MFA, Payment, Gateway security, Redis, and gateway resilience/rate-limit
+PRs referenced in earlier handoff entries are merged. Their runtime rollout still
+requires the open Config Repo changes above and SIT verification.
 
 ## Known Missing Work
 
@@ -375,17 +372,57 @@ done
 
 The current implementation wave is ready for review and rollout, in this order:
 
-1. Merge [`.github#201`](https://github.com/digital-bank-java/.github/pull/201), the shared SIT Auth Secret runbook.
-2. Merge [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32), then [`auth-service#6`](https://github.com/digital-bank-java/auth-service/pull/6).
-3. Merge [`auth-service#7`](https://github.com/digital-bank-java/auth-service/pull/7) for durable sessions, then [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8), [`mfa-service#9`](https://github.com/digital-bank-java/mfa-service/pull/9), and [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) in parallel.
-4. Merge [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33), [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34), and [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29). The first two depend on config-repo#32; the Kafka topic PR can merge independently.
-5. Merge [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) after the corresponding service/configuration contracts are available.
-6. Provision the local SIT Auth Secret, MFA TOTP encryption Secret, and service databases; roll out the services and verify health, protected workflows, Kafka delivery, centralized Swagger, and database state.
-7. Record runtime evidence in the supporting issues and synchronize Sprint 3, 4, and 5 statuses. Keep UAT/PROD cloud deployment deferred to Sprint 7.
+1. Merge [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39), which is clean after conflict repair and contains the Gateway security, workflow, and centralized Swagger routes.
+2. Merge [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) in either order; both are clean after rebasing onto current `main`.
+3. Merge [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41) to enable the Account, Transaction, and Ledger event transport in local SIT. Topic provisioning from [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) should be available before end-to-end transfer verification.
+4. Merge [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) for transfer-created notification topics, then provision the Auth Secret and remaining service prerequisites.
+5. Merge [`infra-sit#31`](https://github.com/digital-bank-java/infra-sit/pull/31), upgrade PostgreSQL, and wait for its database reconciliation Job before rolling out Auth Service. No fixed delay is required after merge.
+6. Roll out Config Server, API Gateway image `0.0.3` from merged commit `23c1fa8`, Account Service, Ledger Service image `0.0.4`, Transaction Service, Payment Service, and Notification Service. Wait for Config Server to serve the merged revision before restarting clients.
+7. Verify service health, protected Gateway workflows, rate limiting, centralized Swagger, Kafka topics/consumer groups in AKHQ, transfer saga state, and database state. Record evidence in the supporting issues.
+8. For local observability, merge [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24) and then [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25); deploy OpenSearch before Fluent Bit and verify logs, redaction, dashboards, and alerts.
+9. Keep UAT/PROD cloud deployment deferred to Sprint 7.
 
 Consult GitHub Project #1 for the authoritative Sprint hierarchy and current issue status.
 
 ## Update Log
+
+### 2026-09-05 - Auth Service SIT database prerequisite
+
+- Created parented task [`.github#214`](https://github.com/digital-bank-java/.github/issues/214) under Auth session Story #46 and moved it to In review.
+- Opened [`infra-sit#31`](https://github.com/digital-bank-java/infra-sit/pull/31) to add `auth_service` and reconcile all configured PostgreSQL databases on Helm install and upgrade, including existing persistent volumes.
+- Local Helm lint, rendered manifest checks, and Kubernetes client-side dry-run passed. The GitHub Helm validation check is pending.
+- Auth Service rollout must wait until this PR is merged and the reconciliation Job completes; no database credentials were added.
+
+### 2026-09-05 - Config conflict repair and SIT event-flow configuration
+
+- Confirmed [`api-gateway#23`](https://github.com/digital-bank-java/api-gateway/pull/23), [`infra-sit#23`](https://github.com/digital-bank-java/infra-sit/pull/23), [`config-repo#35`](https://github.com/digital-bank-java/config-repo/pull/35), and [`config-repo#36`](https://github.com/digital-bank-java/config-repo/pull/36) are merged.
+- Rebased [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) onto current `main` in commit `a58b222`; it is clean and non-draft.
+- Rebased [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) in commit `915df40` and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) in commit `71a669b`; both are clean and non-draft.
+- Added parented Sprint 3 Task [`.github#213`](https://github.com/digital-bank-java/.github/issues/213) and opened [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41) to enable the merged Account, Transaction, and Ledger Kafka adapters in SIT.
+- Verified all four Config Repo PRs are reviewable. No pull request was merged directly by the implementation agent.
+
+### 2026-09-05 - Local observability conflict repair
+
+- Rebased [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24) onto current `main` in commit `e0f8820`; OpenSearch chart validation passed.
+- Rebased [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25) onto current `main` in commit `d54702f`; Fluent Bit chart and plain-text redaction validation passed.
+- Preserved the merged Redis and Kafka infrastructure in both branches and kept OpenSearch/Fluent Bit limited to local SIT. AWS observability remains deferred.
+- Both PRs are normal, non-draft, and ready for review. No pull request was merged directly by the implementation agent.
+
+### 2026-09-04 - Gateway security merged and SIT rollout checkpoint
+
+- Verified that `api-gateway#23` merged to `main` as commit `23c1fa8` after resolving its configuration conflict and isolating Redis health from the security test context.
+- Built `digital-bank-java/api-gateway:0.0.3` from the merged commit and verified its non-root image metadata (`10001:10001`, port `8080`).
+- Verified all current SIT workloads are healthy, but Redis is not installed and the Gateway deployment still runs image `0.0.2`.
+- Verified the remaining Gateway prerequisite PRs are open and clean: `infra-sit#23`, `config-repo#35`, `config-repo#36`, and `config-repo#39`. `config-repo#36` currently targets the #35 feature branch and must be retargeted after #35 merges.
+- Ledger Service consumer and Transaction Service assurance consumer are already merged, but their complete event flow remains dependent on intentional SIT topic/configuration rollout.
+- No pull request was merged directly by the implementation agent. The next boundary is user review/merge of the Redis and Config Repo changes, followed by SIT rollout evidence.
+
+### 2026-09-04 - Mainline merge checkpoint
+
+- Verified that the recent review wave is on the service `main` branches, including Auth #8, Account #38, Customer #34, Ledger #17, MFA #12, Transaction #18, Payment #8, Notification #8, API Gateway #20, Infra SIT #30, Config Repo #40, and Config Server #21.
+- Verified that the remaining security/configuration and delivery PRs are open and reviewable: Auth #6, MFA #8, Payment #7, Config Repo #32, Ledger #18, API Gateway #22 and #23, Infra SIT #23 through #25 and #29.
+- Transaction Service is running the merged assurance-consumer release in local SIT. MFA remains on its previous SIT image until the shared Auth/MFA trust contract and configuration PRs are merged and rolled out together.
+- No pull request was merged directly by the implementation agent. The next boundary is user review and merge, followed by SIT rollout evidence.
 
 ### 2026-09-04 - SIT security and gateway review wave
 
