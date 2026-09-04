@@ -381,7 +381,8 @@ The current implementation wave is ready for review and rollout, in this order:
 4. Merge [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) for transfer-created notification topics, then provision the Auth Secret and remaining service prerequisites.
 5. Roll out Config Server, API Gateway image `0.0.3` from merged commit `23c1fa8`, Account Service, Ledger Service image `0.0.4`, Transaction Service, Payment Service, and Notification Service. No fixed delay is required between merges; wait for Config Server to serve the merged revision before restarting clients.
 6. Verify service health, protected Gateway workflows, rate limiting, centralized Swagger, Kafka topics/consumer groups in AKHQ, transfer saga state, and database state. Record evidence in the supporting issues.
-7. Keep UAT/PROD cloud deployment deferred to Sprint 7.
+7. For local observability, merge [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24) and then [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25); deploy OpenSearch before Fluent Bit and verify logs, redaction, dashboards, and alerts.
+8. Keep UAT/PROD cloud deployment deferred to Sprint 7.
 
 Consult GitHub Project #1 for the authoritative Sprint hierarchy and current issue status.
 
@@ -394,6 +395,13 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Rebased [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) in commit `915df40` and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) in commit `71a669b`; both are clean and non-draft.
 - Added parented Sprint 3 Task [`.github#213`](https://github.com/digital-bank-java/.github/issues/213) and opened [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41) to enable the merged Account, Transaction, and Ledger Kafka adapters in SIT.
 - Verified all four Config Repo PRs are reviewable. No pull request was merged directly by the implementation agent.
+
+### 2026-09-05 - Local observability conflict repair
+
+- Rebased [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24) onto current `main` in commit `e0f8820`; OpenSearch chart validation passed.
+- Rebased [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25) onto current `main` in commit `d54702f`; Fluent Bit chart and plain-text redaction validation passed.
+- Preserved the merged Redis and Kafka infrastructure in both branches and kept OpenSearch/Fluent Bit limited to local SIT. AWS observability remains deferred.
+- Both PRs are normal, non-draft, and ready for review. No pull request was merged directly by the implementation agent.
 
 ### 2026-09-04 - Gateway security merged and SIT rollout checkpoint
 
