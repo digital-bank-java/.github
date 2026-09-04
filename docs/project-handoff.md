@@ -618,7 +618,7 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Created and classified [`.github#208`](https://github.com/digital-bank-java/.github/issues/208) under the transfer step-up story [`.github#56`](https://github.com/digital-bank-java/.github/issues/56), in Sprint 4 with native type `Task`, priority P0, and the `Step-Up Security` / `event-contracts` classification.
 - Defined the next implementation boundary as an event-driven `MfaAssuranceGranted.v1` handoff: MFA writes the assurance outbox record atomically with successful challenge consumption; Transaction Service consumes it through an inbox and resumes the existing reservation outbox only after binding and expiry validation.
 - Explicitly excluded synchronous MFA-to-Transaction calls, direct balance mutation, and AWS/UAT/PROD dependencies. Duplicate, malformed, mismatched, expired, and exhausted-retry events must be idempotent or quarantined without creating a financial action.
-- Implementation remains gated on explicit approval of this cross-service event design; no application code has been changed for task #208 yet.
+- Implemented and verified the event-driven assurance handoff in the merged [mfa-service PR #11](https://github.com/digital-bank-java/mfa-service/pull/11) and [transaction-service PR #17](https://github.com/digital-bank-java/transaction-service/pull/17). Task #208 is closed; SIT transport rollout and end-to-end verification remain tracked separately.
 
 ### 2026-09-04 - Transfer Notification Verification Guide
 
@@ -635,4 +635,12 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - [config-repo #39](https://github.com/digital-bank-java/config-repo/pull/39) is already merged; any earlier conflict indication for that PR is stale.
 - After the PostgreSQL repair is merged, retry the PostgreSQL release first. Then merge Payment configuration, Kafka transfer topics, and ledger-driven SIT event configuration in that order before rolling out the affected services.
 - API Gateway Redis rate limiting and downstream resilience are complete for the current code scope through merged [api-gateway #21](https://github.com/digital-bank-java/api-gateway/pull/21) and [api-gateway #22](https://github.com/digital-bank-java/api-gateway/pull/22); the tracking task and parent story are closed. SIT rollout verification remains part of the pending environment wave.
+- The reusable MFA implementation story is complete through merged [mfa-service #1](https://github.com/digital-bank-java/mfa-service/pull/1) through [mfa-service #12](https://github.com/digital-bank-java/mfa-service/pull/12), and the Ledger command-consumer implementation is complete through merged [ledger-service #17](https://github.com/digital-bank-java/ledger-service/pull/17). Their organization tracking items are closed; MFA/ledger runtime enablement and verification remain separate SIT work.
 - Do not record the full Auth, Payment, Notification, or event-driven transfer rollout as complete until the merged configurations are served by Config Server and the workloads and representative flows are verified in `digital-bank-sit`.
+
+### 2026-09-05 - Backlog and review cleanup
+
+- Closed completed Sprint 4 parent stories [`.github#55`](https://github.com/digital-bank-java/.github/issues/55) and [`.github#56`](https://github.com/digital-bank-java/.github/issues/56) after confirming that every native child task is closed. Their Project items are synchronized to `Done`.
+- Closed superseded duplicate documentation PRs [`.github#193`](https://github.com/digital-bank-java/.github/pull/193) and [infra-sit#28](https://github.com/digital-bank-java/infra-sit/pull/28); [`.github#201`](https://github.com/digital-bank-java/.github/pull/201) is the authoritative replacement and remains open for review.
+- Confirmed [config-repo#39](https://github.com/digital-bank-java/config-repo/pull/39) is merged. Any remaining conflict banner for that PR is stale.
+- Confirmed [infra-sit#24](https://github.com/digital-bank-java/infra-sit/pull/24) is a normal, clean, mergeable review PR rather than a draft.
