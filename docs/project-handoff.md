@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-09-01
+Last updated: 2026-09-04
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -33,6 +33,11 @@ The working style is:
 | `customer-service` | Customer identity and profile management |
 | `account-service` | Account lifecycle, account lookup, admin account search |
 | `ledger-service` | Immutable ledger entry posting and lookup |
+| `transaction-service` | Transfer orchestration and saga/process-manager foundation |
+| `auth-service` | Authentication, JWT/session foundation, and login/logout workflow |
+| `mfa-service` | TOTP enrollment and authenticated MFA challenge workflow |
+| `payment-service` | Authenticated internal payment instruction lifecycle |
+| `notification-service` | Transfer-event notification consumption and durable inbox |
 | `infra-sit` | Local SIT infrastructure: shared PostgreSQL, Kafka, and AKHQ tooling |
 
 ## Environment Model
@@ -40,8 +45,8 @@ The working style is:
 | Environment | Meaning |
 | --- | --- |
 | `sit` | Lowest integrated development and testing environment on Docker Desktop Kubernetes |
-| `uat` | Future AWS-hosted pre-production environment |
-| `prod` | Future AWS production environment |
+| `uat` | Formal cloud-hosted pre-production environment |
+| `prod` | Formal production environment |
 
 `LOCAL-DEV` is retired as a formal environment and Spring profile. Running a single service from VS Code or Eclipse remains supported for debugging, but the process uses the `sit` profile and temporary property overrides to connect to forwarded SIT dependencies. It is not a second deployment topology.
 
@@ -143,17 +148,34 @@ Ledger reconciliation is an operational comparison across independently owned vi
 - account opening
 - account lookup
 - account listing/search
-- future available-balance reservations
-- future account balance projection updates driven by ledger events
+- available-balance reservations and reservation lifecycle
+- account balance projection updates driven by ledger events
 
 `ledger-service` owns:
 
 - immutable ledger entries
 - balanced debit/credit posting rules
 - ledger lookup
-- future ledger posting outcome events
+- governed ledger posting outcome events
+- transactional outbox delivery with retry, lease, and quarantine semantics
 
 No service should expose naive public balance mutation APIs.
+
+`transaction-service` owns:
+
+- internal transfer workflow state and lifecycle
+- saga/process-manager decisions
+- reservation and ledger command transport
+- transfer outcome handling and transactional outboxes
+
+`auth-service`, `mfa-service`, `payment-service`, and `notification-service` have
+their runtime and core HTTP/event foundations merged. Their current review wave
+adds the shared SIT JWT trust contract, service configuration, and local rollout
+prerequisites.
+
+`transaction-service` has its transfer lifecycle, reservation/ledger transport,
+authorization, persistence, and saga/process-manager foundation merged. End-to-end
+SIT execution remains operational evidence, not an assumption from merged code.
 
 ## Event-Driven Direction
 
@@ -179,7 +201,7 @@ Transaction Service
 Account Service
   -> validate available balance
   -> reserve funds
-  -> publish AccountReservationCreated through outbox
+  -> publish reservation outcome facts through outbox
 
 Transaction Service
   -> request Ledger Service posting
@@ -201,7 +223,7 @@ Ledger Service should not orchestrate sagas. Transaction Service should own saga
 
 ## Current Implementation Snapshot
 
-Implemented or substantially started:
+The following baseline is merged on the repository default branches or was already established before this update:
 
 - `config-server` bootstrap, tests, Dockerfile, Helm chart, CI, Git-backed config
 - `config-repo` externalized service configuration
@@ -213,37 +235,63 @@ Implemented or substantially started:
 - `infra-sit` shared PostgreSQL, Kafka, and AKHQ deployment for local SIT
 - org-level and repo-level `AGENTS.md` files
 - Java test phase convention documentation
+- ledger reconciliation architecture and the independent-view reconciliation model
+- shared local SIT Kafka and AKHQ tooling
+- ledger database credential injection for SIT
+ - governed ledger event contracts and AsyncAPI documentation
+ - ledger transactional outbox publication, retry, lease, and quarantine behavior
+ - account reservation persistence, ledger-event consumption, and reservation transport
+ - transaction transfer lifecycle, saga/process manager, HTTP workflow API, authorization, and Kafka transport
+ - auth-service session/JWT foundations and configurable single-session policy
+ - mfa-service provider, TOTP, challenge, authenticated HTTP API, and principal binding foundations
+ - payment-service lifecycle, internal HTTP API, idempotency, authorization, and resource contract
+ - notification-service delivery lifecycle, TransferCreated consumer, and durable inbox
+ - SIT ledger and transfer Kafka topic provisioning
 
-Prepared local/SIT event-delivery work that is verified on dedicated review branches but is still awaiting non-draft PR publication:
+The implementation wave above is merged on the service default branches as of
+2026-09-01. Its PRs report the required Maven, Helm, and PostgreSQL/Testcontainers
+verification. SIT rollout and end-to-end transfer demonstration remain separate
+operational evidence and are not inferred from merged PRs.
 
-- governed ledger event contracts: `.github` `feature/104-event-contracts`, latest commit `e37a717`
-- ledger outbox delivery and safety: `ledger-service` `fix/176-ledger-outbox-safety`, latest commit `1dc0f81`
-- account reservation transport: `account-service` `feature/177-account-reservation-transport`, latest commit `71cfe80`
-- transaction reservation transport: `transaction-service` `feature/178-transfer-kafka-transport`, latest commit `8922c06`
-- transaction SIT transport configuration: `config-repo` `fix/transaction-service-sit-config`, latest commit `8152613`
-- ledger outbox SIT configuration: `config-repo` `feature/23-ledger-service-sit-config`, latest commit `3549b7c`
-- SIT Kafka topic provisioning: `infra-sit` `feature/103-sit-kafka-topics`, latest commit `c3dcd16`
-- Ledger posting command consumer: `ledger-service` `feature/103-ledger-posting-consumer`, latest commit `76c11a5`
-- Transaction-to-Ledger Kafka transport: `transaction-service` `feature/103-transaction-ledger-transport`, latest commit `f2092f3`
+The current reviewable implementation wave is non-draft and is not merged or
+deployed until accepted and verified:
+
+| Repository / PR | Reviewable scope |
+| --- | --- |
+| [`.github#201`](https://github.com/digital-bank-java/.github/pull/201) | Shared SIT Auth JWT secret runbook |
+| [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32) | Auth/MFA SIT configuration, shared issuer, and Auth scopes |
+| [`auth-service#6`](https://github.com/digital-bank-java/auth-service/pull/6) | Shared SIT JWT scope contract |
+| [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8) | HMAC/JWK JWT validation for SIT and cloud modes |
+| [`auth-service#7`](https://github.com/digital-bank-java/auth-service/pull/7) | PostgreSQL-backed Auth session persistence and replica-safe revocation |
+| [`mfa-service#9`](https://github.com/digital-bank-java/mfa-service/pull/9) | PostgreSQL-backed MFA enrollment/challenge persistence with encrypted TOTP secrets |
+| [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) | HMAC/JWK JWT validation and SIT deployment contract |
+| [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) | Notification and Payment SIT configuration |
+| [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) | Transfer-created Kafka topic and dead-letter topic provisioning |
+| [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) | Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries |
+| [`api-gateway#23`](https://github.com/digital-bank-java/api-gateway/pull/23) | Feature-flagged JWT validation and scope authorization at the gateway |
+
+The application PRs report focused Maven, Helm, and container verification. The
+configuration PRs report YAML parsing and diff checks. SIT rollout, end-to-end
+transfer demonstration, and secret provisioning still require separate evidence.
+
+Other local-SIT operational PRs remain independently reviewable: `infra-sit#23`
+(Redis), `infra-sit#24` (OpenSearch), `infra-sit#25` (Fluent Bit),
+`config-repo#35` (gateway resilience), and `config-repo#36` (gateway rate limits).
 
 ## Known Missing Work
 
 High-priority missing capabilities:
 
-- Kafka application integration
-- Transactional ledger outbox implementation and posting outcome publication, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
-- Account reservation persistence and event consumption boundary, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
-- Transaction Service process-manager bootstrap, dependent on [`docs/contracts/ledger-events-asyncapi.yml`](contracts/ledger-events-asyncapi.yml)
-- saga/process-manager implementation in Transaction Service
-- account reservation tables and APIs
-- account outbox/inbox tables and publishers/consumers
-- service-to-service security
-- API Gateway rate limiting and resilience
-- admin API authentication/authorization
-- centralized logging with OpenSearch direction
+- complete governed account/transfer event-contract documentation and compatibility checks
+- integrated SIT rollout and end-to-end transfer verification across Transaction, Account, and Ledger services
+- rollout of the newly added gateway routes and SIT configuration for Auth, MFA, Transaction, and Payment
+- gateway security rollout after the shared SIT secret is provisioned and the dependent configuration PRs are merged
+- service-to-service security and admin API authentication/authorization
+- API Gateway rate limiting and resilience rollout
+- centralized logging with OpenSearch, Fluent Bit, dashboards, and alerts
 - distributed tracing and correlation IDs
-- AWS infrastructure path for UAT and production
-- ledger idempotent replay, append-only reversals, and reconciliation controls
+- event-driven reconciliation checks and scheduled reconciliation reporting
+- production documentation and the later AWS UAT/PROD delivery path
 
 Deferred or intentionally not first:
 
@@ -317,17 +365,55 @@ Before doing work:
 Useful local command:
 
 ```bash
-for repo in .github config-server config-repo api-gateway customer-service account-service ledger-service infra-sit; do
+for repo in .github config-server config-repo api-gateway customer-service account-service ledger-service transaction-service infra-sit; do
   printf "\n== %s ==\n" "$repo"
   git -C "$repo" status -sb
 done
 ```
 
-## Recommended Next Work
+## Next Dependency-Aware Work
 
-Finish and verify any remaining local SIT event-driven domain work before starting AWS delivery. Keep saga completion, reconciliation execution, and later security/resilience work in their assigned Sprint 3 or Sprint 6 items. Consult GitHub Project #1 for the current native hierarchy and status; Sprint 7 remains the later AWS/UAT/PROD boundary.
+The current implementation wave is ready for review and rollout, in this order:
+
+1. Merge [`.github#201`](https://github.com/digital-bank-java/.github/pull/201), the shared SIT Auth Secret runbook.
+2. Merge [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32), then [`auth-service#6`](https://github.com/digital-bank-java/auth-service/pull/6).
+3. Merge [`auth-service#7`](https://github.com/digital-bank-java/auth-service/pull/7) for durable sessions, then [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8), [`mfa-service#9`](https://github.com/digital-bank-java/mfa-service/pull/9), and [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) in parallel.
+4. Merge [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33), [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34), and [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29). The first two depend on config-repo#32; the Kafka topic PR can merge independently.
+5. Merge [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) after the corresponding service/configuration contracts are available.
+6. Provision the local SIT Auth Secret, MFA TOTP encryption Secret, and service databases; roll out the services and verify health, protected workflows, Kafka delivery, centralized Swagger, and database state.
+7. Record runtime evidence in the supporting issues and synchronize Sprint 3, 4, and 5 statuses. Keep UAT/PROD cloud deployment deferred to Sprint 7.
+
+Consult GitHub Project #1 for the authoritative Sprint hierarchy and current issue status.
 
 ## Update Log
+
+### 2026-09-04 - SIT security and gateway review wave
+
+- Added the shared SIT Auth JWT secret delivery runbook in [`.github#201`](https://github.com/digital-bank-java/.github/pull/201).
+- Aligned Auth, MFA, and Payment JWT trust behavior for local HMAC SIT validation while preserving OIDC/JWK support for future cloud environments.
+- Completed the Auth/MFA/Notification/Payment SIT configuration review wave in `config-repo#32`, `#33`, and `#34`, including shared issuer/scopes and README structure corrections.
+- Provisioned the transfer-created Kafka topic and dead-letter topic in [infra-sit#29](https://github.com/digital-bank-java/infra-sit/pull/29).
+- Added the missing Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries in [config-repo#39](https://github.com/digital-bank-java/config-repo/pull/39), tracked by [`.github#202`](https://github.com/digital-bank-java/.github/issues/202).
+- Added feature-flagged gateway JWT validation and scope authorization in [api-gateway#23](https://github.com/digital-bank-java/api-gateway/pull/23), tracked by [`.github#203`](https://github.com/digital-bank-java/.github/issues/203); updated config-repo#32 with `admin.internal` and config-repo#39 with the SIT enablement flag.
+- No pull request was merged directly by the implementation agent. The remaining boundary is user review/merge followed by local SIT rollout evidence.
+
+### 2026-09-04 - Durable Auth and MFA persistence review wave
+
+- Added PostgreSQL/Flyway Auth session persistence with transaction-safe same-user revocation in [auth-service#7](https://github.com/digital-bank-java/auth-service/pull/7), linked to `.github#28` and `.github#45`.
+- Added PostgreSQL/Flyway MFA enrollment and challenge persistence with AES-256-GCM protected TOTP secrets in [mfa-service#9](https://github.com/digital-bank-java/mfa-service/pull/9), linked to `.github#29` and `.github#49`.
+- Created the parented SIT rollout task [`.github#204`](https://github.com/digital-bank-java/.github/issues/204) for the `mfa_service` database and externally supplied `mfa-service-secrets` / `MFA_TOTP_ENCRYPTION_KEY` prerequisite.
+- No secret material is stored in Git, Helm values, Config Server, or issue comments. UAT/PROD secret delivery remains deferred to Sprint 7.
+- Updated both container smoke workflows to start disposable PostgreSQL instances and pass only CI-local credentials; all Auth and MFA Maven, Helm, and container checks passed.
+- SIT rollout requires the existing PostgreSQL Secret, separate `auth_service` and `mfa_service` databases, and an externally managed `mfa-service-secrets` key containing a base64-encoded 32-byte AES key. No secret material was committed.
+- These PRs are open, non-draft, and awaiting user review. No pull request was merged directly by the implementation agent.
+
+### 2026-09-01
+
+- Merged the event-driven implementation wave: Ledger Service PRs #14-#16, Account Service PRs #33-#36, Transaction Service PRs #6-#12, Auth Service PRs #1-#4, MFA Service PRs #1-#6, Payment Service PRs #1-#5, Notification Service PRs #1-#5, organization event contracts PR #137, and SIT Kafka topics PR #27.
+- Closed and recorded evidence for the completed Sprint 3 implementation issues #101, #102, #103, #170, #171, #182, and #183, plus the completed auth, MFA, payment, notification, and transfer implementation tasks.
+- Corrected the native parent hierarchy: payment resource contract task #167 is now under payment lifecycle task #161; transfer authorization task #169 is now under transfer HTTP task #165.
+- Audited GitHub Project #1 after authentication refresh: 223 tracked issues, exactly eight root Sprint epics, and no unparented non-Epic issue. Closed issue state and Project status are synchronized for the completed implementation items.
+- AWS/UAT/PROD deployment remains deferred; the current focus is local SIT rollout and verification.
 
 ### 2026-08-30 - Sprint 3 ledger event contract
 
@@ -470,3 +556,22 @@ Finish and verify any remaining local SIT event-driven domain work before starti
 - Payment Service is prepared in dependency order: HTTP lifecycle, PostgreSQL/idempotency/authorization, then resource-contract documentation. SIT configuration is available in `config-repo` on `feature/162-payment-service-sit-config`, but the service is not yet deployed in the SIT baseline.
 - Notification transfer-consumer verification reports 15 passing tests; the transfer-saga branch reports passing domain, persistence, and Spring integration suites. Their PR publication and Project updates remain blocked by expired GitHub CLI authentication.
 - GitHub Project status, parent, assignee, and native issue-type changes must be applied after authentication is restored; no item is to be treated as updated based only on local branch state.
+
+### 2026-09-04 - Transfer Risk Decision Gate
+
+- Started and implemented [.github#205](https://github.com/digital-bank-java/.github/issues/205) under Sprint 4 Story #55, with the project item moved to `In review`.
+- Opened [transaction-service PR #16](https://github.com/digital-bank-java/transaction-service/pull/16) for review; it is intentionally not merged by the agent.
+- Added a deterministic, configuration-driven transfer-risk gate with outcomes `ALLOW`, `REQUIRE_STEP_UP`, and `DECLINE` before account reservation is recorded.
+- Persisted normalized transfer intent and the bound risk decision snapshot with Flyway migration 7, unique decision request/decision identifiers, expiry, and additive API response fields.
+- `REQUIRE_STEP_UP` remains `PENDING` without a reservation action; `DECLINE` becomes `FAILED` without reservation or ledger actions. MFA challenge execution remains the follow-up under Story #56.
+- Added focused risk-boundary tests, SIT verification documentation, runtime properties, and Helm values. Full Maven verify passed with 85 unit-phase tests and 15 integration tests; PostgreSQL Testcontainers, H2 migration validation, and Helm lint/render passed.
+- No AWS/UAT/PROD work was started; this remains local SIT implementation.
+
+### 2026-09-04 - Transfer-Bound MFA Challenge
+
+- Created and parented [.github#206](https://github.com/digital-bank-java/.github/issues/206) under Sprint 4 Story #56, assigned it to `ramioooz`, and placed it in `In review`.
+- Opened [mfa-service PR #10](https://github.com/digital-bank-java/mfa-service/pull/10) as a non-draft dependent PR; durable persistence [mfa-service PR #9](https://github.com/digital-bank-java/mfa-service/pull/9) must merge first, with no delay required.
+- Added transfer-bound challenge creation and verification APIs that retain the risk decision, authenticated subject, account references, normalized amount/currency, policy version, and correlation ID.
+- Added PostgreSQL Flyway migration 2 and persistence rehydration for the immutable binding; mismatched transfer/decision/subject verification returns a controlled conflict.
+- Verified focused controller coverage, persistence migration/rehydration, full Maven `verify` (42 unit-phase and 19 integration tests), Helm lint/render, and `git diff --check`.
+- API Gateway routing and Transaction Service continuation after MFA assurance remain follow-up integration work; no AWS/UAT/PROD work was started.
