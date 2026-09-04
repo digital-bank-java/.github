@@ -576,6 +576,13 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Verified focused controller coverage, persistence migration/rehydration, full Maven `verify` (42 unit-phase and 19 integration tests), Helm lint/render, and `git diff --check`.
 - API Gateway routing and Transaction Service continuation after MFA assurance remain follow-up integration work; no AWS/UAT/PROD work was started.
 
+### 2026-09-04 - MFA Assurance Integration Boundary
+
+- Created and classified [`.github#208`](https://github.com/digital-bank-java/.github/issues/208) under the transfer step-up story [`.github#56`](https://github.com/digital-bank-java/.github/issues/56), in Sprint 4 with native type `Task`, priority P0, and the `Step-Up Security` / `event-contracts` classification.
+- Defined the next implementation boundary as an event-driven `MfaAssuranceGranted.v1` handoff: MFA writes the assurance outbox record atomically with successful challenge consumption; Transaction Service consumes it through an inbox and resumes the existing reservation outbox only after binding and expiry validation.
+- Explicitly excluded synchronous MFA-to-Transaction calls, direct balance mutation, and AWS/UAT/PROD dependencies. Duplicate, malformed, mismatched, expired, and exhausted-retry events must be idempotent or quarantined without creating a financial action.
+- Implementation remains gated on explicit approval of this cross-service event design; no application code has been changed for task #208 yet.
+
 ### 2026-09-04 - Transfer Notification Verification Guide
 
 - Added the notification verification guide in [`docs/insomnia-transfer-notification-workflow.md`](insomnia-transfer-notification-workflow.md), tracked by [`.github#62`](https://github.com/digital-bank-java/.github/issues/62).
