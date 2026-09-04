@@ -549,3 +549,13 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Payment Service is prepared in dependency order: HTTP lifecycle, PostgreSQL/idempotency/authorization, then resource-contract documentation. SIT configuration is available in `config-repo` on `feature/162-payment-service-sit-config`, but the service is not yet deployed in the SIT baseline.
 - Notification transfer-consumer verification reports 15 passing tests; the transfer-saga branch reports passing domain, persistence, and Spring integration suites. Their PR publication and Project updates remain blocked by expired GitHub CLI authentication.
 - GitHub Project status, parent, assignee, and native issue-type changes must be applied after authentication is restored; no item is to be treated as updated based only on local branch state.
+
+### 2026-09-04 - Transfer Risk Decision Gate
+
+- Started and implemented [.github#205](https://github.com/digital-bank-java/.github/issues/205) under Sprint 4 Story #55, with the project item moved to `In review`.
+- Opened [transaction-service PR #16](https://github.com/digital-bank-java/transaction-service/pull/16) for review; it is intentionally not merged by the agent.
+- Added a deterministic, configuration-driven transfer-risk gate with outcomes `ALLOW`, `REQUIRE_STEP_UP`, and `DECLINE` before account reservation is recorded.
+- Persisted normalized transfer intent and the bound risk decision snapshot with Flyway migration 7, unique decision request/decision identifiers, expiry, and additive API response fields.
+- `REQUIRE_STEP_UP` remains `PENDING` without a reservation action; `DECLINE` becomes `FAILED` without reservation or ledger actions. MFA challenge execution remains the follow-up under Story #56.
+- Added focused risk-boundary tests, SIT verification documentation, runtime properties, and Helm values. Full Maven verify passed with 85 unit-phase tests and 15 integration tests; PostgreSQL Testcontainers, H2 migration validation, and Helm lint/render passed.
+- No AWS/UAT/PROD work was started; this remains local SIT implementation.
