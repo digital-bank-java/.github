@@ -1,0 +1,259 @@
+asyncapi: 3.0.0
+info:
+  title: MFA Assurance Events
+  version: 1.0.0
+  description: >-
+    Versioned security-assurance facts published by MFA Service after a
+    transfer-bound MFA challenge is successfully verified. Transaction Service
+    consumes this event as assurance evidence and must revalidate the transfer
+    and risk binding before continuing the workflow. This event never changes
+    the transfer intent or authorizes a different transfer.
+defaultContentType: application/json
+x-data-classification: confidential-financial
+x-schema-registry:
+  boundary: AsyncAPI payload schemas are the organization contract; the Schema Registry stores serialized schemas and enforces compatibility.
+  subjectStrategy: TopicNameStrategy
+  subjects:
+    mfa.assurance.granted.v1: mfa.assurance.granted.v1-value
+  compatibility: BACKWARD_TRANSITIVE
+  provisioning: Platform infrastructure owns topic and registry provisioning. This contract contains no registry URL, credential, or schema id.
+channels:
+  mfa.assurance.granted.v1:
+    address: mfa.assurance.granted.v1
+    description: >-
+      MFA Service publishes this fact after a transfer-bound challenge is
+      durably verified. Transaction Service consumes it to continue only when
+      the transfer intent, risk decision, customer identity, and expiry still
+      match its persisted state. The Kafka partition key is aggregateId, which
+      is the transferId for this event.
+    x-producer: mfa-service
+    x-consumers:
+      - transaction-service
+    x-partition-key: aggregateId
+    x-delivery-semantics: at-least-once; consumers use a durable inbox keyed by eventId before production enablement.
+    x-dead-letter-topic: mfa.assurance.granted.v1.dlq
+    x-quarantine-topic: mfa.assurance.granted.v1.quarantine
+    x-dead-letter-policy: >-
+      Retry transient consumer failures with bounded backoff. After the
+      attempt limit, preserve the original event and failure metadata in the
+      topic-specific DLQ or quarantine topic. Replay is explicit, authorized,
+      and idempotent; a DLQ or quarantine record is never a new business fact.
+    messages:
+      mfaAssuranceGranted:
+        $ref: '#/components/messages/MfaAssuranceGrantedV1'
+    bindings:
+      kafka:
+        topic: mfa.assurance.granted.v1
+        bindingVersion: 0.5.0
+operations:
+  publishMfaAssuranceGranted:
+    action: send
+    description: MFA Service publishes a durable, transfer-bound assurance fact after successful challenge verification.
+    channel:
+      $ref: '#/channels/mfa.assurance.granted.v1'
+    messages:
+      - $ref: '#/channels/mfa.assurance.granted.v1/messages/mfaAssuranceGranted'
+components:
+  messages:
+    MfaAssuranceGrantedV1:
+      name: MfaAssuranceGranted.v1
+      title: MFA assurance granted
+      summary: Transfer-bound MFA verification succeeded and is valid until the assurance expiry.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/MfaAssuranceGrantedV1'
+      headers:
+        $ref: '#/components/schemas/MfaEventHeaders'
+      examples:
+        - name: syntheticTransferAssurance
+          summary: Synthetic TOTP assurance granted for a step-up transfer.
+          payload:
+            eventId: '7d8e9f01-2345-4678-9abc-def012345678'
+            eventType: MfaAssuranceGranted.v1
+            schemaVersion: 1.0.0
+            producer: mfa-service
+            occurredAt: '2026-09-04T10:18:42Z'
+            aggregateId: '4f5f6d4c-2f26-4e12-9dd4-6dbb94240b77'
+            correlationId: 'transfer-correlation-001'
+            causationId: 'mfa-challenge-verification-001'
+            transactionId: '4f5f6d4c-2f26-4e12-9dd4-6dbb94240b77'
+            reservationRequestId: 'reservation-request-001'
+            transferId: '4f5f6d4c-2f26-4e12-9dd4-6dbb94240b77'
+            customerId: 'customer-001'
+            sourceAccountId: '11111111-1111-1111-1111-111111111111'
+            destinationAccountId: '22222222-2222-2222-2222-222222222222'
+            amount: '1250.7500'
+            currency: USD
+            decisionId: 'risk-decision-001'
+            decisionRequestId: 'risk-req-001'
+            policyVersion: transfer-risk-policy-2026-09
+            challengeId: 'mfa-challenge-001'
+            assuranceType: MFA
+            challengeType: TOTP
+            grantedAt: '2026-09-04T10:18:42Z'
+            expiresAt: '2026-09-04T10:20:01Z'
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+  schemas:
+    MfaEventHeaders:
+      type: object
+      description: Required Kafka headers. Header names use kebab-case on the wire.
+      additionalProperties: false
+      required:
+        - event-id
+        - correlation-id
+        - causation-id
+        - producer
+        - schema-version
+        - occurred-at
+      properties:
+        event-id:
+          type: string
+          format: uuid
+          description: Stable event identifier reused for every delivery retry.
+        correlation-id:
+          type: string
+          minLength: 1
+          description: End-to-end transfer workflow correlation identifier.
+        causation-id:
+          type: string
+          minLength: 1
+          description: MFA challenge or verification action that caused this event.
+        producer:
+          type: string
+          const: mfa-service
+          description: Canonical service name of the producer.
+        schema-version:
+          type: string
+          const: 1.0.0
+          description: Registered payload schema version.
+        occurred-at:
+          type: string
+          format: date-time
+          description: UTC event occurrence timestamp.
+    MfaAssuranceGrantedV1:
+      type: object
+      additionalProperties: true
+      required:
+        - eventId
+        - eventType
+        - schemaVersion
+        - producer
+        - occurredAt
+        - aggregateId
+        - correlationId
+        - causationId
+        - transactionId
+        - reservationRequestId
+        - transferId
+        - customerId
+        - sourceAccountId
+        - destinationAccountId
+        - amount
+        - currency
+        - decisionId
+        - decisionRequestId
+        - policyVersion
+        - challengeId
+        - assuranceType
+        - challengeType
+        - grantedAt
+        - expiresAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique immutable identifier for this event instance.
+        eventType:
+          type: string
+          const: MfaAssuranceGranted.v1
+          description: Versioned event name.
+        schemaVersion:
+          type: string
+          const: 1.0.0
+          description: Semantic version of the registered payload schema.
+        producer:
+          type: string
+          const: mfa-service
+          description: Canonical service name of the sole producer.
+        occurredAt:
+          type: string
+          format: date-time
+          description: UTC timestamp at which MFA verification was durably accepted.
+        aggregateId:
+          type: string
+          minLength: 1
+          description: Transfer aggregate identifier used as the Kafka partition key; equal to transferId.
+        correlationId:
+          type: string
+          minLength: 1
+          description: Identifier propagated across the transfer workflow.
+        causationId:
+          type: string
+          minLength: 1
+          description: Identifier for the challenge verification or preceding event that caused publication.
+        transactionId:
+          type: string
+          minLength: 1
+          description: Transfer saga identifier owned by Transaction Service; equal to transferId.
+        reservationRequestId:
+          type: string
+          minLength: 1
+          description: Account Service reservation key retained across the transfer workflow for idempotent continuation.
+        transferId:
+          type: string
+          minLength: 1
+          description: Transfer intent identifier to which the assurance is bound.
+        customerId:
+          type: string
+          minLength: 1
+          description: Customer or authenticated principal identity bound to the MFA challenge.
+        sourceAccountId:
+          type: string
+          minLength: 1
+          description: Source account reference from the normalized transfer intent.
+        destinationAccountId:
+          type: string
+          minLength: 1
+          description: Destination account reference from the normalized transfer intent.
+        amount:
+          type: string
+          pattern: '^[0-9]+(\\.[0-9]+)?$'
+          description: Normalized decimal transfer amount; it must match the risk decision binding.
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: ISO 4217 currency code; it must match the risk decision binding.
+        decisionId:
+          type: string
+          minLength: 1
+          description: Single-use risk decision identifier that required this step-up assurance.
+        decisionRequestId:
+          type: string
+          minLength: 1
+          description: Idempotent risk decision request identifier retained for audit and binding validation.
+        policyVersion:
+          type: string
+          minLength: 1
+          description: Active transfer-risk policy version used for the bound decision.
+        challengeId:
+          type: string
+          minLength: 1
+          description: Single-use MFA challenge identifier that was successfully verified.
+        assuranceType:
+          type: string
+          const: MFA
+          description: Authentication assurance category granted by this event.
+        challengeType:
+          type: string
+          minLength: 1
+          description: MFA challenge method used to grant the assurance, such as TOTP.
+        grantedAt:
+          type: string
+          format: date-time
+          description: UTC timestamp at which the MFA assurance became valid.
+        expiresAt:
+          type: string
+          format: date-time
+          description: UTC expiry of this transfer-bound assurance; expired assurance cannot authorize reservation or posting.
