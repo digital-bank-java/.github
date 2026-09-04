@@ -263,6 +263,7 @@ deployed until accepted and verified:
 | [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) | Transfer-created Kafka topic and dead-letter topic provisioning |
 | [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) | Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries |
 | [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41) | Account, Transaction, and Ledger event transport enablement in SIT |
+| [`infra-sit#31`](https://github.com/digital-bank-java/infra-sit/pull/31) | Auth Service logical database reconciliation for existing SIT PVCs |
 | [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24) | OpenSearch deployment for local SIT |
 | [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25) | Fluent Bit log collection for local SIT |
 
@@ -375,14 +376,22 @@ The current implementation wave is ready for review and rollout, in this order:
 2. Merge [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) in either order; both are clean after rebasing onto current `main`.
 3. Merge [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41) to enable the Account, Transaction, and Ledger event transport in local SIT. Topic provisioning from [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) should be available before end-to-end transfer verification.
 4. Merge [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) for transfer-created notification topics, then provision the Auth Secret and remaining service prerequisites.
-5. Roll out Config Server, API Gateway image `0.0.3` from merged commit `23c1fa8`, Account Service, Ledger Service image `0.0.4`, Transaction Service, Payment Service, and Notification Service. No fixed delay is required between merges; wait for Config Server to serve the merged revision before restarting clients.
-6. Verify service health, protected Gateway workflows, rate limiting, centralized Swagger, Kafka topics/consumer groups in AKHQ, transfer saga state, and database state. Record evidence in the supporting issues.
-7. For local observability, merge [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24) and then [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25); deploy OpenSearch before Fluent Bit and verify logs, redaction, dashboards, and alerts.
-8. Keep UAT/PROD cloud deployment deferred to Sprint 7.
+5. Merge [`infra-sit#31`](https://github.com/digital-bank-java/infra-sit/pull/31), upgrade PostgreSQL, and wait for its database reconciliation Job before rolling out Auth Service. No fixed delay is required after merge.
+6. Roll out Config Server, API Gateway image `0.0.3` from merged commit `23c1fa8`, Account Service, Ledger Service image `0.0.4`, Transaction Service, Payment Service, and Notification Service. Wait for Config Server to serve the merged revision before restarting clients.
+7. Verify service health, protected Gateway workflows, rate limiting, centralized Swagger, Kafka topics/consumer groups in AKHQ, transfer saga state, and database state. Record evidence in the supporting issues.
+8. For local observability, merge [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24) and then [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25); deploy OpenSearch before Fluent Bit and verify logs, redaction, dashboards, and alerts.
+9. Keep UAT/PROD cloud deployment deferred to Sprint 7.
 
 Consult GitHub Project #1 for the authoritative Sprint hierarchy and current issue status.
 
 ## Update Log
+
+### 2026-09-05 - Auth Service SIT database prerequisite
+
+- Created parented task [`.github#214`](https://github.com/digital-bank-java/.github/issues/214) under Auth session Story #46 and moved it to In review.
+- Opened [`infra-sit#31`](https://github.com/digital-bank-java/infra-sit/pull/31) to add `auth_service` and reconcile all configured PostgreSQL databases on Helm install and upgrade, including existing persistent volumes.
+- Local Helm lint, rendered manifest checks, and Kubernetes client-side dry-run passed. The GitHub Helm validation check is pending.
+- Auth Service rollout must wait until this PR is merged and the reconciliation Job completes; no database credentials were added.
 
 ### 2026-09-05 - Config conflict repair and SIT event-flow configuration
 
