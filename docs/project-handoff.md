@@ -259,6 +259,7 @@ deployed until accepted and verified:
 | Repository / PR | Reviewable scope |
 | --- | --- |
 | [`.github#201`](https://github.com/digital-bank-java/.github/pull/201) | Shared SIT Auth JWT secret runbook |
+| [`.github#216`](https://github.com/digital-bank-java/.github/pull/216) | Full local SIT event-driven service rollout and verification guide |
 | [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) | Notification and Payment SIT configuration |
 | [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) | Transfer-created Kafka topic and dead-letter topic provisioning |
 | [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) | Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries |
@@ -392,6 +393,12 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Opened [`infra-sit#31`](https://github.com/digital-bank-java/infra-sit/pull/31) to add `auth_service` and reconcile all configured PostgreSQL databases on Helm install and upgrade, including existing persistent volumes.
 - Local Helm lint, rendered manifest checks, and Kubernetes client-side dry-run passed. The GitHub Helm validation check is pending.
 - Auth Service rollout must wait until this PR is merged and the reconciliation Job completes; no database credentials were added.
+
+### 2026-09-05 - Full local SIT rollout guide
+
+- Created parented task [`.github#215`](https://github.com/digital-bank-java/.github/issues/215) under the Sprint 3 transfer-flow task.
+- Opened [`.github#216`](https://github.com/digital-bank-java/.github/pull/216) with the complete local SIT service order, secret/database prerequisites, Gateway/OpenAPI checks, and event-flow evidence requirements.
+- The guide explicitly distinguishes partial rollout from a healthy full SIT baseline and keeps AWS/UAT/PROD implementation deferred.
 
 ### 2026-09-05 - Config conflict repair and SIT event-flow configuration
 
