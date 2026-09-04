@@ -386,6 +386,14 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 
 ## Update Log
 
+### 2026-09-05 - Enforced Project Sprint parent hierarchy
+
+- Audited all 245 items in Digital Bank Project #1 across its paginated item connection.
+- Confirmed that the eight Sprint epics are the only intended root planning items.
+- Repaired the two parentless historical tasks: [`.github#202`](https://github.com/digital-bank-java/.github/issues/202) now belongs to Sprint 3, and [`.github#203`](https://github.com/digital-bank-java/.github/issues/203) now belongs to Sprint 4.
+- Created the parented governance task [`.github#223`](https://github.com/digital-bank-java/.github/issues/223) under the Sprint 6 engineering-workflow story to make the parent-before-project rule explicit for future agents and contributors.
+- The native GitHub sub-issue relationship is authoritative; a `Parent:` line in an issue body alone is not sufficient. New work must be assigned a Sprint, native Issue Type, parent, assignee, and Project status before implementation begins.
+
 ### 2026-09-05 - Auth Service SIT database prerequisite
 
 - Created parented task [`.github#214`](https://github.com/digital-bank-java/.github/issues/214) under Auth session Story #46 and moved it to In review.
