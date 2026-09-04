@@ -559,3 +559,12 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - `REQUIRE_STEP_UP` remains `PENDING` without a reservation action; `DECLINE` becomes `FAILED` without reservation or ledger actions. MFA challenge execution remains the follow-up under Story #56.
 - Added focused risk-boundary tests, SIT verification documentation, runtime properties, and Helm values. Full Maven verify passed with 85 unit-phase tests and 15 integration tests; PostgreSQL Testcontainers, H2 migration validation, and Helm lint/render passed.
 - No AWS/UAT/PROD work was started; this remains local SIT implementation.
+
+### 2026-09-04 - Transfer-Bound MFA Challenge
+
+- Created and parented [.github#206](https://github.com/digital-bank-java/.github/issues/206) under Sprint 4 Story #56, assigned it to `ramioooz`, and placed it in `In review`.
+- Opened [mfa-service PR #10](https://github.com/digital-bank-java/mfa-service/pull/10) as a non-draft dependent PR; durable persistence [mfa-service PR #9](https://github.com/digital-bank-java/mfa-service/pull/9) must merge first, with no delay required.
+- Added transfer-bound challenge creation and verification APIs that retain the risk decision, authenticated subject, account references, normalized amount/currency, policy version, and correlation ID.
+- Added PostgreSQL Flyway migration 2 and persistence rehydration for the immutable binding; mismatched transfer/decision/subject verification returns a controlled conflict.
+- Verified focused controller coverage, persistence migration/rehydration, full Maven `verify` (42 unit-phase and 19 integration tests), Helm lint/render, and `git diff --check`.
+- API Gateway routing and Transaction Service continuation after MFA assurance remain follow-up integration work; no AWS/UAT/PROD work was started.
