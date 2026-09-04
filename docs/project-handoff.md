@@ -401,6 +401,8 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 
 - Added PostgreSQL/Flyway Auth session persistence with transaction-safe same-user revocation in [auth-service#7](https://github.com/digital-bank-java/auth-service/pull/7), linked to `.github#28` and `.github#45`.
 - Added PostgreSQL/Flyway MFA enrollment and challenge persistence with AES-256-GCM protected TOTP secrets in [mfa-service#9](https://github.com/digital-bank-java/mfa-service/pull/9), linked to `.github#29` and `.github#49`.
+- Created the parented SIT rollout task [`.github#204`](https://github.com/digital-bank-java/.github/issues/204) for the `mfa_service` database and externally supplied `mfa-service-secrets` / `MFA_TOTP_ENCRYPTION_KEY` prerequisite.
+- No secret material is stored in Git, Helm values, Config Server, or issue comments. UAT/PROD secret delivery remains deferred to Sprint 7.
 - Updated both container smoke workflows to start disposable PostgreSQL instances and pass only CI-local credentials; all Auth and MFA Maven, Helm, and container checks passed.
 - SIT rollout requires the existing PostgreSQL Secret, separate `auth_service` and `mfa_service` databases, and an externally managed `mfa-service-secrets` key containing a base64-encoded 32-byte AES key. No secret material was committed.
 - These PRs are open, non-draft, and awaiting user review. No pull request was merged directly by the implementation agent.
