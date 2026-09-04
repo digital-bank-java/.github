@@ -18,6 +18,8 @@ Local tooling is deliberately separate from banking runtime workloads:
 
 Clone the active platform repositories under one parent directory, including [`config-repo`](https://github.com/digital-bank-java/config-repo), [`infra-sit`](https://github.com/digital-bank-java/infra-sit), [`config-server`](https://github.com/digital-bank-java/config-server), [`api-gateway`](https://github.com/digital-bank-java/api-gateway), [`customer-service`](https://github.com/digital-bank-java/customer-service), [`account-service`](https://github.com/digital-bank-java/account-service), and [`ledger-service`](https://github.com/digital-bank-java/ledger-service).
 
+For the complete event-driven SIT slice, also clone [`auth-service`](https://github.com/digital-bank-java/auth-service), [`mfa-service`](https://github.com/digital-bank-java/mfa-service), [`transaction-service`](https://github.com/digital-bank-java/transaction-service), [`payment-service`](https://github.com/digital-bank-java/payment-service), and [`notification-service`](https://github.com/digital-bank-java/notification-service).
+
 Install and verify:
 
 - Docker Desktop with Kubernetes enabled.
@@ -46,12 +48,46 @@ Run each deployment from its repository root and use its README for the complete
 | --- | --- | --- | --- | --- |
 | 1 | PostgreSQL | `digital-bank-sit` | Creates persistent shared local storage and logical service databases. | [`infra-sit` PostgreSQL](https://github.com/digital-bank-java/infra-sit#install-shared-postgresql) |
 | 2 | Kafka | `digital-bank-sit` | Supplies the shared local event broker before event-driven services are introduced. | [`infra-sit` Kafka](https://github.com/digital-bank-java/infra-sit#install-shared-kafka) |
-| 3 | Config Server | `digital-bank-sit` | Loads service configuration from the private Git-backed `config-repo`. | [`config-server` local SIT](https://github.com/digital-bank-java/config-server#deploy-to-local-sit) |
-| 4 | Customer Service | `digital-bank-sit` | Requires Config Server and PostgreSQL. | [`customer-service` local SIT](https://github.com/digital-bank-java/customer-service#deploy-to-local-sit) |
-| 5 | Account Service | `digital-bank-sit` | Requires Config Server and PostgreSQL. | [`account-service` local SIT](https://github.com/digital-bank-java/account-service#deploy-to-local-sit) |
-| 6 | Ledger Service | `digital-bank-sit` | Requires Config Server and PostgreSQL; Kafka infrastructure is available for later event work. | [`ledger-service` Helm](https://github.com/digital-bank-java/ledger-service#helm) |
-| 7 | API Gateway | `digital-bank-sit` | Becomes the workstation entry point after downstream routes are available. | [`api-gateway` local SIT](https://github.com/digital-bank-java/api-gateway#deploy-to-local-sit) |
-| 8 | AKHQ | `digital-bank-tooling` | Optional local-only Kafka inspection tooling; it requires Kafka but is not a banking runtime dependency. | [`infra-sit` AKHQ](https://github.com/digital-bank-java/infra-sit#install-akhq-kafka-dashboard) |
+| 3 | Redis | `digital-bank-sit` | Provides gateway rate-limit and resilience state before the gateway is rolled out. | [`infra-sit` Redis](https://github.com/digital-bank-java/infra-sit#install-shared-redis) |
+| 4 | Config Server | `digital-bank-sit` | Loads service configuration from the private Git-backed `config-repo`. | [`config-server` local SIT](https://github.com/digital-bank-java/config-server#deploy-to-local-sit) |
+| 5 | Customer Service | `digital-bank-sit` | Requires Config Server and PostgreSQL. | [`customer-service` local SIT](https://github.com/digital-bank-java/customer-service#deploy-to-local-sit) |
+| 6 | Account Service | `digital-bank-sit` | Requires Config Server and PostgreSQL; event transport is enabled only after its SIT configuration is available. | [`account-service` local SIT](https://github.com/digital-bank-java/account-service#deploy-to-local-sit) |
+| 7 | Ledger Service | `digital-bank-sit` | Requires Config Server, PostgreSQL, Kafka, and the ledger transport configuration. | [`ledger-service` Helm](https://github.com/digital-bank-java/ledger-service#helm) |
+| 8 | Auth Service | `digital-bank-sit` | Requires Config Server, the `auth_service` database, the shared PostgreSQL Secret, and the externally supplied `auth-service-secrets` Secret. | [`auth-service` local SIT](https://github.com/digital-bank-java/auth-service#deploy-to-local-sit) |
+| 9 | MFA Service | `digital-bank-sit` | Requires Config Server, the `mfa_service` database, `auth-service-secrets`, and `mfa-service-secrets`. | [`mfa-service` local SIT](https://github.com/digital-bank-java/mfa-service#deploy-to-local-sit) |
+| 10 | Transaction Service | `digital-bank-sit` | Requires Auth, Account, Ledger, Kafka, and the governed reservation/ledger transport configuration. | [`transaction-service` local SIT](https://github.com/digital-bank-java/transaction-service#deploy-to-local-sit) |
+| 11 | Payment Service | `digital-bank-sit` | Requires Config Server, PostgreSQL, Auth JWT trust configuration, and its internal gateway route. | [`payment-service` local SIT](https://github.com/digital-bank-java/payment-service#deploy-to-local-sit) |
+| 12 | Notification Service | `digital-bank-sit` | Requires Config Server, PostgreSQL, Kafka, and the transfer-created topic/DLQ. | [`notification-service` local SIT](https://github.com/digital-bank-java/notification-service#deploy-to-local-sit) |
+| 13 | API Gateway | `digital-bank-sit` | Becomes the workstation entry point after its route/security configuration and downstream services are available. | [`api-gateway` local SIT](https://github.com/digital-bank-java/api-gateway#deploy-to-local-sit) |
+| 14 | AKHQ | `digital-bank-tooling` | Optional local-only Kafka inspection tooling; it requires Kafka but is not a banking runtime dependency. | [`infra-sit` AKHQ](https://github.com/digital-bank-java/infra-sit#install-akhq-kafka-dashboard) |
+
+The service-specific Config Repo and infrastructure changes must be merged
+before applying this full order. In particular, the transfer-flow configuration
+is tracked by [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41),
+the gateway routes and centralized documentation by
+[`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39),
+the transfer notification topics by
+[`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29), and
+Auth database reconciliation for an existing PostgreSQL volume by
+[`infra-sit#31`](https://github.com/digital-bank-java/infra-sit/pull/31).
+
+Before rolling out the durable Auth and MFA services, verify the external
+prerequisites without printing secret data:
+
+```bash
+kubectl get secret postgres --namespace digital-bank-sit
+kubectl get secret auth-service-secrets --namespace digital-bank-sit
+kubectl get secret mfa-service-secrets --namespace digital-bank-sit
+```
+
+PostgreSQL logical databases are not Kubernetes resources. Verify them with
+the PostgreSQL client or DBeaver after the PostgreSQL release is upgraded. The
+`postgres` chart must include
+`auth_service` and its post-upgrade reconciliation Job must complete before
+Auth Service starts. `auth-service-secrets` must contain the configured JWT
+secret and fixture password hash, while `mfa-service-secrets` must contain
+`MFA_TOTP_ENCRYPTION_KEY`. Follow the service and Infra SIT READMEs for secret
+delivery; never place values in this guide, Helm values, or issue comments.
 
 For every Helm chart, run its documented `helm lint` and `helm template ... | kubectl apply --dry-run=client -f -` commands before `helm upgrade --install`. After every install or upgrade, wait for the rollout before continuing:
 
@@ -83,7 +119,13 @@ kubectl get deployments,pods,services \
 helm list --all-namespaces
 ```
 
-The active banking deployments are currently `config-server`, `api-gateway`, `customer-service`, `account-service`, and `ledger-service`. PostgreSQL and Kafka are StatefulSets. A future service is not part of the reproducible SIT baseline until it has a supporting issue, image, Helm chart, runtime configuration, and documented verification path.
+The complete banking deployment set is `config-server`, `api-gateway`,
+`customer-service`, `account-service`, `ledger-service`, `auth-service`,
+`mfa-service`, `transaction-service`, `payment-service`, and
+`notification-service`. PostgreSQL and Kafka are StatefulSets. During a
+partial rollout, a service may be absent or intentionally scaled down; do not
+call the full SIT baseline healthy until every required deployment is ready and
+its Config Server, database, secret, and Kafka prerequisites have been verified.
 
 ## Workstation Access and Verification
 
@@ -106,6 +148,10 @@ curl --fail http://localhost:8080/actuator/health
 curl --fail http://localhost:8080/config-server/actuator/health
 curl --fail http://localhost:8080/customer-service/actuator/health
 curl --fail http://localhost:8080/account-service/actuator/health
+curl --fail http://localhost:8080/auth-service/actuator/health
+curl --fail http://localhost:8080/mfa-service/actuator/health
+curl --fail http://localhost:8080/transaction-service/actuator/health
+curl --fail http://localhost:8080/payment-service/actuator/health
 ```
 
 If `8080` is already used by a local application or Docker container, choose an unused workstation port such as `18080` and use that same port in every subsequent browser, `curl`, and Insomnia URL:
@@ -130,9 +176,18 @@ Verify the currently aggregated contracts directly:
 ```bash
 curl --fail http://localhost:8080/admin/docs/customer-service/v3/api-docs
 curl --fail http://localhost:8080/admin/docs/account-service/v3/api-docs
+curl --fail http://localhost:8080/admin/docs/ledger-service/v3/api-docs
+curl --fail http://localhost:8080/admin/docs/auth-service/v3/api-docs
+curl --fail http://localhost:8080/admin/docs/mfa-service/v3/api-docs
+curl --fail http://localhost:8080/admin/docs/transaction-service/v3/api-docs
+curl --fail http://localhost:8080/admin/docs/payment-service/v3/api-docs
 ```
 
-Ledger Service has no business HTTP API in its bootstrap slice, so it is not yet included in the aggregated Swagger UI. Swagger is an internal developer/admin tool, not a public customer-facing endpoint.
+Open the Swagger UI and confirm the named Customer, Account, Ledger, Auth, MFA,
+Transaction, and Payment definitions are present. Swagger is an internal
+developer/admin tool, not a public customer-facing endpoint. Notification
+Service has no OpenAPI entry because its current slice is an event consumer and
+delivery boundary rather than a client-facing HTTP API.
 
 ### Ledger Service Direct Health
 
@@ -148,6 +203,19 @@ kubectl port-forward \
 curl --fail http://localhost:18083/actuator/health
 ```
 
+Notification Service has no normal Gateway business route in this slice.
+Verify its event-consumer health directly when required:
+
+```bash
+kubectl port-forward \
+  --namespace digital-bank-sit \
+  service/notification-service 18088:8088
+```
+
+```bash
+curl --fail http://localhost:18088/actuator/health
+```
+
 ### AKHQ
 
 Forward the local Kafka dashboard from the separate tooling namespace:
@@ -159,6 +227,32 @@ kubectl port-forward \
 ```
 
 Open `http://localhost:8088` to inspect the local SIT Kafka broker, topics, messages, and consumer groups. The ACL view reports that no authorizer is configured because the single-broker local SIT installation intentionally does not implement production Kafka authorization. Do not interpret that local limitation as an acceptable UAT or production security posture.
+
+### Event-Driven Transfer Verification
+
+After the Account, Ledger, and Transaction transport configuration is served by
+Config Server, use the authenticated transfer workflow documented by
+[`transaction-service`](https://github.com/digital-bank-java/transaction-service#readme)
+or the platform Insomnia workflow. Do not call a public balance-mutation API;
+the expected sequence is:
+
+```text
+transfer request
+  -> account reservation outcome
+  -> ledger posting command
+  -> ledger posting completed or failed event
+  -> reservation commit or release
+  -> transaction completion or failure
+```
+
+In AKHQ, confirm the relevant versioned topics and consumer groups exist before
+testing the workflow. At minimum, inspect the reservation request/outcome
+topics, `ledger.posting.completed.v1`, `ledger.posting.failed.v1`, their DLQs,
+and the transfer-created topic used by Notification Service. A successful
+verification records the transfer identifier, correlation identifier, final
+workflow state, consumed event evidence, and the corresponding Account/Ledger
+database rows. Repeat delivery of the same event must not create a second
+reservation, posting, or notification.
 
 ## Troubleshooting Boundary
 
@@ -187,4 +281,9 @@ Use Headlamp Desktop or `kubectl` to inspect rollout state, logs, events, Servic
 - [`customer-service` README](https://github.com/digital-bank-java/customer-service#readme): customer API deployment and verification.
 - [`account-service` README](https://github.com/digital-bank-java/account-service#readme): account API deployment and verification.
 - [`ledger-service` README](https://github.com/digital-bank-java/ledger-service#readme): current Ledger Service bootstrap and Helm details.
+- [`auth-service` README](https://github.com/digital-bank-java/auth-service#readme): Auth session persistence, secret prerequisites, and deployment.
+- [`mfa-service` README](https://github.com/digital-bank-java/mfa-service#readme): MFA persistence, encryption key, and deployment.
+- [`transaction-service` README](https://github.com/digital-bank-java/transaction-service#readme): transfer workflow and event transport deployment.
+- [`payment-service` README](https://github.com/digital-bank-java/payment-service#readme): internal payment lifecycle and deployment.
+- [`notification-service` README](https://github.com/digital-bank-java/notification-service#readme): transfer-event consumer and deployment.
 - [`config-repo` README](https://github.com/digital-bank-java/config-repo#readme): externalized service runtime configuration.
