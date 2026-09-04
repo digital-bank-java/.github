@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-09-01
+Last updated: 2026-09-04
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -34,6 +34,10 @@ The working style is:
 | `account-service` | Account lifecycle, account lookup, admin account search |
 | `ledger-service` | Immutable ledger entry posting and lookup |
 | `transaction-service` | Transfer orchestration and saga/process-manager foundation |
+| `auth-service` | Authentication, JWT/session foundation, and login/logout workflow |
+| `mfa-service` | TOTP enrollment and authenticated MFA challenge workflow |
+| `payment-service` | Authenticated internal payment instruction lifecycle |
+| `notification-service` | Transfer-event notification consumption and durable inbox |
 | `infra-sit` | Local SIT infrastructure: shared PostgreSQL, Kafka, and AKHQ tooling |
 
 ## Environment Model
@@ -165,11 +169,13 @@ No service should expose naive public balance mutation APIs.
 - transfer outcome handling and transactional outboxes
 
 `auth-service`, `mfa-service`, `payment-service`, and `notification-service` have
-their initial runtime and core HTTP/event foundations merged. Their remaining
-SIT configuration, contract documentation, and hardening tasks remain tracked in
-later Sprint 4 and Sprint 5 work.
+their runtime and core HTTP/event foundations merged. Their current review wave
+adds the shared SIT JWT trust contract, service configuration, and local rollout
+prerequisites.
 
-`transaction-service` is now a repository and has an open bootstrap PR, but it is not yet a completed transfer workflow. The bootstrap scope is limited to the Spring Boot service shell, Config Client, health endpoints, container/Helm delivery, and CI. Transfer APIs, persistence, Kafka transport, reservations, and saga orchestration remain follow-on work.
+`transaction-service` has its transfer lifecycle, reservation/ledger transport,
+authorization, persistence, and saga/process-manager foundation merged. End-to-end
+SIT execution remains operational evidence, not an assumption from merged code.
 
 ## Event-Driven Direction
 
@@ -240,47 +246,34 @@ The following baseline is merged on the repository default branches or was alrea
  - mfa-service provider, TOTP, challenge, authenticated HTTP API, and principal binding foundations
  - payment-service lifecycle, internal HTTP API, idempotency, authorization, and resource contract
  - notification-service delivery lifecycle, TransferCreated consumer, and durable inbox
- - SIT ledger Kafka topic provisioning
+ - SIT ledger and transfer Kafka topic provisioning
 
 The implementation wave above is merged on the service default branches as of
 2026-09-01. Its PRs report the required Maven, Helm, and PostgreSQL/Testcontainers
 verification. SIT rollout and end-to-end transfer demonstration remain separate
 operational evidence and are not inferred from merged PRs.
 
-The remaining reviewable PRs are non-draft and are not merged or deployed until
-accepted and verified:
+The current reviewable implementation wave is non-draft and is not merged or
+deployed until accepted and verified:
 
 | Repository / PR | Reviewable scope |
 | --- | --- |
-| [`.github#173`](https://github.com/digital-bank-java/.github/pull/173) and [`.github#176`](https://github.com/digital-bank-java/.github/pull/176) | Transfer and account reservation event-contract governance |
-| [`.github#178`](https://github.com/digital-bank-java/.github/pull/178), [`.github#179`](https://github.com/digital-bank-java/.github/pull/179), [`.github#180`](https://github.com/digital-bank-java/.github/pull/180), [`.github#181`](https://github.com/digital-bank-java/.github/pull/181) | Auth, AsyncAPI, transfer Insomnia, and layered-debugging documentation |
-| [`config-repo#30`](https://github.com/digital-bank-java/config-repo/pull/30), [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32), [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33), [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34), [`config-repo#35`](https://github.com/digital-bank-java/config-repo/pull/35), [`config-repo#36`](https://github.com/digital-bank-java/config-repo/pull/36) | Transaction, auth/MFA, notification/payment, gateway resilience, and rate-limit SIT configuration |
-| [`infra-sit#23`](https://github.com/digital-bank-java/infra-sit/pull/23), [`infra-sit#24`](https://github.com/digital-bank-java/infra-sit/pull/24), [`infra-sit#25`](https://github.com/digital-bank-java/infra-sit/pull/25) | Redis, OpenSearch, and Fluent Bit local-SIT infrastructure |
-| [`account-service#27`](https://github.com/digital-bank-java/account-service/pull/27) | Account-service Maven quality gate follow-up |
-| [`.github#138`](https://github.com/digital-bank-java/.github/pull/138) | Structured JSON logging, correlation/trace fields, and redaction contract | Open; self-contained documentation |
-| [`.github#139`](https://github.com/digital-bank-java/.github/pull/139) | `sit`/`uat`/`prod` API documentation access and safe interactive execution policy | Open; self-contained documentation |
-| [`transaction-service#5`](https://github.com/digital-bank-java/transaction-service/pull/5) | Transaction Service Spring Boot, Config Client, health, container, Helm, and CI bootstrap | Open; service shell only, with no transfer workflow |
-| [`infra-sit#23`](https://github.com/digital-bank-java/infra-sit/pull/23) | Shared Redis StatefulSet, persistence, service, probes, and SIT Helm validation | Open; prerequisite for a later Redis-backed gateway rate limiter |
-| [`api-gateway#20`](https://github.com/digital-bank-java/api-gateway/pull/20) | Resilience4j circuit breaker, GET-only safe retries, and controlled `503` fallback | Open; can merge independently of Redis |
-| [`ledger-service#14`](https://github.com/digital-bank-java/ledger-service/pull/14) | Transactional ledger outbox persistence and posting-event metadata | Open; depends on [`.github#137`](https://github.com/digital-bank-java/.github/pull/137); Kafka dispatch remains deferred |
-| [`account-service#33`](https://github.com/digital-bank-java/account-service/pull/33) | Account reservation persistence boundary, commands, status, and optimistic-concurrency rules | Open; depends on [`.github#137`](https://github.com/digital-bank-java/.github/pull/137); event transport remains deferred |
-| [`config-repo#30`](https://github.com/digital-bank-java/config-repo/pull/30) | Config Server defaults and `sit` profile for `transaction-service` on port `8084` | Open; required with `transaction-service#5` before a SIT rollout |
+| [`.github#201`](https://github.com/digital-bank-java/.github/pull/201) | Shared SIT Auth JWT secret runbook |
+| [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32) | Auth/MFA SIT configuration, shared issuer, and Auth scopes |
+| [`auth-service#6`](https://github.com/digital-bank-java/auth-service/pull/6) | Shared SIT JWT scope contract |
+| [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8) | HMAC/JWK JWT validation for SIT and cloud modes |
+| [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) | HMAC/JWK JWT validation and SIT deployment contract |
+| [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33) and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34) | Notification and Payment SIT configuration |
+| [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29) | Transfer-created Kafka topic and dead-letter topic provisioning |
+| [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) | Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries |
 
-`account-service#27` (quality-gate follow-up) is also open and reviewable, but it is outside the current event/transaction implementation wave. The implementation PRs report focused unit/integration, Helm, container, schema, or configuration verification in their PR descriptions; that evidence does not establish a merged or deployed state.
+The application PRs report focused Maven, Helm, and container verification. The
+configuration PRs report YAML parsing and diff checks. SIT rollout, end-to-end
+transfer demonstration, and secret provisioning still require separate evidence.
 
-Current verification evidence is review evidence only: transaction-service#5 reports Maven `verify`, strict SIT Helm lint/template checks, and a non-root/read-only-container smoke test; infra-sit#23 reports Redis/PostgreSQL/Kafka/AKHQ/Redis Helm lint and render checks plus a Kubernetes dry run; api-gateway#20 reports Maven `verify`, strict SIT Helm validation/rendering, and container smoke coverage; ledger-service#14 reports `./mvnw verify` with 8 unit and 15 integration tests plus Flyway V1-V5 Testcontainers coverage; account-service#33 has green Maven, Helm, and container CI checks; config-repo#30 reports YAML parsing and `git diff --check`; and `.github#137`-`.github#139` report focused contract/Markdown checks. SIT rollout, UAT deployment, and production deployment still require separate evidence.
-
-Prepared local/SIT event-delivery work that is verified on dedicated review branches but is still awaiting non-draft PR publication:
-
-- governed ledger event contracts: `.github` `feature/104-event-contracts`, latest commit `e37a717`
-- ledger outbox delivery and safety: `ledger-service` `fix/176-ledger-outbox-safety`, latest commit `1dc0f81`
-- account reservation transport: `account-service` `feature/177-account-reservation-transport`, latest commit `71cfe80`
-- transaction reservation transport: `transaction-service` `feature/178-transfer-kafka-transport`, latest commit `8922c06`
-- transaction SIT transport configuration: `config-repo` `fix/transaction-service-sit-config`, latest commit `8152613`
-- ledger outbox SIT configuration: `config-repo` `feature/23-ledger-service-sit-config`, latest commit `3549b7c`
-- SIT Kafka topic provisioning: `infra-sit` `feature/103-sit-kafka-topics`, latest commit `c3dcd16`
-- Ledger posting command consumer: `ledger-service` `feature/103-ledger-posting-consumer`, latest commit `76c11a5`
-- Transaction-to-Ledger Kafka transport: `transaction-service` `feature/103-transaction-ledger-transport`, latest commit `f2092f3`
+Other local-SIT operational PRs remain independently reviewable: `infra-sit#23`
+(Redis), `infra-sit#24` (OpenSearch), `infra-sit#25` (Fluent Bit),
+`config-repo#35` (gateway resilience), and `config-repo#36` (gateway rate limits).
 
 ## Known Missing Work
 
@@ -288,7 +281,7 @@ High-priority missing capabilities:
 
 - complete governed account/transfer event-contract documentation and compatibility checks
 - integrated SIT rollout and end-to-end transfer verification across Transaction, Account, and Ledger services
-- gateway routing and SIT configuration for the newly bootstrapped services
+- rollout of the newly added gateway routes and SIT configuration for Auth, MFA, Transaction, and Payment
 - service-to-service security and admin API authentication/authorization
 - API Gateway rate limiting and resilience rollout
 - centralized logging with OpenSearch, Fluent Bit, dashboards, and alerts
@@ -376,18 +369,28 @@ done
 
 ## Next Dependency-Aware Work
 
-The implementation wave is merged. The next work is review and rollout, in this
-order:
+The current implementation wave is ready for review and rollout, in this order:
 
-1. Merge the governance/documentation PRs [`.github#173`](https://github.com/digital-bank-java/.github/pull/173) and [`.github#176`](https://github.com/digital-bank-java/.github/pull/176). No waiting period is required, but dependent service configuration should use the accepted contract.
-2. Merge the service configuration PRs [`config-repo#30`](https://github.com/digital-bank-java/config-repo/pull/30), [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32), [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33), and [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34). Restart Config Server or refresh its Git checkout before service rollout.
-3. Merge [`infra-sit#23`](https://github.com/digital-bank-java/infra-sit/pull/23) before enabling the Redis-backed gateway limiter. OpenSearch and Fluent Bit can merge independently after review.
-4. Roll out Auth, MFA, Transaction, Payment, Notification, Account, and Ledger services in SIT. Verify migrations, Kafka topics, gateway routes, health, authentication, transfer acceptance, reservation events, ledger outcomes, and notification consumption.
-5. Record the SIT evidence in the supporting issues and update Sprint 3, 4, and 5 statuses. Keep UAT/PROD cloud deployment deferred to Sprint 7.
+1. Merge [`.github#201`](https://github.com/digital-bank-java/.github/pull/201), the shared SIT Auth Secret runbook.
+2. Merge [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32), then [`auth-service#6`](https://github.com/digital-bank-java/auth-service/pull/6).
+3. Merge [`mfa-service#8`](https://github.com/digital-bank-java/mfa-service/pull/8) and [`payment-service#7`](https://github.com/digital-bank-java/payment-service/pull/7) in parallel.
+4. Merge [`config-repo#33`](https://github.com/digital-bank-java/config-repo/pull/33), [`config-repo#34`](https://github.com/digital-bank-java/config-repo/pull/34), and [`infra-sit#29`](https://github.com/digital-bank-java/infra-sit/pull/29). The first two depend on config-repo#32; the Kafka topic PR can merge independently.
+5. Merge [`config-repo#39`](https://github.com/digital-bank-java/config-repo/pull/39) after the corresponding service/configuration contracts are available.
+6. Provision the local SIT Auth Secret, roll out the services, and verify health, protected workflows, Kafka delivery, centralized Swagger, and database state.
+7. Record runtime evidence in the supporting issues and synchronize Sprint 3, 4, and 5 statuses. Keep UAT/PROD cloud deployment deferred to Sprint 7.
 
 Consult GitHub Project #1 for the authoritative Sprint hierarchy and current issue status.
 
 ## Update Log
+
+### 2026-09-04 - SIT security and gateway review wave
+
+- Added the shared SIT Auth JWT secret delivery runbook in [`.github#201`](https://github.com/digital-bank-java/.github/pull/201).
+- Aligned Auth, MFA, and Payment JWT trust behavior for local HMAC SIT validation while preserving OIDC/JWK support for future cloud environments.
+- Completed the Auth/MFA/Notification/Payment SIT configuration review wave in `config-repo#32`, `#33`, and `#34`, including shared issuer/scopes and README structure corrections.
+- Provisioned the transfer-created Kafka topic and dead-letter topic in [infra-sit#29](https://github.com/digital-bank-java/infra-sit/pull/29).
+- Added the missing Auth, MFA, Transaction, and Payment gateway routes and centralized OpenAPI entries in [config-repo#39](https://github.com/digital-bank-java/config-repo/pull/39), tracked by [`.github#202`](https://github.com/digital-bank-java/.github/issues/202).
+- No pull request was merged directly by the implementation agent. The remaining boundary is user review/merge followed by local SIT rollout evidence.
 
 ### 2026-09-01
 
