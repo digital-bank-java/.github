@@ -1,8 +1,9 @@
 # Shared Auth JWT Secret for Local SIT
 
-This runbook provisions the local-only HMAC signing key shared by Auth Service
-and Transaction Service in the `digital-bank-sit` namespace. It is limited to
-Docker Desktop SIT. Do not use this procedure for UAT or PROD.
+This runbook provisions the local-only HMAC signing key shared by Auth Service,
+Transaction Service, API Gateway, MFA Service, and Payment Service in the
+`digital-bank-sit` namespace. It is limited to Docker Desktop SIT. Do not use
+this procedure for UAT or PROD.
 
 Supporting task: [`.github#192`](https://github.com/digital-bank-java/.github/issues/192)
 
@@ -21,25 +22,26 @@ key. Kubernetes represents Secret data as base64 in its API object; that API
 encoding is separate from the application-level base64 format and is not
 encryption.
 
-The Helm charts use the same contract:
+The current SIT Helm values wire every secured consumer to this same Secret
+reference:
 
-- Auth Service maps `secrets.name` and `secrets.keys.jwtSecret` to
-  `AUTH_JWT_SECRET`.
-- Transaction Service maps `auth.secrets.name` and
-  `auth.secrets.jwtSecretKey` to `AUTH_JWT_SECRET`.
+| Workload | SIT enablement | Chart secret reference | Additional secret prerequisite |
+| --- | --- | --- | --- |
+| API Gateway | `security.enabled=true` | `security.secretName` / `security.secretKey` | None |
+| Auth Service | `secrets.enabled=true` | `secrets.name` / `secrets.keys.jwtSecret` | `fixture-password-hash` in the same Secret |
+| MFA Service | `auth.enabled=true` | `auth.secretName` / `auth.secretKey` | `mfa-service-secrets/MFA_TOTP_ENCRYPTION_KEY` |
+| Payment Service | `auth.enabled=true` | `auth.secretName` / `auth.secretKey` | None |
+| Transaction Service | `auth.secrets.enabled=true` | `auth.secrets.name` / `auth.secrets.jwtSecretKey` | None |
 
-Transaction Service contains this contract on `main` through
-[`transaction-service#15`](https://github.com/digital-bank-java/transaction-service/pull/15).
-At the time this runbook was written, Auth Service contains the matching chart
-change in review in
-[`auth-service#5`](https://github.com/digital-bank-java/auth-service/pull/5).
-Both deployed charts consume `auth-service-secrets/jwt-secret` after that Auth
-Service PR is merged.
+In SIT, Auth Service, Transaction Service, API Gateway, MFA Service, and
+Payment Service all consume `auth-service-secrets/jwt-secret` through
+`AUTH_JWT_SECRET`.
 
-Auth Service may also require a separately managed `fixture-password-hash` key
-for the synthetic SIT login fixture. This runbook owns only `jwt-secret`. Do not
-enable Auth Service secret injection until every key required by its merged
-chart has been provisioned. Never store the fixture's source password.
+Config Repo supplies the nonsecret issuer and scope configuration; it does not
+contain the signing key. Auth Service's `fixture-password-hash` is a BCrypt
+hash for the synthetic fixture and must not be replaced with or accompanied by
+the fixture's source password. This runbook owns only `jwt-secret` and does not
+provision the MFA TOTP encryption key.
 
 ## Preconditions
 
@@ -71,7 +73,7 @@ instead of silently replacing an existing key.
 
   if kubectl get secret auth-service-secrets \
     --namespace digital-bank-sit >/dev/null 2>&1; then
-    printf '%s\n' 'auth-service-secrets already exists; use the rotation procedure.'
+    printf '%s\n' 'auth-service-secrets already exists; this runbook will not replace it.'
     exit 1
   fi
 
@@ -123,12 +125,12 @@ The two decode operations are intentional: the first removes Kubernetes Secret
 encoding and the second validates the application's base64 key format. `-D` is
 the macOS `base64` decode option used by local SIT.
 
-After both deployments exist, verify that their pod templates reference the
-same Secret name and key. This command inspects references only and suppresses
-the JSON output:
+After the five secured workloads exist, verify that their pod templates
+reference the same Secret name and key. This command inspects references only
+and suppresses the JSON output:
 
 ```bash
-kubectl get deployments auth-service transaction-service \
+kubectl get deployments api-gateway auth-service mfa-service payment-service transaction-service \
   --namespace digital-bank-sit \
   --output json |
   jq -e '
@@ -139,89 +141,40 @@ kubectl get deployments auth-service transaction-service \
       | select(.name == "AUTH_JWT_SECRET")
       | .valueFrom.secretKeyRef
     ] as $references
-    | ($references | length == 2)
+    | ($references | length == 5)
       and ($references | all(
         .name == "auth-service-secrets" and .key == "jwt-secret"
       ))
-  ' >/dev/null && printf '%s\n' 'Auth and Transaction use the shared JWT Secret contract.'
+  ' >/dev/null && printf '%s\n' 'All five secured SIT workloads use the shared JWT Secret contract.'
 ```
 
-## Merge and Rollout Order
+## Rollout
 
-The runbook may merge independently and requires no waiting period. Do not roll
-out the consumers until their application and configuration changes are on
-their default branches and the corresponding images have been built.
+Do not roll out secured consumers until the application revisions, Config Repo
+revision, Helm values, database prerequisites, and required Secrets are
+available. Current SIT prerequisites include the `auth_service` and
+`mfa_service` PostgreSQL databases, the `postgres` Secret,
+`auth-service-secrets`, and `mfa-service-secrets` when MFA is enabled.
 
-1. Merge Auth Service integration
-   [`auth-service#5`](https://github.com/digital-bank-java/auth-service/pull/5)
-   and Auth/MFA SIT configuration
-   [`config-repo#32`](https://github.com/digital-bank-java/config-repo/pull/32).
-2. Confirm Transaction Service JWT integration
-   [`transaction-service#15`](https://github.com/digital-bank-java/transaction-service/pull/15)
-   and its SIT configuration
-   [`config-repo#38`](https://github.com/digital-bank-java/config-repo/pull/38)
-   are merged.
-3. Build the exact merged service revisions and validate their Helm charts.
-4. Generate `auth-service-secrets/jwt-secret`. Provision any additional
-   Auth-only fixture key through its approved local SIT procedure without
-   replacing `jwt-secret`.
-5. Upgrade Auth Service and wait for its rollout to become ready.
-6. Upgrade Transaction Service and wait for its rollout to become ready.
-7. Run the safe reference check above, verify both health endpoints, obtain a
-   new synthetic SIT token from Auth Service, and call an authorized
-   Transaction Service endpoint.
+1. Validate affected Helm charts with their repository-owned lint or render
+   checks.
+2. Upgrade Auth Service and wait for its rollout to become ready.
+3. Upgrade MFA Service, Payment Service, Transaction Service, and API Gateway,
+   waiting for each rollout to become ready.
+4. Run the reference check above and the service health checks.
+5. Obtain a synthetic SIT token through Auth Service and exercise the approved
+   internal workflow, including the protected gateway routes.
 
 Use `kubectl rollout status` for each deployment. No arbitrary sleep is needed;
 the next step starts only after the preceding rollout reports success.
 
-## Rotate the Local SIT Key
+## Rotation Boundary
 
-The current HMAC contract has one active key and no key identifier or overlap
-window. Rotation therefore invalidates existing SIT tokens and requires a
-coordinated maintenance window.
-
-1. Stop synthetic test traffic.
-2. Generate a replacement key and merge-patch only `jwt-secret`, preserving
-   other keys in `auth-service-secrets`.
-3. Restart Auth Service and Transaction Service; do not resume traffic until
-   both rollouts are ready.
-4. Discard existing tokens and obtain new ones.
-
-```bash
-(
-  set -eu
-  set +x
-  umask 077
-
-  secret_file="$(mktemp)"
-  trap 'rm -f "$secret_file"' EXIT HUP INT TERM
-
-  openssl rand -base64 32 | tr -d '\n' >"$secret_file"
-
-  base64 <"$secret_file" | tr -d '\n' |
-    jq -R '{data: {"jwt-secret": .}}' |
-    kubectl patch secret auth-service-secrets \
-      --namespace digital-bank-sit \
-      --type merge \
-      --patch-file /dev/stdin
-)
-
-kubectl rollout restart deployment/auth-service \
-  --namespace digital-bank-sit
-kubectl rollout status deployment/auth-service \
-  --namespace digital-bank-sit \
-  --timeout=180s
-
-kubectl rollout restart deployment/transaction-service \
-  --namespace digital-bank-sit
-kubectl rollout status deployment/transaction-service \
-  --namespace digital-bank-sit \
-  --timeout=180s
-```
-
-Run the safe verification checks again after rotation. The temporary mismatch
-between restarting consumers is why traffic must remain stopped until both are
-ready.
+This runbook does not define a key-rotation procedure. The current SIT contract
+has one shared active HMAC secret and no key identifier or overlap mechanism.
+Changing `jwt-secret` therefore requires a separately approved, coordinated
+change that updates and restarts all five consumers. Do not patch or rotate the
+Secret using this runbook.
 
 ## Cleanup
 
@@ -240,23 +193,9 @@ kubectl delete secret auth-service-secrets \
 Recreate it after resetting Docker Desktop Kubernetes. Never copy a local SIT
 key, token, or Secret manifest into another environment.
 
-## UAT and PROD Direction
+## UAT and PROD Boundary
 
-UAT and PROD must use separate environment-specific secrets in AWS Secrets
-Manager. External Secrets Operator, or an equivalent approved controller,
-should materialize each secret into the workload namespace using the same
-`auth-service-secrets/jwt-secret` Kubernetes contract expected by the charts.
-
-The future cloud implementation must include:
-
-- least-privilege workload identity for reading only the environment's secret;
-- encryption and audit controls through AWS KMS, CloudTrail, and Kubernetes
-  RBAC;
-- no secret values in Git, Helm values, Config Server, CI logs, issue bodies, or
-  PR text;
-- a versioned rotation design with key identifiers and an overlap period so
-  production tokens can transition without an outage;
-- independent UAT and PROD keys, rotation schedules, and access policies.
-
-AWS secret delivery remains deferred to Sprint 7. The local commands in this
-runbook are not a production secret-management design.
+UAT and PROD secret delivery, identity integration, coordinated key rotation,
+and production rollout are outside this local SIT runbook and require a
+separately approved architecture and operational procedure. Never copy a local
+SIT key, token, or Secret manifest into another environment.
