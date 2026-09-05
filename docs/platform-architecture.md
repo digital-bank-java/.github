@@ -148,4 +148,3 @@ The future AWS mapping is intentionally infrastructure-neutral at this layer. Th
 - Keep financial corrections append-only through compensating reversals.
 - Keep secrets, tokens, OTP values, customer PII, and production endpoints out of Git.
 - Add a tracked issue before changing a service boundary, port, topic contract, or deployment dependency.
-
