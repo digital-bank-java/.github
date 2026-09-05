@@ -22,11 +22,10 @@ refer to the same business identifier as `transactionId`. Keep
 
 The current Transaction Service implementation is an internal workflow
 foundation, not a public customer transfer API. The API Gateway route,
-account-reservation transport, ledger transport, and end-to-end SIT event
-deployment are separate work. Until those changes are merged, configured, and
-rolled out, the requests below are contract examples and may return a gateway
-`404` or an unavailable-downstream response. Do not treat that as a transfer
-business result.
+account-reservation transport, ledger transport, and event-driven service
+deployments are present in local SIT. The requests below still require the
+SIT fixtures and credentials described by the acceptance task; an unavailable
+downstream response is an environment result, not a transfer business result.
 
 ## Prerequisites
 
@@ -80,7 +79,15 @@ not contain usable credentials, tokens, or production endpoints:
   "correlationId": "",
   "transferRequestId": "",
   "reservationRequestId": "",
-  "postingRequestId": ""
+  "postingRequestId": "",
+  "decisionRequestId": "",
+  "destinationClass": "INTERNAL",
+  "mfaEnrollmentId": "",
+  "mfaChallengeId": "",
+  "riskDecisionId": "",
+  "riskDecisionRequestId": "",
+  "riskPolicyVersion": "",
+  "otpCode": ""
 }
 ```
 
@@ -122,11 +129,23 @@ checks are:
 | Valid token without `transfer.internal` or without an allowlisted `sub` | `403` `application/problem+json` |
 | Valid token with the required scope and allowlisted subject | Continue to the transfer contract check. |
 
-MFA is not a field or operation in the current transfer HTTP contract. Do not
-invent an `mfaCode` body property or a transfer-specific MFA endpoint. A
-future step-up authorization contract may add a separate precondition; that
-scenario is unavailable until the owning auth/MFA and gateway work is merged
-and deployed.
+MFA is a separate, transfer-bound precondition. Do not add an `mfaCode` field
+to the transfer request. The transfer response carries the risk decision
+metadata needed to start the MFA challenge, and the MFA Service publishes
+`MfaAssuranceGranted.v1` after successful verification. Transaction Service
+then resumes the existing reservation outbox; MFA does not mutate balances.
+
+The gateway exposes these MFA routes under the same protected API surface:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/v1/mfa/transfer-challenges` | Create or replay a challenge bound to one transfer and risk decision. |
+| `POST` | `/api/v1/mfa/transfer-challenges/{challengeId}/verifications` | Verify the bound challenge with the authenticator code. |
+
+The challenge must use the same authenticated subject, transfer ID, decision
+ID, reservation request ID, accounts, amount, currency, policy version, and
+correlation ID returned by the transfer workflow. Keep the TOTP code only as a
+short-lived private value; never export it or place it in a shared collection.
 
 ## Create A Transfer
 
@@ -149,7 +168,10 @@ Content-Type: application/json
   "correlationId": "{{ correlationId }}",
   "transferRequestId": "{{ transferRequestId }}",
   "reservationRequestId": "{{ reservationRequestId }}",
-  "postingRequestId": "{{ postingRequestId }}"
+  "postingRequestId": "{{ postingRequestId }}",
+  "decisionRequestId": "{{ decisionRequestId }}",
+  "channel": "INTERNAL",
+  "destinationClass": "{{ destinationClass }}"
 }
 ```
 
@@ -172,6 +194,77 @@ The request validation contract supports these checks:
 Malformed JSON, invalid UUIDs, or failed field/cross-field validation return
 `400` `application/problem+json` with a validation problem and an `errors`
 array. This is a request failure, not a `FAILED` transfer state.
+
+## Complete A Step-Up Transfer
+
+To exercise the step-up path, set `destinationClass` to `INTERNATIONAL` or use
+an amount that exceeds the configured SIT high-value threshold. The current
+SIT defaults require step-up for `INTERNATIONAL` transfers and for amounts at
+or above the configured AED/USD threshold. Do not assume a `PENDING` response
+means step-up was requested; inspect the response fields.
+
+Expected risk-gated response:
+
+- HTTP `201 Created` for the first workflow request;
+- `status: "AWAITING_STEP_UP"`;
+- `riskOutcome: "REQUIRE_STEP_UP"`;
+- `riskDecisionId`, `riskDecisionRequestId`, `riskRequiredAssurance: "MFA"`,
+  `riskChallengeType`, `riskPolicyVersion`, and `riskExpiresAt` populated;
+- no reservation command action yet.
+
+Copy the response values into private/local variables, then create the bound
+challenge through API Gateway:
+
+```http
+POST {{ apiGatewayUrl }}/api/v1/mfa/transfer-challenges
+Authorization: Bearer {{ authAccessToken }}
+Content-Type: application/json
+
+{
+  "enrollmentId": "{{ mfaEnrollmentId }}",
+  "transferId": "{{ transferId }}",
+  "reservationRequestId": "{{ reservationRequestId }}",
+  "decisionId": "{{ riskDecisionId }}",
+  "decisionRequestId": "{{ riskDecisionRequestId }}",
+  "sourceAccountId": "{{ sourceAccountId }}",
+  "destinationAccountId": "{{ destinationAccountId }}",
+  "amount": 125.5000,
+  "currency": "AED",
+  "policyVersion": "{{ riskPolicyVersion }}",
+  "correlationId": "{{ correlationId }}"
+}
+```
+
+The first request returns `201 Created`; an identical request returns `200 OK`
+with `Idempotent-Replay: true`. Save only the opaque `challengeId` in the
+private SIT environment. Verify it with a current authenticator code:
+
+```http
+POST {{ apiGatewayUrl }}/api/v1/mfa/transfer-challenges/{{ mfaChallengeId }}/verifications
+Authorization: Bearer {{ authAccessToken }}
+Content-Type: application/json
+
+{
+  "transferId": "{{ transferId }}",
+  "decisionId": "{{ riskDecisionId }}",
+  "code": "{{ otpCode }}"
+}
+```
+
+Poll the transfer workflow using the existing GET request. A valid first
+verification should publish the assurance event and advance the workflow into
+reservation processing. Repeating the same verification must not publish a
+second assurance event or create a second reservation command. A mismatched,
+expired, exhausted, or replayed challenge must return a Problem Details error
+and must not resume the transfer.
+
+For event evidence, use AKHQ to inspect the governed assurance topic and its
+consumer group. Use read-only DBeaver queries against the MFA and Transaction
+databases to compare the challenge, assurance outbox, workflow inbox, and
+workflow action rows. Do not publish a forged Kafka payload or update these
+tables manually. The malformed-event and DLQ acceptance check is separate from
+this happy-path workflow and must be recorded only after the controlled SIT
+fixture has been executed.
 
 ## Inspect The Workflow
 
