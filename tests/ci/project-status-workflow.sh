@@ -7,11 +7,13 @@ workflow="$repo_root/.github/workflows/project-status.yml"
 caller="$repo_root/.github/workflow-templates/project-status.yml"
 caller_metadata="$repo_root/.github/workflow-templates/project-status.properties.json"
 documentation="$repo_root/docs/reusable-project-status.md"
+caller_documentation="$repo_root/docs/project-status-caller-template.md"
 
 test -f "$workflow"
 test -f "$caller"
 test -f "$caller_metadata"
 test -f "$documentation"
+test -f "$caller_documentation"
 
 ruby -rjson -ryaml - "$workflow" "$caller" "$caller_metadata" <<'RUBY'
 workflow_path, caller_path, metadata_path = ARGV
@@ -45,7 +47,11 @@ end
 caller_ref = caller.fetch("jobs").fetch("project-status").fetch("uses")
 raise "caller workflow reference must use a full commit SHA" unless caller_ref.match?(/@[0-9a-f]{40}\z/)
 raise "caller workflow reference must not use a placeholder SHA" if caller_ref.end_with?("@#{'0' * 40}")
-raise "caller must pass project_token" unless caller.fetch("jobs").fetch("project-status").dig("secrets", "project_token")
+caller_job = caller.fetch("jobs").fetch("project-status")
+raise "caller permissions must be empty" unless caller.fetch("permissions") == {}
+raise "caller job permissions must be empty" unless caller_job.fetch("permissions") == {}
+raise "caller must pass project_token" unless caller_job.dig("secrets", "project_token")
+raise "caller must not inherit unrelated secrets" if caller_job.fetch("secrets").values.any? { |value| value == "inherit" }
 
 metadata = JSON.parse(File.read(metadata_path))
 raise "workflow template name is missing" unless metadata.fetch("name") == "GitHub Project status"
@@ -82,5 +88,25 @@ required_documentation_fragments=(
 for fragment in "${required_documentation_fragments[@]}"; do
   grep -Fq "$fragment" "$documentation"
 done
+
+required_caller_documentation_fragments=(
+  'project-status.yml'
+  'PROJECT_STATUS_TOKEN'
+  'permissions: {}'
+  'pull_request_target'
+  'never merges pull requests'
+  'secrets: inherit'
+  'Failure Handling'
+  'Adoption Steps'
+)
+
+for fragment in "${required_caller_documentation_fragments[@]}"; do
+  grep -Fq "$fragment" "$caller_documentation"
+done
+
+if grep -Eq 'gh[[:space:]]+pr[[:space:]]+merge|pull_request[[:space:]]*:[[:space:]]*write' "$workflow" "$caller"; then
+  echo "project status workflows must not merge pull requests or request pull request write access" >&2
+  exit 1
+fi
 
 echo "Project status workflow contract checks passed"

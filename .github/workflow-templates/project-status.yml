@@ -1,3 +1,5 @@
+# This caller delegates lifecycle updates to the pinned organization workflow.
+# Keep permissions empty and pass only the explicitly required Project secret.
 name: GitHub Project status
 
 on:
