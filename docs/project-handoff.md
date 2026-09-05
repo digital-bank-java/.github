@@ -709,3 +709,10 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Account Service and Ledger Service SIT transport settings were already present in the configuration baseline; no duplicate properties or alternate environment stack was introduced.
 - YAML parsing, required-property checks, diff hygiene, and secret scanning passed. No Java tests, generated models, or additional CI workflow were added.
 - The PR must merge before refreshing Config Server and rolling out Account, Transaction, and Ledger consumers for end-to-end SIT verification. A representative successful transfer, duplicate-delivery proof, and deterministic DLQ proof remain open acceptance checks; no public balance mutation endpoint should be added.
+
+### 2026-09-05 - Ledger outbox SIT startup repair
+
+- During the merged SIT transport rollout, Ledger Service exposed a startup defect when outbox delivery was enabled: Spring could not select between two transport constructors, and the service did not have Spring Boot Kafka auto-configuration for `KafkaTemplate`.
+- Prepared [ledger-service PR #20](https://github.com/digital-bank-java/ledger-service/pull/20), tracked by parented Bug [`.github#238`](https://github.com/digital-bank-java/.github/issues/238) under Sprint 3 task [`.github#213`](https://github.com/digital-bank-java/.github/issues/213). The fix explicitly selects the properties constructor, resolves the scheduler delay from configuration, and uses `spring-boot-starter-kafka`.
+- Full `./mvnw verify` passed with 27 unit-phase tests and 30 integration tests. The corrected local image `digital-bank-java/ledger-service:0.0.4` was rolled out to `digital-bank-sit`; Helm revision 8 is `deployed`, the pod is `1/1 Running`, the Kafka consumer joined `ledger.posting.requested.v1`, and health/OpenAPI checks passed.
+- PR #20 remains open for review. The local SIT rollout is validation evidence only and is not a merge or production deployment. End-to-end transfer evidence still requires a controlled positive-balance fixture.
