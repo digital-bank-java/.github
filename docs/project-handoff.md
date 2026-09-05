@@ -697,3 +697,4 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - All eight PRs passed their existing Maven verification/test phase, Helm validation, and container build/smoke checks. No redundant CI workflow or broad unit-test expansion was added.
 - The API Gateway correlation and structured logging boundary was already present in merged [api-gateway #24](https://github.com/digital-bank-java/api-gateway/pull/24); no duplicate gateway implementation was retained.
 - `.github#233` remains `In review` until the service PRs are merged. Fluent Bit/OpenSearch collection, Zipkin, immutable audit storage, and AWS deployment remain separate work.
+- Re-audited Project #1 after the logging wave: all 20 active non-Epic items have a native GitHub parent, and no active task, story, or bug is unparented. Deferred Sonar work is correctly in `Backlog`.
