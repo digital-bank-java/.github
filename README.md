@@ -26,6 +26,6 @@ Use a tracked GitHub issue, a dedicated branch, and a pull request for every cha
 The versioned Kafka contracts under `docs/contracts/` are checked by the
 path-scoped `Validate AsyncAPI contracts` workflow. The dependency-free Ruby
 validator checks AsyncAPI metadata, Kafka channel and operation wiring, local
-references, required event/header metadata, and the declared
-`BACKWARD_TRANSITIVE` Schema Registry compatibility policy. Schema Registry
-deployment and credentials remain platform responsibilities.
+references, required event/header metadata, representative payload examples,
+and the declared `BACKWARD_TRANSITIVE` Schema Registry compatibility policy.
+Schema Registry deployment and credentials remain platform responsibilities.
