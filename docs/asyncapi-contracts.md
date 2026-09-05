@@ -230,12 +230,19 @@ before merge. The contract check should:
    topic-specific DLQ or quarantine policy.
 4. Verify the `TopicNameStrategy` subject mapping, schema version, and
    declared `BACKWARD_TRANSITIVE` compatibility.
-5. Validate representative examples against their payload schemas and reject
-   credentials, tokens, secrets, and obvious customer PII.
+5. Validate every representative example against its payload schema, including
+   required fields, constants, formats, patterns, arrays, and object
+   properties. The repository validator performs this deterministic local
+   check without requiring a schema-validation dependency.
 6. Compare changed subjects with the prior contract or registry snapshot and
    reject breaking changes under an existing major subject.
 7. Run `git diff --check` and fail on malformed Markdown or accidental
    literal escape text in documentation.
+
+The repository gate validates the checked-in contract examples. Registry
+subject comparison and live compatibility checks remain release/platform
+responsibilities because pull requests must not require access to a deployed
+registry or production credentials.
 
 Pull-request validation must be deterministic and must not require access to a
 deployed Kafka cluster, production registry, cloud credentials, or real

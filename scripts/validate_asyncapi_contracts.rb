@@ -4,6 +4,7 @@
 # Runtime Schema Registry validation remains a platform responsibility.
 
 require "yaml"
+require "time"
 
 CONTRACT_GLOB = File.expand_path("../docs/contracts/*-asyncapi.yml", __dir__)
 REQUIRED_EVENT_FIELDS = %w[
@@ -39,6 +40,91 @@ end
 
 def expect(condition, path, message)
   fail_with(path, message) unless condition
+end
+
+UUID_PATTERN = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i
+
+def normalized_pattern(pattern)
+  # Some YAML examples use JSON-style escaping while others use a literal
+  # single backslash. Normalize both forms before constructing the regexp.
+  pattern.gsub("\\\\", "\\")
+end
+
+def schema_matches?(document, schema, value)
+  schema = lookup(document, schema["$ref"], "schema validation") if schema["$ref"]
+
+  return false unless schema.fetch("allOf", []).all? { |part| schema_matches?(document, part, value) }
+
+  if schema["oneOf"]
+    return false unless schema["oneOf"].count { |part| schema_matches?(document, part, value) } == 1
+  end
+
+  if schema["anyOf"]
+    return false unless schema["anyOf"].any? { |part| schema_matches?(document, part, value) }
+  end
+
+  if schema["if"]
+    condition_matches = schema_matches?(document, schema["if"], value)
+    return false if condition_matches && schema["then"] && !schema_matches?(document, schema["then"], value)
+    return false if !condition_matches && schema["else"] && !schema_matches?(document, schema["else"], value)
+  end
+
+  return false if schema["not"] && schema_matches?(document, schema["not"], value)
+  return false if schema["const"] && value != schema["const"]
+  return false if schema["enum"] && !schema["enum"].include?(value)
+
+  case schema["type"]
+  when "object"
+    return false unless value.is_a?(Hash)
+  when "array"
+    return false unless value.is_a?(Array)
+  when "string"
+    return false unless value.is_a?(String)
+  when "integer"
+    return false unless value.is_a?(Integer)
+  when "number"
+    return false unless value.is_a?(Numeric)
+  when "boolean"
+    return false unless value == true || value == false
+  when "null"
+    return false unless value.nil?
+  end
+
+  return false if schema["minLength"] && (!value.is_a?(String) || value.length < schema["minLength"])
+  if schema["pattern"]
+    return false unless value.is_a?(String) && Regexp.new(normalized_pattern(schema["pattern"])).match?(value)
+  end
+  if schema["format"] == "uuid"
+    return false unless value.is_a?(String) && UUID_PATTERN.match?(value)
+  elsif schema["format"] == "date-time"
+    begin
+      Time.iso8601(value.to_s)
+    rescue ArgumentError
+      return false
+    end
+  end
+
+  if value.is_a?(Hash)
+    required = schema.fetch("required", [])
+    return false unless required.all? { |key| value.key?(key) }
+
+    properties = schema.fetch("properties", {})
+    if schema["additionalProperties"] == false
+      return false unless (value.keys - properties.keys).empty?
+    end
+    return false unless properties.all? do |key, property_schema|
+      !value.key?(key) || schema_matches?(document, property_schema, value[key])
+    end
+  elsif value.is_a?(Array) && schema["items"]
+    return false unless value.all? { |item| schema_matches?(document, schema["items"], item) }
+  end
+
+  true
+end
+
+def validate_example(document, schema, value, path)
+  expect(schema_matches?(document, schema, value), path,
+         "example payload does not satisfy its declared schema")
 end
 
 files = Dir[CONTRACT_GLOB].sort
@@ -97,6 +183,16 @@ files.each do |file|
              "payload must require all common event metadata fields")
       expect(REQUIRED_HEADER_FIELDS.all? { |field| header_schema.fetch("required", []).include?(field) },
              path, "headers must require all common event metadata fields")
+
+      examples = message.fetch("examples", [])
+      expect(examples.is_a?(Array) && !examples.empty?, path,
+             "at least one representative payload example is required")
+      examples.each_with_index do |example, index|
+        example_path = "#{path}.messages.#{message_name}.examples[#{index}]"
+        expect(example.is_a?(Hash) && example.key?("payload"), example_path,
+               "example payload is required")
+        validate_example(document, payload_schema, example["payload"], example_path)
+      end
     end
   end
 
