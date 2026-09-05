@@ -1,0 +1,24 @@
+# This caller delegates lifecycle updates to the pinned organization workflow.
+# Keep permissions empty and pass only the explicitly required Project secret.
+name: GitHub Project status
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - closed
+
+permissions: {}
+
+jobs:
+  project-status:
+    uses: digital-bank-java/.github/.github/workflows/project-status.yml@30501c72e229bc3e7071d105f41df6cc6c7d3589
+    permissions: {}
+    with:
+      project_owner: digital-bank-java
+      project_number: 1
+      status_field_name: Status
+    secrets:
+      project_token: ${{ secrets.PROJECT_STATUS_TOKEN }}

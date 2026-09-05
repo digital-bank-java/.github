@@ -40,6 +40,9 @@ Use repo-local `AGENTS.md` files for:
 | `account-service` | Account lifecycle and account lookup |
 | `ledger-service` | Immutable journal entry posting and lookup |
 | `transaction-service` | Transfer orchestration and saga/process-manager foundation |
+| `auth-service` | Authentication and identity access management |
+| `mfa-service` | Multi-factor authentication |
+| `notification-service` | Notification delivery and messaging |
 | `infra-sit` | Local SIT infrastructure for Kubernetes workloads |
 
 ## Architecture Rules
@@ -117,6 +120,11 @@ Do not rename these files to non-Spring names such as `common.yml` unless the Co
   - `TASK:`
 - Use the GitHub issue Type field correctly for every issue, including completed items.
 - Keep tasks and stories attached to a relevant epic when one exists.
+- Every issue added to Digital Bank Project #1 must have a native parent in the Sprint hierarchy. The only root planning items are the eight Sprint epics (`.github#18` through `.github#25`).
+- Before creating or adding work, identify its Sprint and existing parent. If no existing branch fits, create and parent the missing Story or Epic first, then create the child item beneath it.
+- A `Parent:` line in an issue body is useful documentation but does not establish hierarchy; use GitHub's native sub-issue relationship and verify it through the API.
+- Set the native Issue Type, Project Sprint, assignee, and status when adding an item. Closed or historical items follow the same hierarchy rule.
+- After creating or repairing items, audit every Project page and confirm there are no parentless non-Epic issues, no cross-Sprint parent relationships, and no orphaned project items.
 - Assign in-progress tasks to `ramioooz`.
 - Use dedicated branches, never commit directly to `main`.
 

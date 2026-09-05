@@ -1,0 +1,1256 @@
+asyncapi: 3.0.0
+info:
+  title: Account Reservation And Transfer Workflow Contracts
+  version: 1.0.0
+  description: >-
+    Versioned workflow messages used by Transaction Service and Account Service
+    to reserve and release source-account funds and to publish terminal transfer
+    outcomes. Transaction Service owns transfer workflow state and is the sole
+    producer of reservation commands and transfer outcomes. Account Service
+    owns reservation state and is the sole producer of reservation outcomes.
+    These contracts are transport and documentation boundaries; services map
+    them to transport-neutral application ports and do not share Java DTOs.
+defaultContentType: application/json
+x-data-classification: confidential-financial
+x-schema-registry:
+  boundary: >-
+    This AsyncAPI document and its payload schemas are the organization-facing
+    contract. Schema Registry stores registered serialized payload schemas and
+    enforces compatibility. Kafka headers, delivery policy, ownership, and
+    workflow semantics remain governed by this document rather than Registry.
+  subjectStrategy: TopicNameStrategy
+  subjects:
+    account.reservation.requested.v1: account.reservation.requested.v1-value
+    account.reservation.release-requested.v1: account.reservation.release-requested.v1-value
+    account.reservation.accepted.v1: account.reservation.accepted.v1-value
+    account.reservation.rejected.v1: account.reservation.rejected.v1-value
+    account.reservation.released.v1: account.reservation.released.v1-value
+    account.reservation.expired.v1: account.reservation.expired.v1-value
+    events.transfer.created.v1: events.transfer.created.v1-value
+    events.transfer.completed.v1: events.transfer.completed.v1-value
+    events.transfer.failed.v1: events.transfer.failed.v1-value
+  compatibility: BACKWARD_TRANSITIVE
+  provisioning: >-
+    Platform infrastructure owns Kafka topic provisioning, partitions,
+    retention, ACLs, Registry subjects, and compatibility configuration. This
+    contract contains no broker or Registry URL, credential, or schema id.
+x-command-event-ownership:
+  transaction-service: >-
+    Owns transfer state. It sends AccountReservationRequested.v1 and
+    AccountReservationReleaseRequested.v1 and publishes TransferCreated.v1,
+    TransferCompleted.v1, and TransferFailed.v1. It never mutates reservation
+    or ledger state.
+  account-service: >-
+    Owns reservation state and available-balance enforcement. It consumes the
+    reservation commands and publishes AccountReservationAccepted.v1,
+    AccountReservationRejected.v1, AccountReservationReleased.v1, and
+    AccountReservationExpired.v1. It never owns transfer status.
+  ledger-service: >-
+    Owns immutable posting facts under the separate ledger event contract in
+    .github PR #137. It neither produces nor consumes messages in this file.
+  notification-service: >-
+    Consumes terminal transfer outcomes for notification work. Notification
+    failures cannot change transfer, reservation, or ledger state.
+x-delivery-and-processing:
+  semantics: at-least-once
+  producerRetries: >-
+    The producer persists each message in an outbox in the same database
+    transaction as the state change that makes it publishable. It generates
+    eventId once and retries broker publication with the same eventId and exact
+    payload until acknowledged. A request handler never publishes directly.
+  consumerRetries: >-
+    Consumers retry transient processing failures with bounded exponential
+    backoff and jitter. Attempt limits and timing are runtime configuration;
+    changing them does not change the business schema.
+  deadLetter: >-
+    After the configured attempt limit, preserve the original message and
+    failure metadata in the channel-specific DLQ. Replay is explicit,
+    authorized, observable, and idempotent. A DLQ record is not a new command
+    or business fact and replay does not generate a new eventId.
+  duplicateHandling: >-
+    Consumers persist an inbox entry unique on eventId in the same transaction
+    as their state change. An exact redelivery is a successful no-op. Reuse of
+    an eventId with different bytes, identity fields, or eventType is a contract
+    violation and is quarantined. reservationRequestId and transactionId remain
+    business idempotency keys even when a producer recovery emits a new eventId.
+  outOfOrderHandling: >-
+    Consumers validate the current aggregate state before applying a message.
+    A message whose prerequisite state is not yet visible is deferred for
+    bounded retry, not converted into a failure fact. A stale message already
+    represented by the current terminal state is a no-op. A contradictory
+    terminal outcome is quarantined for authorized reconciliation and never
+    overwrites completed financial history.
+  ordering: >-
+    Kafka ordering is guaranteed only within one partition of one topic.
+    Reservation topics use sourceAccountId and transfer outcome topics use
+    transactionId. No ordering is promised across topics, so correctness must
+    come from inbox idempotency, aggregate version checks, and legal state
+    transitions rather than arrival order.
+x-correlation-and-causation:
+  correlationId: >-
+    The initiating transfer request supplies the end-to-end correlationId.
+    Every command and event in that transfer workflow propagates it unchanged.
+  causationId: >-
+    The first reservation request uses the initiating transfer command id.
+    Every later message uses the eventId of the command or event that directly
+    caused it. Timed expiry uses the accepted reservation eventId or the durable
+    expiry-schedule command id recorded by Account Service.
+  identifiers: >-
+    transactionId identifies Transaction Service workflow state;
+    reservationRequestId is the cross-service reservation idempotency key;
+    reservationId identifies Account Service reservation state; postingRequestId
+    is the Ledger Service request idempotency key; postingId identifies an
+    immutable completed posting; account ids are opaque identifiers; currency
+    is ISO 4217; and amounts are positive decimal strings with up to four
+    fractional digits.
+x-workflow-rules:
+  transferCreated: >-
+    Transaction Service publishes TransferCreated.v1 after the transfer request
+    and initial workflow state are durable. It announces workflow processing;
+    it does not reserve funds, post to the ledger, or imply a balance change.
+  reservationAccepted: >-
+    Account Service publishes AccountReservationAccepted.v1 only after the
+    reservation and outbox row are durable. The reservation is ACTIVE and its
+    amount reduces available balance until committed, released, or expired.
+  reservationRejected: >-
+    Account Service publishes AccountReservationRejected.v1 when no reservation
+    was created. Transaction Service moves the transfer to FAILED with no
+    release command and may publish TransferFailed.v1 with compensationStatus
+    NOT_REQUIRED.
+  reservationReleased: >-
+    Account Service publishes AccountReservationReleased.v1 once an ACTIVE
+    reservation is durably RELEASED. Repeated release requests are idempotent.
+    LedgerPostingFailed.v1 from the #137 contract causes Account Service to
+    release directly; Transaction Service must not duplicate that trigger with
+    a release command. Transaction Service waits for the released fact before
+    publishing a compensated TransferFailed.v1.
+  reservationExpired: >-
+    Account Service publishes AccountReservationExpired.v1 when the ACTIVE
+    reservation reaches expiresAt before settlement. Expiry releases the held
+    amount. Transaction Service treats it as a terminal reservation failure and
+    does not send a second release command.
+  transferCompleted: >-
+    Transaction Service publishes TransferCompleted.v1 only after the governed
+    ledger completion fact has advanced the workflow to COMPLETED. A completed
+    transfer can never later become failed because of duplicate, delayed, or
+    contradictory delivery.
+  transferFailed: >-
+    Transaction Service publishes TransferFailed.v1 only after failure is
+    terminal. If an ACTIVE reservation requires compensation, publication waits
+    for AccountReservationReleased.v1. compensationStatus is NOT_REQUIRED,
+    COMPLETED, or FAILED; FAILED requires manualReviewRequired true and captures
+    a quarantined compensation failure rather than pretending funds were
+    released.
+x-compatibility-rules:
+  withinMajorVersion: >-
+    Within v1, changes are additive and optional only. Do not remove, rename,
+    or change the meaning, type, format, enum meaning, or requiredness of an
+    existing field. Producers continue to populate every required v1 field.
+  breakingChanges: >-
+    An incompatible change requires a new major-version event type, topic, and
+    Registry subject. Never register an incompatible schema under a v1 subject.
+  parallelMigration: >-
+    Producers and consumers support old and new major versions in parallel for
+    an explicitly planned migration window. Topic retirement requires verified
+    consumer migration and retention-aware replay planning.
+  consumerBehavior: >-
+    Payload schemas permit additional fields. Consumers ignore unknown fields,
+    preserve required identity semantics, and must not branch on unrecognized
+    optional fields. Adding an enum value is treated as compatibility-sensitive
+    and requires consumer readiness before production use.
+channels:
+  account.reservation.requested.v1:
+    address: account.reservation.requested.v1
+    description: >-
+      Transaction Service requests a source-account reservation. Account
+      Service is the only consumer and evaluates account state, currency, and
+      available balance idempotently by reservationRequestId.
+    x-message-kind: command
+    x-producer: transaction-service
+    x-consumers:
+      - account-service
+    x-partition-key: sourceAccountId
+    x-ordering: >-
+      Ordered by sourceAccountId only within this topic so competing requests
+      for one account reach a consumer partition in broker order. Database
+      concurrency controls remain authoritative.
+    x-delivery-semantics: at-least-once; Account Service uses an inbox keyed by eventId and a reservation idempotency key.
+    x-dead-letter-topic: account.reservation.requested.v1.dlq
+    x-dead-letter-policy: >-
+      Retry transient failures with bounded backoff, then preserve the original
+      command and failure metadata. Validation and insufficient funds are
+      business rejections, not DLQ conditions.
+    messages:
+      accountReservationRequested:
+        $ref: '#/components/messages/AccountReservationRequestedV1'
+    bindings:
+      kafka:
+        topic: account.reservation.requested.v1
+        bindingVersion: 0.5.0
+  account.reservation.release-requested.v1:
+    address: account.reservation.release-requested.v1
+    description: >-
+      Transaction Service requests compensation of an ACTIVE reservation after
+      a workflow cancellation, timeout, or authorized manual intervention. A
+      ledger posting failure reaches Account Service directly through the #137
+      ledger contract and must not produce this command. This command does not
+      assert that release has happened.
+    x-message-kind: command
+    x-producer: transaction-service
+    x-consumers:
+      - account-service
+    x-partition-key: sourceAccountId
+    x-ordering: Ordered by sourceAccountId only within this topic; no ordering is guaranteed against reservation-request or outcome topics.
+    x-delivery-semantics: at-least-once; Account Service makes release idempotent by eventId and reservationRequestId.
+    x-dead-letter-topic: account.reservation.release-requested.v1.dlq
+    x-dead-letter-policy: >-
+      Retry transient failures with bounded backoff, then preserve the original
+      command and failure metadata. A missing prerequisite reservation is
+      deferred before it is classified as a reconciliation conflict.
+    messages:
+      accountReservationReleaseRequested:
+        $ref: '#/components/messages/AccountReservationReleaseRequestedV1'
+    bindings:
+      kafka:
+        topic: account.reservation.release-requested.v1
+        bindingVersion: 0.5.0
+  account.reservation.accepted.v1:
+    address: account.reservation.accepted.v1
+    description: >-
+      Account Service reports that an ACTIVE reservation is durable.
+      Transaction Service consumes the fact to request ledger posting.
+    x-message-kind: event
+    x-producer: account-service
+    x-consumers:
+      - transaction-service
+    x-partition-key: sourceAccountId
+    x-ordering: Ordered by sourceAccountId only within this topic; consumers must not infer order across reservation outcome topics.
+    x-delivery-semantics: at-least-once; Transaction Service uses an inbox keyed by eventId and validates transactionId plus reservationRequestId.
+    x-dead-letter-topic: account.reservation.accepted.v1.dlq
+    x-dead-letter-policy: Retry transient failures with bounded backoff, then preserve the original event and failure metadata for authorized replay.
+    messages:
+      accountReservationAccepted:
+        $ref: '#/components/messages/AccountReservationAcceptedV1'
+    bindings:
+      kafka:
+        topic: account.reservation.accepted.v1
+        bindingVersion: 0.5.0
+  account.reservation.rejected.v1:
+    address: account.reservation.rejected.v1
+    description: >-
+      Account Service reports that the request reached a terminal business
+      rejection and no reservation was created.
+    x-message-kind: event
+    x-producer: account-service
+    x-consumers:
+      - transaction-service
+    x-partition-key: sourceAccountId
+    x-ordering: Ordered by sourceAccountId only within this topic; consumers must not infer order across reservation outcome topics.
+    x-delivery-semantics: at-least-once; Transaction Service uses an inbox keyed by eventId and fails the matching workflow idempotently.
+    x-dead-letter-topic: account.reservation.rejected.v1.dlq
+    x-dead-letter-policy: Retry transient consumer failures with bounded backoff, then preserve the original event and sanitized failure metadata.
+    messages:
+      accountReservationRejected:
+        $ref: '#/components/messages/AccountReservationRejectedV1'
+    bindings:
+      kafka:
+        topic: account.reservation.rejected.v1
+        bindingVersion: 0.5.0
+  account.reservation.released.v1:
+    address: account.reservation.released.v1
+    description: >-
+      Account Service reports that a reservation is durably RELEASED and its
+      held amount is available again. Transaction Service consumes this fact to
+      finish compensated failure processing.
+    x-message-kind: event
+    x-producer: account-service
+    x-consumers:
+      - transaction-service
+    x-partition-key: sourceAccountId
+    x-ordering: Ordered by sourceAccountId only within this topic; consumers must validate reservation state rather than rely on cross-topic arrival order.
+    x-delivery-semantics: at-least-once; Transaction Service uses an inbox keyed by eventId and treats an already applied release as a no-op.
+    x-dead-letter-topic: account.reservation.released.v1.dlq
+    x-dead-letter-policy: Retry transient failures with bounded backoff, then preserve the original event and failure metadata for authorized replay.
+    messages:
+      accountReservationReleased:
+        $ref: '#/components/messages/AccountReservationReleasedV1'
+    bindings:
+      kafka:
+        topic: account.reservation.released.v1
+        bindingVersion: 0.5.0
+  account.reservation.expired.v1:
+    address: account.reservation.expired.v1
+    description: >-
+      Account Service reports that an ACTIVE reservation reached expiresAt and
+      was durably expired, releasing the held amount.
+    x-message-kind: event
+    x-producer: account-service
+    x-consumers:
+      - transaction-service
+    x-partition-key: sourceAccountId
+    x-ordering: Ordered by sourceAccountId only within this topic; consumers must validate reservation state rather than rely on cross-topic arrival order.
+    x-delivery-semantics: at-least-once; Transaction Service uses an inbox keyed by eventId and fails the matching workflow idempotently.
+    x-dead-letter-topic: account.reservation.expired.v1.dlq
+    x-dead-letter-policy: Retry transient failures with bounded backoff, then preserve the original event and failure metadata for authorized replay.
+    messages:
+      accountReservationExpired:
+        $ref: '#/components/messages/AccountReservationExpiredV1'
+    bindings:
+      kafka:
+        topic: account.reservation.expired.v1
+        bindingVersion: 0.5.0
+  events.transfer.created.v1:
+    address: events.transfer.created.v1
+    description: >-
+      Transaction Service reports that a transfer request and its initial
+      workflow state are durable. This fact starts workflow processing but does
+      not reserve funds, post to the ledger, or mutate account balances.
+    x-message-kind: event
+    x-producer: transaction-service
+    x-consumers:
+      - notification-service
+    x-partition-key: transactionId
+    x-ordering: Ordered by transactionId only within this topic; no order is guaranteed against reservation, ledger, or terminal transfer topics.
+    x-delivery-semantics: at-least-once; consumers use a durable inbox keyed by eventId before production enablement.
+    x-dead-letter-topic: events.transfer.created.v1.dlq
+    x-dead-letter-policy: >-
+      Retry transient failures with bounded backoff, then preserve the original
+      event and failure metadata for authorized replay. A DLQ record is not a
+      new business fact and notification failure cannot change financial state.
+    messages:
+      transferCreated:
+        $ref: '#/components/messages/TransferCreatedV1'
+    bindings:
+      kafka:
+        topic: events.transfer.created.v1
+        bindingVersion: 0.5.0
+  events.transfer.completed.v1:
+    address: events.transfer.completed.v1
+    description: >-
+      Transaction Service reports that the transfer workflow reached COMPLETED
+      after a durable ledger completion. Notification Service may consume the
+      fact but cannot alter financial state.
+    x-message-kind: event
+    x-producer: transaction-service
+    x-consumers:
+      - notification-service
+    x-partition-key: transactionId
+    x-ordering: Ordered by transactionId only within this topic; no order is guaranteed against transfer-created or failed topics.
+    x-delivery-semantics: at-least-once; consumers use a durable inbox keyed by eventId before production enablement.
+    x-dead-letter-topic: events.transfer.completed.v1.dlq
+    x-dead-letter-policy: Retry transient failures with bounded backoff, then preserve the original event and failure metadata; notification failure never reverses completion.
+    messages:
+      transferCompleted:
+        $ref: '#/components/messages/TransferCompletedV1'
+    bindings:
+      kafka:
+        topic: events.transfer.completed.v1
+        bindingVersion: 0.5.0
+  events.transfer.failed.v1:
+    address: events.transfer.failed.v1
+    description: >-
+      Transaction Service reports a terminal failed workflow and its final
+      compensation status. Notification Service may consume the fact but
+      cannot alter financial state.
+    x-message-kind: event
+    x-producer: transaction-service
+    x-consumers:
+      - notification-service
+    x-partition-key: transactionId
+    x-ordering: Ordered by transactionId only within this topic; no order is guaranteed against transfer-created or completed topics.
+    x-delivery-semantics: at-least-once; consumers use a durable inbox keyed by eventId before production enablement.
+    x-dead-letter-topic: events.transfer.failed.v1.dlq
+    x-dead-letter-policy: Retry transient failures with bounded backoff, then preserve the original event and failure metadata; replay cannot change the terminal transfer state.
+    messages:
+      transferFailed:
+        $ref: '#/components/messages/TransferFailedV1'
+    bindings:
+      kafka:
+        topic: events.transfer.failed.v1
+        bindingVersion: 0.5.0
+operations:
+  requestAccountReservation:
+    action: send
+    description: Transaction Service sends a durable request to reserve source-account funds.
+    channel:
+      $ref: '#/channels/account.reservation.requested.v1'
+    messages:
+      - $ref: '#/channels/account.reservation.requested.v1/messages/accountReservationRequested'
+  requestAccountReservationRelease:
+    action: send
+    description: Transaction Service sends an idempotent compensation request; it does not claim release succeeded.
+    channel:
+      $ref: '#/channels/account.reservation.release-requested.v1'
+    messages:
+      - $ref: '#/channels/account.reservation.release-requested.v1/messages/accountReservationReleaseRequested'
+  publishAccountReservationAccepted:
+    action: send
+    description: Account Service publishes a durable ACTIVE reservation fact.
+    channel:
+      $ref: '#/channels/account.reservation.accepted.v1'
+    messages:
+      - $ref: '#/channels/account.reservation.accepted.v1/messages/accountReservationAccepted'
+  publishAccountReservationRejected:
+    action: send
+    description: Account Service publishes a terminal business rejection with no reservation created.
+    channel:
+      $ref: '#/channels/account.reservation.rejected.v1'
+    messages:
+      - $ref: '#/channels/account.reservation.rejected.v1/messages/accountReservationRejected'
+  publishAccountReservationReleased:
+    action: send
+    description: Account Service publishes a durable RELEASED reservation fact.
+    channel:
+      $ref: '#/channels/account.reservation.released.v1'
+    messages:
+      - $ref: '#/channels/account.reservation.released.v1/messages/accountReservationReleased'
+  publishAccountReservationExpired:
+    action: send
+    description: Account Service publishes a durable EXPIRED reservation fact.
+    channel:
+      $ref: '#/channels/account.reservation.expired.v1'
+    messages:
+      - $ref: '#/channels/account.reservation.expired.v1/messages/accountReservationExpired'
+  publishTransferCreated:
+    action: send
+    description: Transaction Service publishes a durable transfer-created workflow fact.
+    channel:
+      $ref: '#/channels/events.transfer.created.v1'
+    messages:
+      - $ref: '#/channels/events.transfer.created.v1/messages/transferCreated'
+  publishTransferCompleted:
+    action: send
+    description: Transaction Service publishes a terminal COMPLETED workflow fact.
+    channel:
+      $ref: '#/channels/events.transfer.completed.v1'
+    messages:
+      - $ref: '#/channels/events.transfer.completed.v1/messages/transferCompleted'
+  publishTransferFailed:
+    action: send
+    description: Transaction Service publishes a terminal FAILED workflow fact with final compensation status.
+    channel:
+      $ref: '#/channels/events.transfer.failed.v1'
+    messages:
+      - $ref: '#/channels/events.transfer.failed.v1/messages/transferFailed'
+components:
+  messages:
+    AccountReservationRequestedV1:
+      name: AccountReservationRequested.v1
+      title: Account reservation requested
+      summary: Transaction Service requests an idempotent source-account funds reservation.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AccountReservationRequestedV1'
+      headers:
+        $ref: '#/components/schemas/WorkflowMessageHeaders'
+      examples:
+        - name: reserveSourceFunds
+          payload:
+            eventId: '10000000-0000-4000-8000-000000000001'
+            eventType: AccountReservationRequested.v1
+            schemaVersion: 1.0.0
+            producer: transaction-service
+            occurredAt: '2026-08-31T10:15:30Z'
+            aggregateId: reservation-request-001
+            correlationId: transfer-correlation-001
+            causationId: transfer-command-001
+            transactionId: '40000000-0000-4000-8000-000000000001'
+            reservationRequestId: reservation-request-001
+            sourceAccountId: '50000000-0000-4000-8000-000000000001'
+            destinationAccountId: '50000000-0000-4000-8000-000000000002'
+            amount: '125.5000'
+            currency: USD
+            expiresAt: '2026-08-31T10:20:30Z'
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+    AccountReservationReleaseRequestedV1:
+      name: AccountReservationReleaseRequested.v1
+      title: Account reservation release requested
+      summary: Transaction Service requests release of an ACTIVE reservation as compensation.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AccountReservationReleaseRequestedV1'
+      headers:
+        $ref: '#/components/schemas/WorkflowMessageHeaders'
+      examples:
+        - name: releaseAfterWorkflowTimeout
+          payload:
+            eventId: '10000000-0000-4000-8000-000000000002'
+            eventType: AccountReservationReleaseRequested.v1
+            schemaVersion: 1.0.0
+            producer: transaction-service
+            occurredAt: '2026-08-31T10:17:00Z'
+            aggregateId: reservation-request-001
+            correlationId: transfer-correlation-001
+            causationId: workflow-timeout-001
+            transactionId: '40000000-0000-4000-8000-000000000001'
+            reservationRequestId: reservation-request-001
+            reservationId: '60000000-0000-4000-8000-000000000001'
+            sourceAccountId: '50000000-0000-4000-8000-000000000001'
+            reason: TRANSFER_TIMEOUT
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+    AccountReservationAcceptedV1:
+      name: AccountReservationAccepted.v1
+      title: Account reservation accepted
+      summary: Account Service created an ACTIVE source-account reservation.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AccountReservationAcceptedV1'
+      headers:
+        $ref: '#/components/schemas/WorkflowMessageHeaders'
+      examples:
+        - name: activeReservation
+          payload:
+            eventId: '20000000-0000-4000-8000-000000000001'
+            eventType: AccountReservationAccepted.v1
+            schemaVersion: 1.0.0
+            producer: account-service
+            occurredAt: '2026-08-31T10:15:31Z'
+            aggregateId: reservation-request-001
+            correlationId: transfer-correlation-001
+            causationId: '10000000-0000-4000-8000-000000000001'
+            transactionId: '40000000-0000-4000-8000-000000000001'
+            reservationRequestId: reservation-request-001
+            reservationId: '60000000-0000-4000-8000-000000000001'
+            sourceAccountId: '50000000-0000-4000-8000-000000000001'
+            destinationAccountId: '50000000-0000-4000-8000-000000000002'
+            amount: '125.5000'
+            currency: USD
+            expiresAt: '2026-08-31T10:20:30Z'
+            status: ACTIVE
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+    AccountReservationRejectedV1:
+      name: AccountReservationRejected.v1
+      title: Account reservation rejected
+      summary: Account Service rejected the request and created no reservation.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AccountReservationRejectedV1'
+      headers:
+        $ref: '#/components/schemas/WorkflowMessageHeaders'
+      examples:
+        - name: insufficientFunds
+          payload:
+            eventId: '20000000-0000-4000-8000-000000000002'
+            eventType: AccountReservationRejected.v1
+            schemaVersion: 1.0.0
+            producer: account-service
+            occurredAt: '2026-08-31T10:15:31Z'
+            aggregateId: reservation-request-002
+            correlationId: transfer-correlation-002
+            causationId: '10000000-0000-4000-8000-000000000003'
+            transactionId: '40000000-0000-4000-8000-000000000002'
+            reservationRequestId: reservation-request-002
+            sourceAccountId: '50000000-0000-4000-8000-000000000003'
+            destinationAccountId: '50000000-0000-4000-8000-000000000004'
+            amount: '500.0000'
+            currency: USD
+            rejectionCode: INSUFFICIENT_AVAILABLE_BALANCE
+            rejectionReason: Available balance is lower than the requested amount.
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+    AccountReservationReleasedV1:
+      name: AccountReservationReleased.v1
+      title: Account reservation released
+      summary: Account Service released the held amount for a reservation.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AccountReservationReleasedV1'
+      headers:
+        $ref: '#/components/schemas/WorkflowMessageHeaders'
+      examples:
+        - name: compensatedReservation
+          payload:
+            eventId: '20000000-0000-4000-8000-000000000003'
+            eventType: AccountReservationReleased.v1
+            schemaVersion: 1.0.0
+            producer: account-service
+            occurredAt: '2026-08-31T10:17:01Z'
+            aggregateId: reservation-request-001
+            correlationId: transfer-correlation-001
+            causationId: '10000000-0000-4000-8000-000000000002'
+            transactionId: '40000000-0000-4000-8000-000000000001'
+            reservationRequestId: reservation-request-001
+            reservationId: '60000000-0000-4000-8000-000000000001'
+            sourceAccountId: '50000000-0000-4000-8000-000000000001'
+            amount: '125.5000'
+            currency: USD
+            releaseReason: LEDGER_POSTING_FAILED
+            status: RELEASED
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+    AccountReservationExpiredV1:
+      name: AccountReservationExpired.v1
+      title: Account reservation expired
+      summary: Account Service expired an ACTIVE reservation and released its held amount.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AccountReservationExpiredV1'
+      headers:
+        $ref: '#/components/schemas/WorkflowMessageHeaders'
+      examples:
+        - name: reservationTimedOut
+          payload:
+            eventId: '20000000-0000-4000-8000-000000000004'
+            eventType: AccountReservationExpired.v1
+            schemaVersion: 1.0.0
+            producer: account-service
+            occurredAt: '2026-08-31T10:20:31Z'
+            aggregateId: reservation-request-003
+            correlationId: transfer-correlation-003
+            causationId: '20000000-0000-4000-8000-000000000005'
+            transactionId: '40000000-0000-4000-8000-000000000003'
+            reservationRequestId: reservation-request-003
+            reservationId: '60000000-0000-4000-8000-000000000003'
+            sourceAccountId: '50000000-0000-4000-8000-000000000005'
+            amount: '75.0000'
+            currency: USD
+            expiresAt: '2026-08-31T10:20:30Z'
+            status: EXPIRED
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+    TransferCreatedV1:
+      name: TransferCreated.v1
+      title: Transfer created
+      summary: Transaction Service accepted a transfer request for workflow processing.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TransferCreatedV1'
+      headers:
+        $ref: '#/components/schemas/WorkflowMessageHeaders'
+      examples:
+        - name: acceptedTransfer
+          payload:
+            eventId: '30000000-0000-4000-8000-000000000000'
+            eventType: TransferCreated.v1
+            schemaVersion: 1.0.0
+            producer: transaction-service
+            occurredAt: '2026-08-31T10:15:30Z'
+            aggregateId: '40000000-0000-4000-8000-000000000000'
+            correlationId: transfer-correlation-000
+            causationId: transfer-command-000
+            transactionId: '40000000-0000-4000-8000-000000000000'
+            reservationRequestId: reservation-request-000
+            sourceAccountId: '50000000-0000-4000-8000-000000000000'
+            destinationAccountId: '50000000-0000-4000-8000-000000000001'
+            amount: '40.0000'
+            currency: USD
+            transferRequestId: transfer-request-000
+            postingRequestId: posting-request-000
+            status: PENDING
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+    TransferCompletedV1:
+      name: TransferCompleted.v1
+      title: Transfer completed
+      summary: Transaction Service completed the transfer workflow after ledger posting.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TransferCompletedV1'
+      headers:
+        $ref: '#/components/schemas/WorkflowMessageHeaders'
+      examples:
+        - name: completedTransfer
+          payload:
+            eventId: '30000000-0000-4000-8000-000000000001'
+            eventType: TransferCompleted.v1
+            schemaVersion: 1.0.0
+            producer: transaction-service
+            occurredAt: '2026-08-31T10:16:00Z'
+            aggregateId: '40000000-0000-4000-8000-000000000004'
+            correlationId: transfer-correlation-004
+            causationId: '70000000-0000-4000-8000-000000000004'
+            transactionId: '40000000-0000-4000-8000-000000000004'
+            reservationRequestId: reservation-request-004
+            reservationId: '60000000-0000-4000-8000-000000000004'
+            postingRequestId: posting-request-004
+            postingId: '80000000-0000-4000-8000-000000000004'
+            sourceAccountId: '50000000-0000-4000-8000-000000000007'
+            destinationAccountId: '50000000-0000-4000-8000-000000000008'
+            amount: '40.0000'
+            currency: USD
+            status: COMPLETED
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+    TransferFailedV1:
+      name: TransferFailed.v1
+      title: Transfer failed
+      summary: Transaction Service reached a terminal failed state with final compensation status.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/TransferFailedV1'
+      headers:
+        $ref: '#/components/schemas/WorkflowMessageHeaders'
+      examples:
+        - name: failedAfterCompensation
+          payload:
+            eventId: '30000000-0000-4000-8000-000000000002'
+            eventType: TransferFailed.v1
+            schemaVersion: 1.0.0
+            producer: transaction-service
+            occurredAt: '2026-08-31T10:17:02Z'
+            aggregateId: '40000000-0000-4000-8000-000000000001'
+            correlationId: transfer-correlation-001
+            causationId: '20000000-0000-4000-8000-000000000003'
+            transactionId: '40000000-0000-4000-8000-000000000001'
+            reservationRequestId: reservation-request-001
+            reservationId: '60000000-0000-4000-8000-000000000001'
+            postingRequestId: posting-request-001
+            sourceAccountId: '50000000-0000-4000-8000-000000000001'
+            destinationAccountId: '50000000-0000-4000-8000-000000000002'
+            amount: '125.5000'
+            currency: USD
+            status: FAILED
+            failureStage: LEDGER_POSTING
+            failureCode: LEDGER_POSTING_FAILED
+            failureReason: Ledger Service rejected the posting request.
+            compensationStatus: COMPLETED
+            manualReviewRequired: false
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+  schemas:
+    WorkflowMessageHeaders:
+      type: object
+      description: >-
+        Required Kafka headers aligned with the ledger contract in .github PR
+        #137. Header names use kebab-case on the wire. The payload repeats the
+        same identity and timing facts in camelCase for persistence and replay.
+        Header values must equal their payload counterparts.
+      additionalProperties: false
+      required:
+        - event-id
+        - correlation-id
+        - causation-id
+        - producer
+        - schema-version
+        - occurred-at
+      properties:
+        event-id:
+          type: string
+          format: uuid
+          description: Stable immutable message identifier reused for every delivery retry.
+        correlation-id:
+          type: string
+          minLength: 1
+          description: End-to-end workflow correlation identifier propagated unchanged.
+        causation-id:
+          type: string
+          minLength: 1
+          description: Initiating command id or directly preceding eventId that caused this message.
+        producer:
+          type: string
+          enum:
+            - account-service
+            - transaction-service
+          description: Canonical name of the channel's sole producer.
+        schema-version:
+          type: string
+          const: 1.0.0
+          description: Registered payload schema version.
+        occurred-at:
+          type: string
+          format: date-time
+          description: UTC timestamp at which the command was created or business fact occurred.
+    WorkflowMessageEnvelope:
+      type: object
+      description: Common identity, ownership, timing, and workflow correlation fields.
+      additionalProperties: true
+      required:
+        - eventId
+        - eventType
+        - schemaVersion
+        - producer
+        - occurredAt
+        - aggregateId
+        - correlationId
+        - causationId
+        - transactionId
+        - reservationRequestId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique immutable identifier for this command or event instance.
+        eventType:
+          type: string
+          minLength: 1
+          description: Versioned command or event name declared by the concrete message schema.
+        schemaVersion:
+          type: string
+          const: 1.0.0
+          description: Semantic version of the registered v1 payload schema.
+        producer:
+          type: string
+          enum:
+            - account-service
+            - transaction-service
+          description: Canonical service name of the sole producer.
+        occurredAt:
+          type: string
+          format: date-time
+          description: UTC timestamp at which the command was created or business fact occurred.
+        aggregateId:
+          type: string
+          minLength: 1
+          description: reservationRequestId for reservation messages and transactionId for transfer outcomes.
+        correlationId:
+          type: string
+          minLength: 1
+          description: End-to-end workflow identifier propagated unchanged.
+        causationId:
+          type: string
+          minLength: 1
+          description: Initiating command id or directly preceding eventId that caused this message.
+        transactionId:
+          type: string
+          format: uuid
+          description: Transfer workflow identifier owned by Transaction Service.
+        reservationRequestId:
+          type: string
+          minLength: 1
+          description: Cross-service reservation idempotency key generated by Transaction Service.
+    AccountReservationRequestedV1:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMessageEnvelope'
+        - type: object
+          additionalProperties: true
+          required:
+            - sourceAccountId
+            - destinationAccountId
+            - amount
+            - currency
+            - expiresAt
+          properties:
+            eventType:
+              type: string
+              const: AccountReservationRequested.v1
+            schemaVersion:
+              type: string
+              const: 1.0.0
+            producer:
+              type: string
+              const: transaction-service
+            sourceAccountId:
+              $ref: '#/components/schemas/AccountId'
+            destinationAccountId:
+              $ref: '#/components/schemas/AccountId'
+            amount:
+              $ref: '#/components/schemas/PositiveDecimalAmount'
+            currency:
+              $ref: '#/components/schemas/Currency'
+            expiresAt:
+              type: string
+              format: date-time
+              description: UTC deadline after which an ACTIVE reservation may expire.
+    AccountReservationReleaseRequestedV1:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMessageEnvelope'
+        - type: object
+          additionalProperties: true
+          required:
+            - reservationId
+            - sourceAccountId
+            - reason
+          properties:
+            eventType:
+              type: string
+              const: AccountReservationReleaseRequested.v1
+            schemaVersion:
+              type: string
+              const: 1.0.0
+            producer:
+              type: string
+              const: transaction-service
+            reservationId:
+              type: string
+              format: uuid
+              description: Account Service reservation identifier received in the accepted event.
+            sourceAccountId:
+              $ref: '#/components/schemas/AccountId'
+            reason:
+              type: string
+              enum:
+                - TRANSFER_CANCELED
+                - TRANSFER_TIMEOUT
+                - MANUAL_COMPENSATION
+              description: Stable reason Transaction Service requires compensation.
+            postingRequestId:
+              type: string
+              minLength: 1
+              description: Ledger request idempotency key when compensation follows posting failure.
+    AccountReservationAcceptedV1:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMessageEnvelope'
+        - type: object
+          additionalProperties: true
+          required:
+            - reservationId
+            - sourceAccountId
+            - destinationAccountId
+            - amount
+            - currency
+            - expiresAt
+            - status
+          properties:
+            eventType:
+              type: string
+              const: AccountReservationAccepted.v1
+            schemaVersion:
+              type: string
+              const: 1.0.0
+            producer:
+              type: string
+              const: account-service
+            reservationId:
+              type: string
+              format: uuid
+              description: Stable Account Service reservation identifier.
+            sourceAccountId:
+              $ref: '#/components/schemas/AccountId'
+            destinationAccountId:
+              $ref: '#/components/schemas/AccountId'
+            amount:
+              $ref: '#/components/schemas/PositiveDecimalAmount'
+            currency:
+              $ref: '#/components/schemas/Currency'
+            expiresAt:
+              type: string
+              format: date-time
+            status:
+              type: string
+              const: ACTIVE
+    AccountReservationRejectedV1:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMessageEnvelope'
+        - type: object
+          additionalProperties: true
+          required:
+            - sourceAccountId
+            - destinationAccountId
+            - amount
+            - currency
+            - rejectionCode
+            - rejectionReason
+          properties:
+            eventType:
+              type: string
+              const: AccountReservationRejected.v1
+            schemaVersion:
+              type: string
+              const: 1.0.0
+            producer:
+              type: string
+              const: account-service
+            sourceAccountId:
+              $ref: '#/components/schemas/AccountId'
+            destinationAccountId:
+              $ref: '#/components/schemas/AccountId'
+            amount:
+              $ref: '#/components/schemas/PositiveDecimalAmount'
+            currency:
+              $ref: '#/components/schemas/Currency'
+            rejectionCode:
+              type: string
+              enum:
+                - ACCOUNT_NOT_FOUND
+                - ACCOUNT_NOT_ACTIVE
+                - CURRENCY_MISMATCH
+                - INSUFFICIENT_AVAILABLE_BALANCE
+                - VALIDATION_ERROR
+                - CONFLICT
+              description: Stable machine-readable business rejection.
+            rejectionReason:
+              $ref: '#/components/schemas/SanitizedReason'
+    AccountReservationReleasedV1:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMessageEnvelope'
+        - type: object
+          additionalProperties: true
+          required:
+            - reservationId
+            - sourceAccountId
+            - amount
+            - currency
+            - releaseReason
+            - status
+          properties:
+            eventType:
+              type: string
+              const: AccountReservationReleased.v1
+            schemaVersion:
+              type: string
+              const: 1.0.0
+            producer:
+              type: string
+              const: account-service
+            reservationId:
+              type: string
+              format: uuid
+            sourceAccountId:
+              $ref: '#/components/schemas/AccountId'
+            amount:
+              $ref: '#/components/schemas/PositiveDecimalAmount'
+            currency:
+              $ref: '#/components/schemas/Currency'
+            releaseReason:
+              type: string
+              enum:
+                - LEDGER_POSTING_FAILED
+                - TRANSFER_CANCELED
+                - TRANSFER_TIMEOUT
+                - MANUAL_COMPENSATION
+              description: Stable reason the held amount was released.
+            postingRequestId:
+              type: string
+              minLength: 1
+            status:
+              type: string
+              const: RELEASED
+    AccountReservationExpiredV1:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMessageEnvelope'
+        - type: object
+          additionalProperties: true
+          required:
+            - reservationId
+            - sourceAccountId
+            - amount
+            - currency
+            - expiresAt
+            - status
+          properties:
+            eventType:
+              type: string
+              const: AccountReservationExpired.v1
+            schemaVersion:
+              type: string
+              const: 1.0.0
+            producer:
+              type: string
+              const: account-service
+            reservationId:
+              type: string
+              format: uuid
+            sourceAccountId:
+              $ref: '#/components/schemas/AccountId'
+            amount:
+              $ref: '#/components/schemas/PositiveDecimalAmount'
+            currency:
+              $ref: '#/components/schemas/Currency'
+            expiresAt:
+              type: string
+              format: date-time
+              description: UTC deadline that caused this durable expiry.
+            status:
+              type: string
+              const: EXPIRED
+    TransferCreatedV1:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMessageEnvelope'
+        - type: object
+          additionalProperties: true
+          required:
+            - sourceAccountId
+            - destinationAccountId
+            - amount
+            - currency
+            - transferRequestId
+            - postingRequestId
+            - status
+          properties:
+            eventType:
+              type: string
+              const: TransferCreated.v1
+            schemaVersion:
+              type: string
+              const: 1.0.0
+            producer:
+              type: string
+              const: transaction-service
+            sourceAccountId:
+              $ref: '#/components/schemas/AccountId'
+            destinationAccountId:
+              $ref: '#/components/schemas/AccountId'
+            amount:
+              $ref: '#/components/schemas/PositiveDecimalAmount'
+            currency:
+              $ref: '#/components/schemas/Currency'
+            transferRequestId:
+              type: string
+              minLength: 1
+              description: Client request idempotency key owned by Transaction Service.
+            postingRequestId:
+              type: string
+              minLength: 1
+              description: Ledger posting idempotency key reserved for this workflow.
+            status:
+              type: string
+              const: PENDING
+    TransferCompletedV1:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMessageEnvelope'
+        - type: object
+          additionalProperties: true
+          required:
+            - reservationId
+            - postingRequestId
+            - postingId
+            - sourceAccountId
+            - destinationAccountId
+            - amount
+            - currency
+            - status
+          properties:
+            eventType:
+              type: string
+              const: TransferCompleted.v1
+            schemaVersion:
+              type: string
+              const: 1.0.0
+            producer:
+              type: string
+              const: transaction-service
+            reservationId:
+              type: string
+              format: uuid
+            postingRequestId:
+              type: string
+              minLength: 1
+              description: Ledger posting idempotency key.
+            postingId:
+              type: string
+              format: uuid
+              description: Immutable posting identifier from LedgerPostingCompleted.v1.
+            sourceAccountId:
+              $ref: '#/components/schemas/AccountId'
+            destinationAccountId:
+              $ref: '#/components/schemas/AccountId'
+            amount:
+              $ref: '#/components/schemas/PositiveDecimalAmount'
+            currency:
+              $ref: '#/components/schemas/Currency'
+            status:
+              type: string
+              const: COMPLETED
+    TransferFailedV1:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMessageEnvelope'
+        - type: object
+          additionalProperties: true
+          required:
+            - sourceAccountId
+            - destinationAccountId
+            - amount
+            - currency
+            - status
+            - failureStage
+            - failureCode
+            - failureReason
+            - compensationStatus
+            - manualReviewRequired
+          properties:
+            eventType:
+              type: string
+              const: TransferFailed.v1
+            schemaVersion:
+              type: string
+              const: 1.0.0
+            producer:
+              type: string
+              const: transaction-service
+            reservationId:
+              type: string
+              format: uuid
+              description: Present when Account Service created a reservation.
+            postingRequestId:
+              type: string
+              minLength: 1
+              description: Present when Transaction Service requested ledger posting.
+            postingId:
+              type: string
+              format: uuid
+              description: Present only when an immutable posting exists.
+            sourceAccountId:
+              $ref: '#/components/schemas/AccountId'
+            destinationAccountId:
+              $ref: '#/components/schemas/AccountId'
+            amount:
+              $ref: '#/components/schemas/PositiveDecimalAmount'
+            currency:
+              $ref: '#/components/schemas/Currency'
+            status:
+              type: string
+              const: FAILED
+            failureStage:
+              type: string
+              enum:
+                - RESERVATION
+                - LEDGER_POSTING
+                - RESERVATION_RELEASE
+                - WORKFLOW_TIMEOUT
+              description: Workflow stage that established terminal failure.
+            failureCode:
+              type: string
+              enum:
+                - RESERVATION_REJECTED
+                - RESERVATION_EXPIRED
+                - LEDGER_POSTING_FAILED
+                - RESERVATION_RELEASE_FAILED
+                - WORKFLOW_TIMED_OUT
+                - WORKFLOW_CONFLICT
+              description: Stable machine-readable transfer failure classification.
+            failureReason:
+              $ref: '#/components/schemas/SanitizedReason'
+            compensationStatus:
+              type: string
+              enum:
+                - NOT_REQUIRED
+                - COMPLETED
+                - FAILED
+              description: Final compensation state; PENDING is forbidden on this terminal event.
+            manualReviewRequired:
+              type: boolean
+              description: Must be true when compensationStatus is FAILED or a contradictory terminal outcome was quarantined.
+        - if:
+            properties:
+              compensationStatus:
+                const: FAILED
+          then:
+            properties:
+              manualReviewRequired:
+                const: true
+    AccountId:
+      type: string
+      format: uuid
+      description: Opaque account identifier; never an account number or customer PII.
+    Currency:
+      type: string
+      pattern: '^[A-Z]{3}$'
+      description: ISO 4217 alphabetic currency code.
+    PositiveDecimalAmount:
+      type: string
+      pattern: '^(?:0|[1-9][0-9]*)(?:\.[0-9]{1,4})?$'
+      not:
+        enum:
+          - '0'
+          - '0.0'
+          - '0.00'
+          - '0.000'
+          - '0.0000'
+      description: Decimal amount encoded as a string, at least 0.0001, with no more than four fractional digits.
+    SanitizedReason:
+      type: string
+      minLength: 1
+      maxLength: 500
+      description: Human-readable detail without secrets, PII, account numbers, stack traces, or internal implementation data.
