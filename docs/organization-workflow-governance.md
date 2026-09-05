@@ -46,4 +46,4 @@ GitHub branch protection is not available for this private repository on the cur
 
 ## Current Boundaries
 
-Organization-level workflow access is configured. The reusable Java CI workflow and its Java service caller template are available. Lifecycle automation and its caller template remain separately tracked work; do not treat this document as evidence that they already exist.
+Organization-level workflow access is configured. The reusable Java CI workflow, Java service caller template, reusable GitHub Project status workflow, and its caller template are available. Project status lifecycle behavior and credential setup are documented in [`docs/reusable-project-status.md`](reusable-project-status.md).

@@ -14,6 +14,7 @@ This repository is not a deployable application. It provides shared contributor 
 - [Workstation debugging against SIT](docs/workstation-debugging-against-sit.md)
 - [Insomnia MFA workflow](docs/insomnia-mfa-workflow.md)
 - [README documentation baseline](docs/readme-standard.md)
+- [Reusable GitHub Project status workflow](docs/reusable-project-status.md)
 
 ## Contribution Workflow
 
