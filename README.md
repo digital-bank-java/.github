@@ -20,3 +20,12 @@ This repository is not a deployable application. It provides shared contributor 
 ## Contribution Workflow
 
 Use a tracked GitHub issue, a dedicated branch, and a pull request for every change. Repository-specific quality commands and ownership rules remain authoritative; see the repository's `README.md`, `AGENTS.md`, and `CODEOWNERS` file.
+
+## Event Contract Validation
+
+The versioned Kafka contracts under `docs/contracts/` are checked by the
+path-scoped `Validate AsyncAPI contracts` workflow. The dependency-free Ruby
+validator checks AsyncAPI metadata, Kafka channel and operation wiring, local
+references, required event/header metadata, and the declared
+`BACKWARD_TRANSITIVE` Schema Registry compatibility policy. Schema Registry
+deployment and credentials remain platform responsibilities.
