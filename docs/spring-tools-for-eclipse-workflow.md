@@ -52,6 +52,69 @@ Stop an active run or debug process with the red square **Terminate** button in 
 
 Remove breakpoints that are no longer needed by double-clicking their gutter markers or using the **Breakpoints** view. Before testing a restarted service, confirm a previous application process is not still holding its port.
 
+## Trace A Layered HTTP Request
+
+Use this exercise after a service has a controller, application service, domain logic, and persistence adapter. It demonstrates the request path without changing production behavior.
+
+### Expected Request Flow
+
+For a database-backed command such as opening an account, the call stack should follow this shape:
+
+```text
+HTTP request from Insomnia
+  -> REST controller (input adapter)
+  -> request validation and mapping
+  -> application input port / application service
+  -> domain object and business invariants
+  -> repository output port
+  -> JPA persistence adapter
+  -> Spring Data repository and PostgreSQL
+  -> response mapping
+  -> HTTP response
+```
+
+The names differ between services, but the direction should remain the same: web and database details stay at the edges, while the application and domain layers coordinate the use case.
+
+In Node.js terms, this is similar to:
+
+```text
+Express/Fastify route
+  -> request schema validation
+  -> use-case function
+  -> domain module
+  -> repository interface
+  -> PostgreSQL adapter
+```
+
+Java interfaces such as input and output ports play a role similar to TypeScript interfaces or injected repository contracts. Spring dependency injection supplies the concrete adapter at runtime.
+
+### Debugging Exercise
+
+1. Start the service with **Debug As** > **Spring Boot App**, using the documented `sit` workstation configuration when connecting to SIT.
+2. Put breakpoints on the controller entry point, application service, domain decision, output-port call, and persistence adapter. Breakpoints should be on executable statements, not annotations or blank lines.
+3. Send one valid request from Insomnia. When Eclipse suspends, record the current class and method in the Debug view.
+4. Use **Step Over** for statements in the current layer. Use **Step Into** only when the called application or domain method is the next part of the behavior being examined.
+5. At the output-port breakpoint, inspect the domain identifier and non-sensitive business values. Do not inspect, copy, or log credentials, access tokens, full customer identity data, or database secrets.
+6. Use **Step Return** after the layer has been understood, then **Resume** to reach the next breakpoint.
+7. Confirm the request returns the expected HTTP status and that the database-backed state changed only when the use case is designed to write state.
+8. Stop the debug session and remove the temporary breakpoints when the trace is complete.
+
+### What To Record
+
+The useful result is a short trace, not a screenshot of every stack frame:
+
+```text
+Request: <method and path>
+Controller: <class and method>
+Application service/input port: <class and method>
+Domain decision: <invariant or state transition>
+Output adapter: <port and adapter>
+Persistence result: <created/read/rejected>
+HTTP result: <status>
+```
+
+If the request stops in Spring, JUnit, JDK, or generated framework code, that is an implementation frame rather than a missing application layer. Use **Step Return**, **Resume**, or a breakpoint on the next application statement.
+
 ## Before A Pull Request
 
 Run the final gate from the repository root:
