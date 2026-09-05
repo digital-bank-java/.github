@@ -37,7 +37,7 @@ sequenceDiagram
 
 The access token should contain only the claims needed by downstream authorization: subject, session id, issuer, audience, issued-at, expiry, and a token identifier where replay detection requires it. Credentials, passwords, OTP values, customer PII, and internal exception details never belong in a token.
 
-The current Auth and MFA foundations use in-memory adapters in SIT. That is suitable for an isolated foundation demonstration, but a multi-replica deployment requires a durable or shared session/challenge store, key rotation, revocation strategy, and operational recovery before UAT or production.
+Auth session state is PostgreSQL-backed in the current merged foundation. MFA enrollment and challenge state are also PostgreSQL-backed, with TOTP secrets encrypted before persistence. In-memory adapters remain test-only foundations. A multi-replica UAT or production deployment still requires approved key rotation, revocation, recovery, and operational controls before deployment.
 
 ## Step-Up Decision
 
@@ -185,4 +185,3 @@ The design does not require a dedicated orchestrator service. Transaction Servic
 - Failure handling never edits or deletes an accepted ledger entry.
 - Secrets and sensitive values are absent from logs, events, examples, and problem responses.
 - Durable session/challenge storage and key/revocation operations are completed before a multi-replica UAT or production deployment.
-
