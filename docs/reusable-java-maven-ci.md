@@ -2,6 +2,8 @@
 
 The organization workflow at `.github/workflows/java-maven-verify.yml` provides the common Java quality gate for Maven Wrapper-based services.
 
+For OpenAPI contract validation, breaking-change detection, and versioned contract artifacts, use the separate [reusable OpenAPI CI workflow](reusable-openapi-ci.md). Service repositories should adopt it in a service-owned pull request; this repository does not modify service workflows automatically.
+
 It deliberately performs only the common verification responsibility:
 
 - checks out the calling repository
