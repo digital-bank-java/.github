@@ -737,3 +737,11 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - The six HTTP-path service PRs add only Spring Boot's managed `spring-boot-starter-zipkin`; they do not change business payloads, correlation-ID behavior, CI workflows, or add redundant tests. Existing tests passed: Gateway 20, Customer 7, Account 64, Transaction 89, MFA 46, and Ledger 27.
 - Each service also keeps the exporter disabled by default for standalone/test execution; the shared SIT profile explicitly enables it. The Zipkin Helm chart uses the official slim image because this slice needs HTTP ingestion and in-memory storage only.
 - Required next verification after merge: deploy Zipkin, refresh Config Server, roll out the affected services, then correlate one API Gateway request across at least two services in the Zipkin UI. Do not close #242 until this SIT evidence exists. AWS X-Ray/OpenTelemetry Collector mapping remains deferred to Sprint 7.
+
+### 2026-09-06 - Auth fixture readiness for MFA acceptance
+
+- Runtime inspection found that the deployed Auth Service received the JWT secret and fixture password hash, but not the synthetic fixture username required by the controlled MFA acceptance flow.
+- Created and parented Sprint 4 Task [`.github#243`](https://github.com/digital-bank-java/.github/issues/243) under [`.github#208`](https://github.com/digital-bank-java/.github/issues/208). The task is assigned to `ramioooz`, typed as `Task`, marked `In progress`, and mapped to Sprint 4, Auth Service, and Step-Up Security.
+- Opened [auth-service PR #11](https://github.com/digital-bank-java/auth-service/pull/11). It adds configurable `fixture-username` Secret wiring for `AUTH_FIXTURE_USERNAME` and documents the three required Auth Secret keys without adding credentials, routes, CI jobs, or redundant tests.
+- The existing SIT Secret now contains the documented synthetic `fixture-username` key; existing Secret values were not read or changed.
+- After PR #11 merges, roll out Auth Service and execute the controlled `.github#208` acceptance: one successful step-up, one assurance/outbox and Transaction inbox continuation, duplicate no-op, malformed-event DLQ, and read-only AKHQ/DBeaver evidence. Keep #208 and Sprint 4 open until those checks pass.
