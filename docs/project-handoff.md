@@ -395,6 +395,14 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - The native GitHub sub-issue relationship is authoritative; a `Parent:` line in an issue body alone is not sufficient. New work must be assigned a Sprint, native Issue Type, parent, assignee, and Project status before implementation begins.
 - After the governance repair, the full 246-item audit reports zero parentless non-Epic issues and zero missing native Issue Types. Corrected the native types for [`.github#125`](https://github.com/digital-bank-java/.github/issues/125), [`.github#128`](https://github.com/digital-bank-java/.github/issues/128), [`.github#130`](https://github.com/digital-bank-java/.github/issues/130), [`.github#166`](https://github.com/digital-bank-java/.github/issues/166), [`.github#167`](https://github.com/digital-bank-java/.github/issues/167), [`.github#168`](https://github.com/digital-bank-java/.github/issues/168), [`.github#169`](https://github.com/digital-bank-java/.github/issues/169), [`.github#182`](https://github.com/digital-bank-java/.github/issues/182), [`.github#183`](https://github.com/digital-bank-java/.github/issues/183), and [`infra-sit#26`](https://github.com/digital-bank-java/infra-sit/issues/26).
 
+### 2026-09-05 - PostgreSQL prerequisite and current SIT event-flow state
+
+- Confirmed the merged PostgreSQL database-init password fix in [`infra-sit#33`](https://github.com/digital-bank-java/infra-sit/pull/33) and retried the local SIT release without changing the existing PVC or data.
+- Helm release `postgres` is now `deployed` at revision 5; the post-upgrade database-init hook completed successfully and was removed by its success policy.
+- Read-only verification confirmed all expected logical databases, including `auth_service`, and all 12 SIT workloads are currently Ready.
+- [`config-repo#41`](https://github.com/digital-bank-java/config-repo/pull/41), [`payment-service#9`](https://github.com/digital-bank-java/payment-service/pull/9), and the related infrastructure prerequisites are merged. The Notification Kafka fix is prepared in [`notification-service#9`](https://github.com/digital-bank-java/notification-service/pull/9), which was reopened because its code was previously validated only from a feature image and not merged to `main`.
+- Sprint 3 event-flow task [`.github#213`](https://github.com/digital-bank-java/.github/issues/213) remains open until the Notification fix is merged and a representative transfer is verified end to end through reservation, ledger posting, outcome handling, and transaction state. No AWS/UAT/PROD work is included in this SIT checkpoint.
+
 ### 2026-09-05 - Auth Service SIT database prerequisite
 
 - Created parented task [`.github#214`](https://github.com/digital-bank-java/.github/issues/214) under Auth session Story #46 and moved it to In review.
@@ -636,6 +644,13 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Confirmed that Notification Service has no notification HTTP endpoint in the current scope; no fabricated direct-service request or public notification API was added.
 - Kept duplicate delivery, retry, DLQ/quarantine, sensitive-data handling, and event/balance ownership boundaries explicit.
 
+### 2026-09-04 - Shared Auth JWT Secret Runbook
+
+- Added [`docs/sit-auth-jwt-secret.md`](sit-auth-jwt-secret.md) as the controlled local SIT procedure for generating, verifying, rotating, and removing the synthetic `auth-service-secrets/jwt-secret` value without exposing secret material.
+- Recorded the shared Helm contract for Auth Service and Transaction Service, including the current merge dependencies and ordered rollout checks.
+- Kept AWS Secrets Manager and External Secrets Operator delivery as deferred Sprint 7 scope for UAT and PROD; the local Kubernetes procedure must not be promoted to cloud environments.
+- Supporting task: [`.github#192`](https://github.com/digital-bank-java/.github/issues/192).
+
 ### 2026-09-05 - Current SIT rollout review wave
 
 - Merged the complete local SIT event-driven rollout guide in [`.github` PR #216](https://github.com/digital-bank-java/.github/pull/216), tracked by [task #215](https://github.com/digital-bank-java/.github/issues/215).
@@ -645,3 +660,12 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - After the PostgreSQL repair is merged, retry the PostgreSQL release first. Then merge Payment configuration, Kafka transfer topics, and ledger-driven SIT event configuration in that order before rolling out the affected services.
 - API Gateway Redis rate limiting and downstream resilience are complete for the current code scope through merged [api-gateway #21](https://github.com/digital-bank-java/api-gateway/pull/21) and [api-gateway #22](https://github.com/digital-bank-java/api-gateway/pull/22); the tracking task and parent story are closed. SIT rollout verification remains part of the pending environment wave.
 - Do not record the full Auth, Payment, Notification, or event-driven transfer rollout as complete until the merged configurations are served by Config Server and the workloads and representative flows are verified in `digital-bank-sit`.
+
+### 2026-09-03 - Mainline Integration PR Wave
+
+- Re-audited the service repositories and confirmed that several previously merged PRs were stacked into feature branches rather than present on `main`.
+- Opened non-draft integration PRs for the complete reviewed stacks: Auth Service #5, MFA Service #7, Payment Service #6, Account Service #37, Ledger Service #17, API Gateway #22, Transaction Service #13, and Notification Service #6.
+- Opened `.github` PR #186 to place the governed transfer-event contract on `main`; it should be available before enabling Notification Service transfer-event consumption.
+- All service integration PRs passed their existing Maven, Helm, and container checks. No PR was merged directly.
+- Added `.github#67` platform architecture documentation in PR #187, covering service ownership, local SIT topology, Kafka/outbox flow, ledger-driven transfer consistency, and the future AWS hosting direction.
+- The next state transition requires human review and merge of the prepared PRs, followed by local SIT rollout and cross-service verification. AWS/UAT/PROD implementation remains deferred.
