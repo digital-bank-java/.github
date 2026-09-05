@@ -745,3 +745,9 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Opened [auth-service PR #11](https://github.com/digital-bank-java/auth-service/pull/11). It adds configurable `fixture-username` Secret wiring for `AUTH_FIXTURE_USERNAME` and documents the three required Auth Secret keys without adding credentials, routes, CI jobs, or redundant tests.
 - The existing SIT Secret now contains the documented synthetic `fixture-username` key; existing Secret values were not read or changed.
 - After PR #11 merges, roll out Auth Service and execute the controlled `.github#208` acceptance: one successful step-up, one assurance/outbox and Transaction inbox continuation, duplicate no-op, malformed-event DLQ, and read-only AKHQ/DBeaver evidence. Keep #208 and Sprint 4 open until those checks pass.
+
+### 2026-09-06 - Fluent Bit Docker Desktop source probe
+
+- A read-only SIT node probe confirmed that Docker Desktop exposes Docker JSON logs under `/var/lib/docker/containers/<container-id>/*-json.log`, while the standard `/var/log/containers` and `/var/log/pods` paths contain no readable log files for the DaemonSet.
+- Docker container configuration labels do contain Kubernetes pod, namespace, container, and log-path metadata, but a raw path-only Fluent Bit input would not preserve that mapping or the existing structured-log enrichment contract.
+- No partial collector was added. Fluent Bit task [`.github#94`](https://github.com/digital-bank-java/.github/issues/94) remains open until the runtime exposes supported Kubernetes log symlinks or a metadata-preserving Docker-ID adapter is implemented and verified.
