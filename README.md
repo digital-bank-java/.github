@@ -10,6 +10,7 @@ This repository is not a deployable application. It provides shared contributor 
 - [Reproducible local Kubernetes SIT setup and verification](docs/local-sit.md)
 - [Platform naming, ports, configuration, API, and infrastructure conventions](docs/platform-conventions.md)
 - [Workstation debugging against SIT](docs/workstation-debugging-against-sit.md)
+- [Insomnia MFA workflow](docs/insomnia-mfa-workflow.md)
 - [README documentation baseline](docs/readme-standard.md)
 
 ## Contribution Workflow
