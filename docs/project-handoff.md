@@ -779,6 +779,12 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Deployed the candidate Zipkin chart and rebuilt the merged API Gateway and Auth Service tracing images with temporary local SIT tags. A controlled gateway login produced one trace containing spans from both `api-gateway` and `auth-service`; Zipkin health and span ingestion returned successfully. This is pre-merge runtime evidence and must be repeated after PR #39 is merged with the normal release tags.
 - No direct merge to `main`, public balance-mutation API, redundant CI workflow, or broad test expansion was introduced. The next transfer acceptance remains dependent on review/merge of #42, then a controlled positive-balance SIT fixture for successful reservation, ledger completion, duplicate delivery, and DLQ verification.
 
+### 2026-09-06 - Account reservation-event candidate rollout
+
+- Built the reviewed [account-service PR #42](https://github.com/digital-bank-java/account-service/pull/42) branch as the temporary SIT image `digital-bank-java/account-service:event-timestamp-20260906`; the image build completed successfully with 65 tests passing.
+- Deployed that candidate with the existing SIT Helm chart. The deployment rolled out successfully, the pod is `1/1 Ready`, and `/actuator/health` returned `status: UP`.
+- This is runtime validation only; PR #42 remains open for review and merge. A controlled positive-balance transfer still requires an authorized synthetic fixture. No public balance-mutation endpoint or direct database mutation was introduced.
+
 ### 2026-09-06 - Auth fixture task closeout and review-state correction
 
 - Auth Service PR [#11](https://github.com/digital-bank-java/auth-service/pull/11) is merged with successful Maven verification, Helm validation, and container smoke checks. The SIT `auth-service` deployment is `1/1` Ready and its rendered environment references `AUTH_FIXTURE_USERNAME` and `AUTH_FIXTURE_PASSWORD_HASH` from `auth-service-secrets`; Secret values were not read or recorded.
