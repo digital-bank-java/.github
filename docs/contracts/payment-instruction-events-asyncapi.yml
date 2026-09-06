@@ -1,0 +1,229 @@
+asyncapi: 3.0.0
+info:
+  title: Payment Instruction State Events
+  version: 1.0.0
+  description: >-
+    Payment Service publishes durable facts whenever a payment instruction is
+    accepted or reaches a terminal state. Transaction Service and Notification
+    Service may consume these facts for workflow and delivery work. Consumers
+    must process each event idempotently; these events do not mutate accounts
+    or ledger postings.
+defaultContentType: application/json
+x-data-classification: confidential-financial
+x-schema-registry:
+  boundary: AsyncAPI payload schemas are the organization contract; the Schema Registry stores serialized schemas and enforces compatibility.
+  subjectStrategy: TopicNameStrategy
+  subjects:
+    payment.instruction.state.v1: payment.instruction.state.v1-value
+  compatibility: BACKWARD_TRANSITIVE
+  provisioning: Platform infrastructure owns registry subjects and Kafka topic provisioning. This document contains no registry URL, credential, or schema id.
+channels:
+  payment.instruction.state.v1:
+    address: payment.instruction.state.v1
+    description: >-
+      Payment Service publishes this fact after the payment instruction and
+      its corresponding outbox row are durable. The message covers PENDING,
+      COMPLETED, and FAILED business states. The Kafka partition key is
+      aggregateId, so ordering is guaranteed only for one instruction key on
+      this topic. Publication is at least once and eventId is stable across
+      delivery retries.
+    x-producer: payment-service
+    x-consumers:
+      - transaction-service
+      - notification-service
+    x-partition-key: aggregateId
+    x-delivery-semantics: at-least-once; consumers use an inbox keyed by eventId.
+    x-dead-letter-topic: payment.instruction.state.v1.dlq
+    x-dead-letter-policy: >-
+      Retry transient consumer failures with bounded backoff. After the
+      attempt limit, preserve the original event and failure metadata in this
+      topic-specific DLQ or quarantine topic. Replay is explicit, authorized,
+      and idempotent; a DLQ record is never a new business fact.
+    messages:
+      paymentInstructionStateChanged:
+        $ref: '#/components/messages/PaymentInstructionStateChangedV1'
+    bindings:
+      kafka:
+        topic: payment.instruction.state.v1
+        bindingVersion: 0.5.0
+operations:
+  publishPaymentInstructionStateChanged:
+    action: send
+    description: Payment Service publishes a durable payment instruction state fact without mutating account or ledger state.
+    channel:
+      $ref: '#/channels/payment.instruction.state.v1'
+    messages:
+      - $ref: '#/channels/payment.instruction.state.v1/messages/paymentInstructionStateChanged'
+components:
+  messages:
+    PaymentInstructionStateChangedV1:
+      name: PaymentInstructionStateChanged.v1
+      title: Payment instruction state changed
+      summary: A payment instruction was accepted or reached a terminal business state.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PaymentInstructionStateChangedV1'
+      headers:
+        $ref: '#/components/schemas/PaymentEventHeaders'
+      examples:
+        - name: pendingInstruction
+          summary: Payment instruction accepted for downstream workflow processing.
+          payload:
+            eventId: '7d2a4b12-3e1c-4b4e-8b2d-2d3f4c5a6b7c'
+            eventType: PaymentInstructionStateChanged.v1
+            schemaVersion: 1.0.0
+            producer: payment-service
+            occurredAt: '2026-09-06T19:00:00Z'
+            aggregateId: '123e4567-e89b-12d3-a456-426614174000'
+            correlationId: payment-workflow-001
+            causationId: payment-command-001
+            instructionId: '123e4567-e89b-12d3-a456-426614174000'
+            idempotencyKey: payment-request-001
+            amount: '125.50'
+            currency: AED
+            status: PENDING
+        - name: completedInstruction
+          summary: Payment instruction completed.
+          payload:
+            eventId: '4f4a8a5d-6d39-4b4c-9b91-6c7d8e9f0a12'
+            eventType: PaymentInstructionStateChanged.v1
+            schemaVersion: 1.0.0
+            producer: payment-service
+            occurredAt: '2026-09-06T19:01:00Z'
+            aggregateId: '123e4567-e89b-12d3-a456-426614174000'
+            correlationId: payment-workflow-001
+            causationId: '123e4567-e89b-12d3-a456-426614174000:COMPLETED'
+            instructionId: '123e4567-e89b-12d3-a456-426614174000'
+            idempotencyKey: payment-request-001
+            amount: '125.50'
+            currency: AED
+            status: COMPLETED
+        - name: failedInstruction
+          summary: Payment instruction reached a terminal business failure.
+          payload:
+            eventId: '9f8e7d6c-5b4a-4938-8271-0f1e2d3c4b5a'
+            eventType: PaymentInstructionStateChanged.v1
+            schemaVersion: 1.0.0
+            producer: payment-service
+            occurredAt: '2026-09-06T19:02:00Z'
+            aggregateId: '123e4567-e89b-12d3-a456-426614174000'
+            correlationId: payment-workflow-001
+            causationId: '123e4567-e89b-12d3-a456-426614174000:FAILED'
+            instructionId: '123e4567-e89b-12d3-a456-426614174000'
+            idempotencyKey: payment-request-001
+            amount: '125.50'
+            currency: AED
+            status: FAILED
+            failureReason: Provider rejected the payment instruction.
+      bindings:
+        kafka:
+          bindingVersion: 0.5.0
+  schemas:
+    PaymentEventHeaders:
+      type: object
+      description: Required Kafka headers. Header names use kebab-case on the wire; values repeat the common payload envelope metadata.
+      additionalProperties: false
+      required:
+        - event-id
+        - correlation-id
+        - causation-id
+        - producer
+        - schema-version
+        - occurred-at
+      properties:
+        event-id:
+          type: string
+          format: uuid
+          description: Stable event identifier reused for every delivery retry.
+        correlation-id:
+          type: string
+          minLength: 1
+          description: End-to-end workflow correlation identifier.
+        causation-id:
+          type: string
+          minLength: 1
+          description: Command or preceding event that caused this event.
+        producer:
+          type: string
+          const: payment-service
+        schema-version:
+          type: string
+          const: 1.0.0
+        occurred-at:
+          type: string
+          format: date-time
+    PaymentInstructionStateChangedV1:
+      type: object
+      additionalProperties: true
+      required:
+        - eventId
+        - eventType
+        - schemaVersion
+        - producer
+        - occurredAt
+        - aggregateId
+        - correlationId
+        - causationId
+        - instructionId
+        - idempotencyKey
+        - amount
+        - currency
+        - status
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Immutable identifier for this event instance, reused across delivery retries.
+        eventType:
+          type: string
+          const: PaymentInstructionStateChanged.v1
+        schemaVersion:
+          type: string
+          const: 1.0.0
+        producer:
+          type: string
+          const: payment-service
+        occurredAt:
+          type: string
+          format: date-time
+        aggregateId:
+          type: string
+          format: uuid
+          description: Payment instruction aggregate used as the Kafka partition key.
+        correlationId:
+          type: string
+          minLength: 1
+        causationId:
+          type: string
+          minLength: 1
+        instructionId:
+          type: string
+          format: uuid
+        idempotencyKey:
+          type: string
+          minLength: 1
+        amount:
+          type: string
+          pattern: '^(?:0|[1-9][0-9]*)(?:\.[0-9]{1,4})?$'
+          description: Positive decimal amount encoded as a string with no more than four fractional digits.
+          not:
+            enum:
+              - '0'
+              - '0.0'
+              - '0.00'
+              - '0.000'
+              - '0.0000'
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        status:
+          type: string
+          enum:
+            - PENDING
+            - COMPLETED
+            - FAILED
+        failureReason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Sanitized failure detail present only when status is FAILED.
