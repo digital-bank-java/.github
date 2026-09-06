@@ -10,7 +10,8 @@ It is not a substitute for UAT or production. UAT and PROD infrastructure, manag
 
 Local tooling is deliberately separate from banking runtime workloads:
 
-- `digital-bank-sit`: PostgreSQL, Kafka, Config Server, API Gateway, and banking services.
+- `digital-bank-sit`: PostgreSQL, Kafka, Config Server, API Gateway, banking
+  services, OpenSearch, OpenSearch Dashboards, and Fluent Bit.
 - `digital-bank-tooling`: AKHQ, used only for local Kafka inspection.
 - Headlamp Desktop: workstation software that uses the active kubeconfig; it is not installed in the cluster.
 
@@ -136,6 +137,11 @@ its Config Server, database, secret, and Kafka prerequisites have been verified.
 ## Workstation Access and Verification
 
 Kubernetes Services are `ClusterIP` by design, so they are not directly reachable from the Mac. Use temporary port forwarding for local verification. Keep each port-forward command running in its own terminal and stop it with `Ctrl+C` when finished.
+
+For the centralized logging acceptance, use the dedicated [Local SIT centralized
+logging verification](local-sit-logging-verification.md) runbook. It covers the
+OpenSearch/Dashboards port-forwards, structured-field searches, reproducible
+local monitors, and the local-only access and lifecycle boundary.
 
 ### API Gateway
 
