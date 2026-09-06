@@ -759,6 +759,7 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Helm lint/template, existing Fluent Bit and redaction validators, the Docker-mode Fluent Bit 3.2.10 fixture, and `git diff --check` pass. The container-ID tag matcher was corrected to handle the actual `*-json.log` tag suffix and the focused fixture was rerun successfully.
 - PR #38 is open, non-draft, mergeable, and its Helm CI check is green. Do not close #94 until the PR is reviewed/merged and the Docker Desktop SIT/OpenSearch evidence is repeated against the deployed chart.
 - Current reviewable implementation PRs remain listed in the GitHub project; no direct merge to `main` was performed. After the pending service/config/Zipkin PRs are merged, roll out the observability wave and verify one cross-service trace before closing [`.github#242`](https://github.com/digital-bank-java/.github/issues/242).
+- The current Docker Desktop SIT release was also runtime-verified: Fluent Bit processed 372 CRI records and 397 Docker JSON records, both OpenSearch outputs reported zero errors/retries, and an authenticated OpenSearch query returned 1,749 Docker-source documents with selected Kubernetes metadata. This is pre-merge evidence only; repeat it after PR #38 merges.
 
 ### 2026-09-06 - Resilience backlog deduplication
 
