@@ -327,13 +327,13 @@ balance API.
 | Scenario | Observable contract behavior | Availability |
 | --- | --- | --- |
 | Pending | Create returns `201` with `PENDING`; the workflow awaits reservation processing. | HTTP workflow foundation is implemented. |
-| Insufficient funds / reservation rejected | Account Service rejects the reservation when available-balance rules fail; Transaction Service eventually records `FAILED`. | Future account reservation and event integration; not triggerable by HTTP alone today. |
+| Insufficient funds / reservation rejected | Account Service rejects the reservation when available-balance rules fail; Transaction Service eventually records `FAILED` and the saga releases the reservation. | Implemented in the merged event-driven services; requires a controlled SIT fixture and persisted evidence. |
 | Duplicate | Exact retry returns `200` and `Idempotent-Replay: true`; changed data for an existing identity returns `409`. | Implemented in the workflow HTTP contract. |
-| Awaiting ledger posting | An accepted reservation advances the workflow to `AWAITING_LEDGER_POSTING` and produces the next orchestration action. | Future account-reservation transport and deployed event consumers. |
-| Completed | A governed ledger posting completion advances the workflow to `COMPLETED`. | Future ledger posting integration and SIT event deployment. |
-| Failed | A reservation rejection or ledger posting failure produces terminal `FAILED` state; compensation follows the event contract. | Future account/ledger integration; do not claim an HTTP-only failure test proves compensation. |
-| Authorization denied | Missing/invalid credentials return `401`; an authenticated subject without the required scope or allowlist entry returns `403`. | Supported by the Transaction Service authorization contract when the protected route is deployed. |
-| MFA / step-up | No current transfer request field or route supports this check. | Future and dependent on an explicit auth/MFA contract. |
+| Awaiting ledger posting | An accepted reservation advances the workflow to `AWAITING_LEDGER_POSTING` and produces the next orchestration action. | Implemented; verify through the deployed Account, Ledger, Kafka, and Transaction consumers. |
+| Completed | A governed ledger posting completion advances the workflow to `COMPLETED`. | Implemented; verify the ledger posting, account projection, and transaction inbox evidence together. |
+| Failed | A reservation rejection or ledger posting failure produces terminal `FAILED` state; compensation follows the event contract. | Implemented; verify release/reversal behavior and the terminal state in SIT. |
+| Authorization denied | Missing/invalid credentials return `401`; an authenticated subject without the required scope or allowlist entry returns `403`. | Implemented in the merged gateway and Transaction Service security path; requires the SIT secret and fixture. |
+| MFA / step-up | A transfer-bound challenge can be created and verified; the resulting assurance fact resumes only the matching `AWAITING_STEP_UP` workflow. | Implemented in the merged Auth, MFA, and Transaction services; requires the controlled SIT TOTP fixture. |
 
 `REVERSED` is a domain state in the workflow foundation, but the current HTTP
 surface does not provide a reverse operation. Do not document or test reversal
@@ -348,7 +348,7 @@ the reservation and ledger workflow events, with Ledger Service remaining the
 owner of immutable postings. There is deliberately no direct public balance
 mutation API for this test.
 
-When the event-driven stack is deployed, collect evidence in this order:
+For the current merged event-driven stack, collect evidence in this order:
 
 1. Record the create response and its `transferId`/`transactionId`,
    `correlationId`, and request identifiers.
@@ -362,10 +362,11 @@ When the event-driven stack is deployed, collect evidence in this order:
    discussing retries; an at-least-once redelivery is not a new business fact.
 
 The account-reservation and transfer-event contracts are the source of truth
-for event ownership, correlation, idempotency, and terminal outcomes. Until
-the dependent Transaction Service, Account Service, Ledger Service, gateway,
-configuration, and SIT rollout work is complete, report only the HTTP
-workflow state that was actually observed.
+for event ownership, correlation, idempotency, and terminal outcomes. The
+implementation is merged, but the Sprint 3 acceptance remains incomplete until
+the controlled SIT scenarios and their Account, Ledger, Transaction, Kafka, and
+AKHQ/DBeaver evidence are recorded. Report only the state and event identities
+that were actually observed.
 
 ## Safe Evidence And Export Rules
 
@@ -388,8 +389,10 @@ workflow state that was actually observed.
 - [Transfer contract PR #173](https://github.com/digital-bank-java/.github/pull/173)
 - [Transfer event contract PR #176](https://github.com/digital-bank-java/.github/pull/176)
 - [Transaction Service repository](https://github.com/digital-bank-java/transaction-service)
+- [Sprint 3 transfer verification task](https://github.com/digital-bank-java/.github/issues/213)
 
 The contract PRs and the relevant Transaction Service HTTP, authorization, and
-outbox work must be merged and deployed before an end-to-end transfer run can
-be called a passing SIT workflow. This document intentionally changes no
-application, gateway, account, ledger, AWS, or cloud implementation.
+outbox work are merged. A passing SIT workflow still requires the dependent
+configuration and infrastructure to be rolled out and the end-to-end evidence
+to be recorded. This document intentionally changes no application, gateway,
+account, ledger, AWS, or cloud implementation.
