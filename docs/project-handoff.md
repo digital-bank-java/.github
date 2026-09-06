@@ -791,3 +791,10 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Repeated the Docker Desktop Fluent Bit acceptance after [infra-sit PR #38](https://github.com/digital-bank-java/infra-sit/pull/38) merged. The `fluent-bit` Helm release is `deployed`, its DaemonSet is `1/1` Ready, and both CRI and Docker JSON inputs are active.
 - OpenSearch output metrics report zero output errors and zero failed retries. The Docker output is draining existing backlog with transient backpressure retries; no records were dropped or abandoned. A read-only authenticated query returned at least 10,000 `logging_source=docker-json` records retaining `logging_agent=fluent-bit` and selected Kubernetes namespace, pod, container, UID, and log-path metadata.
 - Recorded the post-merge evidence on [`.github#94`](https://github.com/digital-bank-java/.github/issues/94), which is already closed. The parent centralized-logging story remains open only for its remaining scope.
+
+### 2026-09-06 - Transaction Service SIT rollout baseline
+
+- Deployed merged Transaction Service mainline commit `d09d91f` as the temporary local-SIT image `digital-bank-java/transaction-service:sit-consistency-20260906` using the existing Helm release. The deployment rolled out successfully; the pod is `1/1 Ready` with zero restarts.
+- `/actuator/health` returned `status: UP` with liveness and readiness groups. Startup logs show the reservation, ledger, and MFA-assurance Kafka consumer groups joined their governed topics.
+- Local verification passed: `./mvnw --batch-mode --no-transfer-progress verify -q`, Docker image build, and Helm lint/template validation. The image build executed 93 tests with no failures.
+- Recorded the evidence on [`.github#103`](https://github.com/digital-bank-java/.github/issues/103). This proves the merged runtime baseline is healthy; the controlled positive-balance transfer, duplicate delivery, and malformed-event DLQ acceptance remain open until the authorized SIT fixture and Account event-timestamp fix are available.
