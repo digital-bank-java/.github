@@ -765,3 +765,8 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 
 - Closed Sprint 6 Story [`.github#65`](https://github.com/digital-bank-java/.github/issues/65) as superseded. API Gateway circuit breaking and safe retries are already delivered by [api-gateway #20](https://github.com/digital-bank-java/api-gateway/pull/20) and [#22](https://github.com/digital-bank-java/api-gateway/pull/22), with Redis-backed rate limiting in [#21](https://github.com/digital-bank-java/api-gateway/pull/21).
 - The story was a native child of the Observability & Resilience Epic, so no orphaned active project item was created. A future payment-provider-specific resilience change must be a concrete child of the Sprint 5 payment story with an identified downstream dependency; no duplicate implementation is planned.
+
+### 2026-09-06 - Deferred payment-rail scope normalized
+
+- The Sprint 5 child Epic [`.github#31`](https://github.com/digital-bank-java/.github/issues/31) remains open as the future payment-provider architecture boundary, but its Project status is now `Backlog`. It has no native children, and the current Payment Service README explicitly keeps provider integrations, Kafka publication, and external payment-rail behavior out of the implemented scope.
+- Completed Payment Service and Notification Service lifecycle work remains historical evidence under Sprint 5. No provider-specific implementation was invented to fill an undefined dependency; future payment-rail work must be split into concrete native child tasks when a rail/provider contract is selected.
