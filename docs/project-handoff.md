@@ -804,3 +804,9 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - `/actuator/health` returned `status: UP` with liveness and readiness groups. Startup logs show the reservation, ledger, and MFA-assurance Kafka consumer groups joined their governed topics.
 - Local verification passed: `./mvnw --batch-mode --no-transfer-progress verify -q`, Docker image build, and Helm lint/template validation. The image build executed 93 tests with no failures.
 - Recorded the evidence on [`.github#103`](https://github.com/digital-bank-java/.github/issues/103). This proves the merged runtime baseline is healthy; the controlled positive-balance transfer, duplicate delivery, and malformed-event DLQ acceptance remain open until the authorized SIT fixture and Account event-timestamp fix are available.
+
+### 2026-09-06 - Review queue and project hierarchy audit
+
+- The current review queue contains only [account-service #42](https://github.com/digital-bank-java/account-service/pull/42), [infra-sit #39](https://github.com/digital-bank-java/infra-sit/pull/39), and [`.github` #245](https://github.com/digital-bank-java/.github/pull/245). All three are non-draft and mergeable; no direct merge to `main` was performed.
+- Corrected Bug [`.github#244`](https://github.com/digital-bank-java/.github/issues/244) in Project #1: its native parent is [`.github#103`](https://github.com/digital-bank-java/.github/issues/103), its Sprint is `Sprint 3 - Internal Transfers and Event Consistency`, and its status is `In progress`. A subsequent project audit found no active item without a Sprint assignment.
+- Sprint 5 payment-provider work remains intentionally unstarted: [`.github#31`](https://github.com/digital-bank-java/.github/issues/31) stays in `Backlog` until a provider-neutral execution contract is explicitly approved. No speculative provider adapter, credential, or public payment route was added.
