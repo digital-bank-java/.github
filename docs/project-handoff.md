@@ -770,3 +770,43 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 
 - The Sprint 5 child Epic [`.github#31`](https://github.com/digital-bank-java/.github/issues/31) remains open as the future payment-provider architecture boundary, but its Project status is now `Backlog`. It has no native children, and the current Payment Service README explicitly keeps provider integrations, Kafka publication, and external payment-rail behavior out of the implemented scope.
 - Completed Payment Service and Notification Service lifecycle work remains historical evidence under Sprint 5. No provider-specific implementation was invented to fill an undefined dependency; future payment-rail work must be split into concrete native child tasks when a rail/provider contract is selected.
+
+### 2026-09-06 - SIT tracing and reservation-event consistency follow-up
+
+- SIT revealed a real Account-to-Transaction event contract defect: Account Service serialized reservation-event `Instant` values as numeric timestamps, while Transaction Service validates the governed `occurredAt` field as ISO-8601 text and compares it with the Kafka header. The resulting rejection event was consumed but left the transfer `PENDING` without a workflow event.
+- Opened [account-service PR #42](https://github.com/digital-bank-java/account-service/pull/42), tracked by Bug [`.github#244`](https://github.com/digital-bank-java/.github/issues/244), to disable Jackson timestamp serialization for the reservation-event mapper. The focused regression test and full Maven `verify` with Testcontainers pass; GitHub Maven, Helm, and container checks are green. The PR remains open for review.
+- Installed the merged local SIT Zipkin chart and found a Kubernetes startup defect: the official image declares the symbolic user `zipkin`, which cannot satisfy `runAsNonRoot` validation without a numeric identity. Opened [infra-sit PR #39](https://github.com/digital-bank-java/infra-sit/pull/39), tracked by [`.github#242`](https://github.com/digital-bank-java/.github/issues/242), to set the pod and container UID/GID to `1000` while retaining the hardening settings.
+- Deployed the candidate Zipkin chart and rebuilt the merged API Gateway and Auth Service tracing images with temporary local SIT tags. A controlled gateway login produced one trace containing spans from both `api-gateway` and `auth-service`; Zipkin health and span ingestion returned successfully. This is pre-merge runtime evidence and must be repeated after PR #39 is merged with the normal release tags.
+- No direct merge to `main`, public balance-mutation API, redundant CI workflow, or broad test expansion was introduced. The next transfer acceptance remains dependent on review/merge of #42, then a controlled positive-balance SIT fixture for successful reservation, ledger completion, duplicate delivery, and DLQ verification.
+
+### 2026-09-06 - Account reservation-event candidate rollout
+
+- Built the reviewed [account-service PR #42](https://github.com/digital-bank-java/account-service/pull/42) branch as the temporary SIT image `digital-bank-java/account-service:event-timestamp-20260906`; the image build completed successfully with 65 tests passing.
+- Deployed that candidate with the existing SIT Helm chart. The deployment rolled out successfully, the pod is `1/1 Ready`, and `/actuator/health` returned `status: UP`.
+- This is runtime validation only; PR #42 remains open for review and merge. A controlled positive-balance transfer still requires an authorized synthetic fixture. No public balance-mutation endpoint or direct database mutation was introduced.
+
+### 2026-09-06 - Auth fixture task closeout and review-state correction
+
+- Auth Service PR [#11](https://github.com/digital-bank-java/auth-service/pull/11) is merged with successful Maven verification, Helm validation, and container smoke checks. The SIT `auth-service` deployment is `1/1` Ready and its rendered environment references `AUTH_FIXTURE_USERNAME` and `AUTH_FIXTURE_PASSWORD_HASH` from `auth-service-secrets`; Secret values were not read or recorded.
+- Closed completed child task [`.github#243`](https://github.com/digital-bank-java/.github/issues/243) after recording the rollout evidence. Parent MFA acceptance task [`.github#208`](https://github.com/digital-bank-java/.github/issues/208) remains open because the authorized TOTP fixture and end-to-end assurance/reservation evidence are still required.
+- Infra PR [#38](https://github.com/digital-bank-java/infra-sit/pull/38) is merged; its Docker Desktop Fluent Bit fallback has post-merge SIT/OpenSearch evidence recorded on `.github#94`, which is closed. The remaining reviewable PRs are account-service #42, infra-sit #39, and `.github` #245.
+- The current MFA service intentionally does not return TOTP secrets or provisioning URIs. Do not weaken that boundary or invent a direct database fixture; complete the remaining positive-path acceptance only through an approved authenticator provisioning path.
+
+### 2026-09-06 - Fluent Bit post-merge SIT evidence
+
+- Repeated the Docker Desktop Fluent Bit acceptance after [infra-sit PR #38](https://github.com/digital-bank-java/infra-sit/pull/38) merged. The `fluent-bit` Helm release is `deployed`, its DaemonSet is `1/1` Ready, and both CRI and Docker JSON inputs are active.
+- OpenSearch output metrics report zero output errors and zero failed retries. The Docker output is draining existing backlog with transient backpressure retries; no records were dropped or abandoned. A read-only authenticated query returned at least 10,000 `logging_source=docker-json` records retaining `logging_agent=fluent-bit` and selected Kubernetes namespace, pod, container, UID, and log-path metadata.
+- Recorded the post-merge evidence on [`.github#94`](https://github.com/digital-bank-java/.github/issues/94), which is already closed. The parent centralized-logging story remains open only for its remaining scope.
+
+### 2026-09-06 - Transaction Service SIT rollout baseline
+
+- Deployed merged Transaction Service mainline commit `d09d91f` as the temporary local-SIT image `digital-bank-java/transaction-service:sit-consistency-20260906` using the existing Helm release. The deployment rolled out successfully; the pod is `1/1 Ready` with zero restarts.
+- `/actuator/health` returned `status: UP` with liveness and readiness groups. Startup logs show the reservation, ledger, and MFA-assurance Kafka consumer groups joined their governed topics.
+- Local verification passed: `./mvnw --batch-mode --no-transfer-progress verify -q`, Docker image build, and Helm lint/template validation. The image build executed 93 tests with no failures.
+- Recorded the evidence on [`.github#103`](https://github.com/digital-bank-java/.github/issues/103). This proves the merged runtime baseline is healthy; the controlled positive-balance transfer, duplicate delivery, and malformed-event DLQ acceptance remain open until the authorized SIT fixture and Account event-timestamp fix are available.
+
+### 2026-09-06 - Review queue and project hierarchy audit
+
+- The current review queue contains only [account-service #42](https://github.com/digital-bank-java/account-service/pull/42), [infra-sit #39](https://github.com/digital-bank-java/infra-sit/pull/39), and [`.github` #245](https://github.com/digital-bank-java/.github/pull/245). All three are non-draft and mergeable; no direct merge to `main` was performed.
+- Corrected Bug [`.github#244`](https://github.com/digital-bank-java/.github/issues/244) in Project #1: its native parent is [`.github#103`](https://github.com/digital-bank-java/.github/issues/103), its Sprint is `Sprint 3 - Internal Transfers and Event Consistency`, and its status is `In progress`. A subsequent project audit found no active item without a Sprint assignment.
+- Sprint 5 payment-provider work remains intentionally unstarted: [`.github#31`](https://github.com/digital-bank-java/.github/issues/31) stays in `Backlog` until a provider-neutral execution contract is explicitly approved. No speculative provider adapter, credential, or public payment route was added.
