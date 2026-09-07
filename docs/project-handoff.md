@@ -856,3 +856,10 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Built `digital-bank-java/transaction-service:sit-logging-fix-20260907` and deployed it to local SIT. Helm revision 8 completed successfully and the replacement pod is `1/1 Ready`; the previous crash-looping candidate was fully replaced.
 - Runtime verification passed: a health request returned `X-Correlation-ID: logging-fix-20260907`, and the structured completion log contained `service.name=transaction-service`, `environment=sit`, `correlation_id=logging-fix-20260907`, HTTP 200, and `event.name=http.request.completed`.
 - Full Maven verification passed with 100 unit/API tests and 16 Testcontainers integration tests, with no failures. PR #28 remains open for review and merge.
+
+### 2026-09-07 - Payment Service outbox candidate rollout
+
+- Built the reviewed [payment-service PR #14](https://github.com/digital-bank-java/payment-service/pull/14) branch as the temporary SIT image `digital-bank-java/payment-service:sit-outbox-fix-20260907`; the container build completed successfully with 22 tests passing.
+- Deployed the candidate with the existing `values-sit.yaml` configuration to preserve the SIT profile, Config Server, PostgreSQL, and authentication Secret references. Helm revision 6 completed successfully and the replacement pod is `1/1 Ready`.
+- Runtime verification passed: the Payment Service readiness endpoint returned HTTP 200 with correlation ID `payment-candidate-20260907`; the new pod logged a clean startup and structured HTTP completion records with `service=payment-service`, `environment=sit`, and the supplied correlation ID.
+- PR #14 remains open for review and merge. This is deployment evidence for the outbox attempt-accounting fix; post-merge functional payment state-event acceptance remains tracked under [`.github#250`](https://github.com/digital-bank-java/.github/issues/250).
