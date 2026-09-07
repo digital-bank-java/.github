@@ -926,3 +926,10 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - The deployment is `1/1` Ready with zero restarts and actuator health `UP`. Startup logs show successful assignment of both `payment.instruction.state.v1-0` and `events.transfer.created.v1-0`; the payment-state consumer reports lag `0`.
 - The earlier synthetic valid, duplicate, and malformed event acceptance records remain correct after the merged-mainline rollout: one inbox row, one notification-work row, one quarantine row for the malformed event, and no duplicate work row.
 - Task [`.github#258`](https://github.com/digital-bank-java/.github/issues/258) is closed as completed in Project #1. Provider integrations, external notification delivery, public notification routes, and AWS/UAT/PROD remain outside this task.
+
+### 2026-09-07 - MFA assurance merged-mainline SIT rollout
+
+- MFA Service mainline commit `01bc7e1` includes the merged corrective configuration and assurance implementation. The image `digital-bank-java/mfa-service:sit-mfa-main-20260907` was built and deployed to `digital-bank-sit` with Helm revision 12.
+- The deployment is `1/1` Ready with zero restarts; actuator health is `UP`. Non-secret runtime configuration confirms `MFA_ASSURANCE_PUBLISHER_ENABLED=true` and `MFA_KAFKA_BOOTSTRAP_SERVERS=kafka.digital-bank-sit.svc.cluster.local:9092`.
+- Transaction Service remains assigned to the `mfa.assurance.granted.v1` consumer group.
+- Task [`.github#208`](https://github.com/digital-bank-java/.github/issues/208) remains open for controlled behavioral acceptance of an `AWAITING_STEP_UP` transfer, successful transfer-bound TOTP verification, duplicate assurance delivery, and malformed/mismatched DLQ handling. No credentials, OTP values, or secret material were read or recorded.
