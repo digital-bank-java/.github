@@ -1,6 +1,6 @@
 # Digital Bank Java Project Handoff
 
-Last updated: 2026-09-05
+Last updated: 2026-09-07
 
 This document is the durable resume point for AI agents and contributors working on the Digital Bank Java platform.
 
@@ -947,3 +947,11 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - The two historical DLQ records were not replayed or modified. A fresh authorized synthetic transfer is still required for the positive completion, reservation rejection to `FAILED`, duplicate terminal-event, and ledger-failure compensation evidence. No credential or secret value was read or recorded.
 
 - Post-rollout Kafka verification is clean: `account-service-reservation-v1` is caught up on `account.reservation.requested.v1` at `2/2`, and `transaction-service-reservation-v1` is caught up on `account.reservation.rejected.v1` at `2/2`. The corresponding rejected main topic and DLQ each contain two historical records; no new record was produced during the rollout.
+
+### 2026-09-07 - Project backlog and SIT closeout audit
+
+- GitHub Project #1 currently contains 261 items. The audit found zero missing Sprint values and zero missing native Project item types; the Sprint epics remain the only planning roots.
+- The only active non-epic delivery items are transfer-saga acceptance [`.github#103`](https://github.com/digital-bank-java/.github/issues/103) (`In review`, Sprint 3), MFA assurance acceptance [`.github#208`](https://github.com/digital-bank-java/.github/issues/208) (`In progress`, Sprint 4), and payment state-event acceptance [`.github#250`](https://github.com/digital-bank-java/.github/issues/250) (`In review`, Sprint 5). AWS/UAT/PROD and SonarQube remain intentionally deferred.
+- The Project `Epic` classification for task [`.github#208`](https://github.com/digital-bank-java/.github/issues/208) is set to `Step-Up Authorization`, matching its parent Story #56 and Sprint 4 scope.
+- The local `digital-bank-sit` application deployments are currently `1/1` available. The final open acceptance boundaries require private authorized SIT fixtures for transfer, MFA, and positive payment workflows; no credentials, OTPs, historical DLQ records, or database rows will be fabricated or modified.
+- The only open organization pull request is [`.github#259`](https://github.com/digital-bank-java/.github/pull/259), which records the post-merge rollout and acceptance checkpoints. No implementation PR is currently waiting outside that review.
