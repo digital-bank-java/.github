@@ -919,3 +919,10 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - An unauthenticated synthetic `POST /internal/v1/payment-instructions` request returned `401 Unauthorized`, `WWW-Authenticate: Bearer`, and `application/problem+json`; no payment instruction or outbox mutation was created.
 - Positive-path Payment Service acceptance remains credential-gated: it requires an authorized synthetic `payment.internal` bearer token to create an instruction and verify PENDING/terminal outbox publication and Kafka delivery. No credential value was read or fabricated.
 - Evidence is recorded on [`.github#250`](https://github.com/digital-bank-java/.github/issues/250). AWS/UAT/PROD and provider-specific payment work remain deferred.
+
+### 2026-09-07 - Notification Service post-merge SIT rollout
+
+- Merged [notification-service #14](https://github.com/digital-bank-java/notification-service/pull/14) at merge commit `2ceb64b`. The merged mainline image `digital-bank-java/notification-service:sit-payment-events-main-20260907` was deployed to `digital-bank-sit` with Helm revision 11.
+- The deployment is `1/1` Ready with zero restarts and actuator health `UP`. Startup logs show successful assignment of both `payment.instruction.state.v1-0` and `events.transfer.created.v1-0`; the payment-state consumer reports lag `0`.
+- The earlier synthetic valid, duplicate, and malformed event acceptance records remain correct after the merged-mainline rollout: one inbox row, one notification-work row, one quarantine row for the malformed event, and no duplicate work row.
+- Task [`.github#258`](https://github.com/digital-bank-java/.github/issues/258) is closed as completed in Project #1. Provider integrations, external notification delivery, public notification routes, and AWS/UAT/PROD remain outside this task.
