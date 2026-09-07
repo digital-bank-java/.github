@@ -905,3 +905,11 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Kafka runtime verification confirms the `notification-service` group has assignments for both `payment.instruction.state.v1-0` and the existing `events.transfer.created.v1-0` consumer. Startup logs show the application completed successfully and assigned the payment-state partition.
 - Two startup defects were found and corrected before merge validation: the payment listener now uses a module-aware local Jackson mapper because the service does not expose an `ObjectMapper` bean, and the existing transfer listener factory explicitly qualifies `transferCreatedConsumerFactory` after the payment consumer factory was introduced.
 - [notification-service #14](https://github.com/digital-bank-java/notification-service/pull/14) remains open and non-draft for review. The final candidate is runtime-healthy, but task [`.github#258`](https://github.com/digital-bank-java/.github/issues/258) remains in review until the PR is merged and functional valid, duplicate, and invalid-event acceptance evidence is recorded.
+
+### 2026-09-07 - Notification payment-state functional SIT acceptance
+
+- Published a synthetic contract-valid `PENDING` event to `payment.instruction.state.v1`. Read-only PostgreSQL verification found exactly one `payment_event_inbox` row and one `payment_notification_work` row.
+- Published the exact same event again. The inbox and work counts remained one, proving event-id deduplication without a second notification work item.
+- Published a synthetic malformed event with lowercase currency. It produced exactly one `payment_event_quarantine` row and no inbox row.
+- The `notification-service` Kafka group committed through the test records with `LAG 0`. The test used synthetic identifiers only and did not read or mutate credentials or business data.
+- This completes the functional acceptance evidence for [`.github#258`](https://github.com/digital-bank-java/.github/issues/258). The task remains in review until [notification-service #14](https://github.com/digital-bank-java/notification-service/pull/14) is merged.
