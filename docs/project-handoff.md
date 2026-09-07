@@ -863,3 +863,11 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Deployed the candidate with the existing `values-sit.yaml` configuration to preserve the SIT profile, Config Server, PostgreSQL, and authentication Secret references. Helm revision 6 completed successfully and the replacement pod is `1/1 Ready`.
 - Runtime verification passed: the Payment Service readiness endpoint returned HTTP 200 with correlation ID `payment-candidate-20260907`; the new pod logged a clean startup and structured HTTP completion records with `service=payment-service`, `environment=sit`, and the supplied correlation ID.
 - PR #14 remains open for review and merge. This is deployment evidence for the outbox attempt-accounting fix; post-merge functional payment state-event acceptance remains tracked under [`.github#250`](https://github.com/digital-bank-java/.github/issues/250).
+
+### 2026-09-07 - Ledger posting-command DLQ recovery
+
+- Opened non-draft [ledger-service #23](https://github.com/digital-bank-java/ledger-service/pull/23), linked to [`.github#103`](https://github.com/digital-bank-java/.github/issues/103), to close the malformed-event recovery gap in the Ledger posting consumer.
+- Ledger now uses a dedicated Kafka listener container with two bounded one-second retries. Records that remain malformed or otherwise unprocessable are published to `ledger.posting.requested.v1.dlq` on the original partition and acknowledged at record level so a poison record cannot block the partition indefinitely.
+- Valid posting commands that fail ledger business rules continue through the durable `LedgerPostingFailed.v1` decision path; the DLQ is reserved for records that cannot safely reach a governed business outcome.
+- The focused recovery test and all 29 existing unit tests pass. The PostgreSQL/Testcontainers consumer integration test was attempted but could not start in the current execution environment because Docker's Unix socket was unavailable; no existing integration test was changed.
+- No business API, ledger schema, CI workflow, public route, AWS deployment, or redundant test suite was added. Review and merge PR #23 before the next post-merge SIT DLQ verification.
