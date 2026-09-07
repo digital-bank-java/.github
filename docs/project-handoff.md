@@ -885,3 +885,10 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Auth session validation task [`.github#254`](https://github.com/digital-bank-java/.github/issues/254) is closed against merged [auth-service #13](https://github.com/digital-bank-java/auth-service/pull/13). The task is assigned to `ramioooz`, typed as a native Task, mapped to Sprint 4, and tracked under the existing Auth & Session Management hierarchy.
 - Created parented Sprint 5 Task [`.github#258`](https://github.com/digital-bank-java/.github/issues/258) under Payment Rail Architecture [`.github#31`](https://github.com/digital-bank-java/.github/issues/31). Its scope is limited to consuming the already-governed payment instruction state events in Notification Service, durable notification work, event-id deduplication, and invalid-event quarantine/DLQ handling.
 - Task #258 is in progress in Project #1, assigned to `ramioooz`, and mapped to Sprint 5, `notification-service`, Slice 7 - Events + Notification, and P0 delivery priority. Provider adapters, external delivery, account/ledger mutation, transfer saga orchestration, AWS/UAT/PROD, redundant CI jobs, and broad redundant unit tests remain out of scope.
+
+### 2026-09-07 - Payment state-event post-merge SIT rollout
+
+- Payment Service PRs [#13](https://github.com/digital-bank-java/payment-service/pull/13) and [#14](https://github.com/digital-bank-java/payment-service/pull/14) are merged. The merged mainline was built as `digital-bank-java/payment-service:sit-payment-events-20260907` and deployed to `digital-bank-sit` with Helm revision 7.
+- Payment Service is `1/1` Ready with zero restarts; readiness returned `status: UP`, and startup logs show the `sit` profile and port 8085.
+- Kafka confirms `payment.instruction.state.v1` and `payment.instruction.state.v1.dlq` exist in SIT. This proves platform readiness for the Notification Service consumer task #258.
+- Functional payment creation/terminal-transition, duplicate-publication, PostgreSQL outbox, and AKHQ evidence remain open under [`.github#250`](https://github.com/digital-bank-java/.github/issues/250); no premature story closure was recorded.
