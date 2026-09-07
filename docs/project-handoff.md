@@ -871,3 +871,11 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Valid posting commands that fail ledger business rules continue through the durable `LedgerPostingFailed.v1` decision path; the DLQ is reserved for records that cannot safely reach a governed business outcome.
 - The focused recovery test and all 29 existing unit tests pass. The PostgreSQL/Testcontainers consumer integration test was attempted but could not start in the current execution environment because Docker's Unix socket was unavailable; no existing integration test was changed.
 - No business API, ledger schema, CI workflow, public route, AWS deployment, or redundant test suite was added. Review and merge PR #23 before the next post-merge SIT DLQ verification.
+
+### 2026-09-07 - Ledger posting-command DLQ SIT acceptance
+
+- Ledger Service PR [#23](https://github.com/digital-bank-java/ledger-service/pull/23) and the related organization handoff PR [`.github #256`](https://github.com/digital-bank-java/.github/pull/256) are merged. The merged Ledger image `digital-bank-java/ledger-service:sit-dlq-20260907` was built from main and deployed to the local `digital-bank-sit` cluster with Helm revision 10.
+- The Ledger deployment is healthy: `1/1` ready, zero restarts, profile `sit`, Flyway schema current through version 9, and the `ledger-service` Kafka consumer group is `Stable` with one member assigned to `ledger.posting.requested.v1-0`.
+- A controlled malformed record with key `dlq-sit-1788788306489` was published to `ledger.posting.requested.v1`. Ledger performed the bounded retries, published the unprocessable record to `ledger.posting.requested.v1.dlq`, and committed the source offset. Kafka reports `CURRENT-OFFSET 1`, `LOG-END-OFFSET 1`, and `LAG 0`.
+- Read-only PostgreSQL verification found `ledger_posting_command_inbox_rows|0` and `dlq_test_ids|0`; the malformed record did not create a business inbox or ledger posting. No database mutation was used for the test.
+- This closes the malformed-event recovery acceptance for the Ledger portion of [`.github#103`](https://github.com/digital-bank-java/.github/issues/103). The broader transfer saga story remains open for its controlled positive-balance success, duplicate-delivery, terminal-event, and end-to-end consistency evidence.
