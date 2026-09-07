@@ -919,3 +919,31 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - An unauthenticated synthetic `POST /internal/v1/payment-instructions` request returned `401 Unauthorized`, `WWW-Authenticate: Bearer`, and `application/problem+json`; no payment instruction or outbox mutation was created.
 - Positive-path Payment Service acceptance remains credential-gated: it requires an authorized synthetic `payment.internal` bearer token to create an instruction and verify PENDING/terminal outbox publication and Kafka delivery. No credential value was read or fabricated.
 - Evidence is recorded on [`.github#250`](https://github.com/digital-bank-java/.github/issues/250). AWS/UAT/PROD and provider-specific payment work remain deferred.
+
+### 2026-09-07 - Notification Service post-merge SIT rollout
+
+- Merged [notification-service #14](https://github.com/digital-bank-java/notification-service/pull/14) at merge commit `2ceb64b`. The merged mainline image `digital-bank-java/notification-service:sit-payment-events-main-20260907` was deployed to `digital-bank-sit` with Helm revision 11.
+- The deployment is `1/1` Ready with zero restarts and actuator health `UP`. Startup logs show successful assignment of both `payment.instruction.state.v1-0` and `events.transfer.created.v1-0`; the payment-state consumer reports lag `0`.
+- The earlier synthetic valid, duplicate, and malformed event acceptance records remain correct after the merged-mainline rollout: one inbox row, one notification-work row, one quarantine row for the malformed event, and no duplicate work row.
+- Task [`.github#258`](https://github.com/digital-bank-java/.github/issues/258) is closed as completed in Project #1. Provider integrations, external notification delivery, public notification routes, and AWS/UAT/PROD remain outside this task.
+
+### 2026-09-07 - MFA assurance merged-mainline SIT rollout
+
+- MFA Service mainline commit `01bc7e1` includes the merged corrective configuration and assurance implementation. The image `digital-bank-java/mfa-service:sit-mfa-main-20260907` was built and deployed to `digital-bank-sit` with Helm revision 12.
+- The deployment is `1/1` Ready with zero restarts; actuator health is `UP`. Non-secret runtime configuration confirms `MFA_ASSURANCE_PUBLISHER_ENABLED=true` and `MFA_KAFKA_BOOTSTRAP_SERVERS=kafka.digital-bank-sit.svc.cluster.local:9092`.
+- Transaction Service remains assigned to the `mfa.assurance.granted.v1` consumer group.
+- Task [`.github#208`](https://github.com/digital-bank-java/.github/issues/208) remains open for controlled behavioral acceptance of an `AWAITING_STEP_UP` transfer, successful transfer-bound TOTP verification, duplicate assurance delivery, and malformed/mismatched DLQ handling. No credentials, OTP values, or secret material were read or recorded.
+
+### 2026-09-07 - Sprint 3 SIT runtime checkpoint
+
+- The local `digital-bank-sit` namespace currently reports all core workloads healthy, including Transaction, Account, Ledger, MFA, Payment, Notification, API Gateway, Config Server, Kafka, and PostgreSQL; the deployed Transaction Service has one ready replica.
+- Sprint 3 story [`.github#103`](https://github.com/digital-bank-java/.github/issues/103) remains `In review`. Its implementation descendants are closed and the merged runtime baseline is healthy, but health checks do not prove the business saga outcomes.
+- The remaining acceptance boundary is a controlled positive-balance transfer, reservation rejection to `FAILED`, duplicate terminal-event delivery with no second business action, and ledger-failure compensation through Account-owned reservation release. These checks require an authorized synthetic SIT fixture; no credential or secret value was read or fabricated.
+
+### 2026-09-07 - Account reservation timestamp rollout for Sprint 3
+
+- Controlled SIT data exposed a stale Account Service deployment: it consumed two synthetic reservation requests and published `AccountReservationRejected.v1` decisions, but the running payload omitted the required `occurredAt` field. Transaction Service correctly rejected both records and routed them to `account.reservation.rejected.v1.dlq`.
+- The serialization fix is already merged in [account-service #42](https://github.com/digital-bank-java/account-service/pull/42) and is present on Account Service main at commit `f787876`. The fresh image `digital-bank-java/account-service:sit-account-main-20260907` passed the existing verification with 65 unit-phase tests and was deployed with Helm revision 11; the deployment is healthy with one ready replica.
+- The two historical DLQ records were not replayed or modified. A fresh authorized synthetic transfer is still required for the positive completion, reservation rejection to `FAILED`, duplicate terminal-event, and ledger-failure compensation evidence. No credential or secret value was read or recorded.
+
+- Post-rollout Kafka verification is clean: `account-service-reservation-v1` is caught up on `account.reservation.requested.v1` at `2/2`, and `transaction-service-reservation-v1` is caught up on `account.reservation.rejected.v1` at `2/2`. The corresponding rejected main topic and DLQ each contain two historical records; no new record was produced during the rollout.

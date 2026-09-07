@@ -44,11 +44,12 @@ occupied, forward an unused workstation port such as `18080:8080` and change
 only the active SIT `apiGatewayUrl` value. Do not port-forward or call
 Transaction, Account, Ledger, or any other downstream service directly.
 
-Before testing a protected route, authenticate through the gateway using the
-approved auth workflow. If the gateway-routed login or protected-route
-enforcement is not deployed yet, stop at the contract-readiness checks and
-label the result as blocked by the auth/gateway rollout. Do not put an
-identity claim, MFA code, or substitute header in the transfer request body.
+Before testing a protected route, use the approved private SIT fixture token.
+The current Auth Service is still a deployable boundary and does not issue
+login tokens through a customer-facing login route; absence of the fixture is
+an acceptance prerequisite, not permission to bypass authorization. Do not
+put an identity claim, MFA code, or substitute header in the transfer request
+body.
 
 ## Environment Model
 
@@ -391,8 +392,8 @@ that were actually observed.
 - [Transaction Service repository](https://github.com/digital-bank-java/transaction-service)
 - [Sprint 3 transfer verification task](https://github.com/digital-bank-java/.github/issues/213)
 
-The contract PRs and the relevant Transaction Service HTTP, authorization, and
-outbox work are merged. A passing SIT workflow still requires the dependent
-configuration and infrastructure to be rolled out and the end-to-end evidence
-to be recorded. This document intentionally changes no application, gateway,
-account, ledger, AWS, or cloud implementation.
+The contract PRs and the relevant Transaction Service HTTP, authorization,
+outbox, Account, and Ledger work are merged and deployed in local SIT. A
+passing workflow still requires a fresh authorized synthetic fixture and
+end-to-end evidence. This document intentionally changes no application,
+gateway, account, ledger, AWS, or cloud implementation.
