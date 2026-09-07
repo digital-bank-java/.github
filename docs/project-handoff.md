@@ -913,3 +913,9 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Published a synthetic malformed event with lowercase currency. It produced exactly one `payment_event_quarantine` row and no inbox row.
 - The `notification-service` Kafka group committed through the test records with `LAG 0`. The test used synthetic identifiers only and did not read or mutate credentials or business data.
 - This completes the functional acceptance evidence for [`.github#258`](https://github.com/digital-bank-java/.github/issues/258). The task remains in review until [notification-service #14](https://github.com/digital-bank-java/notification-service/pull/14) is merged.
+
+### 2026-09-07 - Payment Service protected-boundary SIT check
+
+- An unauthenticated synthetic `POST /internal/v1/payment-instructions` request returned `401 Unauthorized`, `WWW-Authenticate: Bearer`, and `application/problem+json`; no payment instruction or outbox mutation was created.
+- Positive-path Payment Service acceptance remains credential-gated: it requires an authorized synthetic `payment.internal` bearer token to create an instruction and verify PENDING/terminal outbox publication and Kafka delivery. No credential value was read or fabricated.
+- Evidence is recorded on [`.github#250`](https://github.com/digital-bank-java/.github/issues/250). AWS/UAT/PROD and provider-specific payment work remain deferred.
