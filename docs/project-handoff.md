@@ -892,3 +892,9 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Payment Service is `1/1` Ready with zero restarts; readiness returned `status: UP`, and startup logs show the `sit` profile and port 8085.
 - Kafka confirms `payment.instruction.state.v1` and `payment.instruction.state.v1.dlq` exist in SIT. This proves platform readiness for the Notification Service consumer task #258.
 - Functional payment creation/terminal-transition, duplicate-publication, PostgreSQL outbox, and AKHQ evidence remain open under [`.github#250`](https://github.com/digital-bank-java/.github/issues/250); no premature story closure was recorded.
+
+### 2026-09-07 - Notification payment-state consumer review PR
+
+- Opened normal, non-draft [notification-service #14](https://github.com/digital-bank-java/notification-service/pull/14) for parented Sprint 5 Task [`.github#258`](https://github.com/digital-bank-java/.github/issues/258), under [`.github#31`](https://github.com/digital-bank-java/.github/issues/31). The Project item is now `In review`.
+- The implementation consumes `payment.instruction.state.v1`, validates the governed envelope and business identity fields, persists durable inbox/notification-work/quarantine records, deduplicates by `eventId`, and handles invalid/conflicting/exhausted records without provider adapters or public routes.
+- PR checks are green: Maven verification, Helm validation, and container build/smoke. The PR remains open for review; post-merge SIT rollout and functional valid/duplicate/invalid-event evidence are still required before closing task #258.
