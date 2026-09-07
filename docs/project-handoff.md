@@ -933,3 +933,9 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - The deployment is `1/1` Ready with zero restarts; actuator health is `UP`. Non-secret runtime configuration confirms `MFA_ASSURANCE_PUBLISHER_ENABLED=true` and `MFA_KAFKA_BOOTSTRAP_SERVERS=kafka.digital-bank-sit.svc.cluster.local:9092`.
 - Transaction Service remains assigned to the `mfa.assurance.granted.v1` consumer group.
 - Task [`.github#208`](https://github.com/digital-bank-java/.github/issues/208) remains open for controlled behavioral acceptance of an `AWAITING_STEP_UP` transfer, successful transfer-bound TOTP verification, duplicate assurance delivery, and malformed/mismatched DLQ handling. No credentials, OTP values, or secret material were read or recorded.
+
+### 2026-09-07 - Sprint 3 SIT runtime checkpoint
+
+- The local `digital-bank-sit` namespace currently reports all core workloads healthy, including Transaction, Account, Ledger, MFA, Payment, Notification, API Gateway, Config Server, Kafka, and PostgreSQL; the deployed Transaction Service has one ready replica.
+- Sprint 3 story [`.github#103`](https://github.com/digital-bank-java/.github/issues/103) remains `In review`. Its implementation descendants are closed and the merged runtime baseline is healthy, but health checks do not prove the business saga outcomes.
+- The remaining acceptance boundary is a controlled positive-balance transfer, reservation rejection to `FAILED`, duplicate terminal-event delivery with no second business action, and ledger-failure compensation through Account-owned reservation release. These checks require an authorized synthetic SIT fixture; no credential or secret value was read or fabricated.
