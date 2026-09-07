@@ -871,3 +871,51 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Valid posting commands that fail ledger business rules continue through the durable `LedgerPostingFailed.v1` decision path; the DLQ is reserved for records that cannot safely reach a governed business outcome.
 - The focused recovery test and all 29 existing unit tests pass. The PostgreSQL/Testcontainers consumer integration test was attempted but could not start in the current execution environment because Docker's Unix socket was unavailable; no existing integration test was changed.
 - No business API, ledger schema, CI workflow, public route, AWS deployment, or redundant test suite was added. Review and merge PR #23 before the next post-merge SIT DLQ verification.
+
+### 2026-09-07 - Ledger posting-command DLQ SIT acceptance
+
+- Ledger Service PR [#23](https://github.com/digital-bank-java/ledger-service/pull/23) and the related organization handoff PR [`.github #256`](https://github.com/digital-bank-java/.github/pull/256) are merged. The merged Ledger image `digital-bank-java/ledger-service:sit-dlq-20260907` was built from main and deployed to the local `digital-bank-sit` cluster with Helm revision 10.
+- The Ledger deployment is healthy: `1/1` ready, zero restarts, profile `sit`, Flyway schema current through version 9, and the `ledger-service` Kafka consumer group is `Stable` with one member assigned to `ledger.posting.requested.v1-0`.
+- A controlled malformed record with key `dlq-sit-1788788306489` was published to `ledger.posting.requested.v1`. Ledger performed the bounded retries, published the unprocessable record to `ledger.posting.requested.v1.dlq`, and committed the source offset. Kafka reports `CURRENT-OFFSET 1`, `LOG-END-OFFSET 1`, and `LAG 0`.
+- Read-only PostgreSQL verification found `ledger_posting_command_inbox_rows|0` and `dlq_test_ids|0`; the malformed record did not create a business inbox or ledger posting. No database mutation was used for the test.
+- This closes the malformed-event recovery acceptance for the Ledger portion of [`.github#103`](https://github.com/digital-bank-java/.github/issues/103). The broader transfer saga story remains open for its controlled positive-balance success, duplicate-delivery, terminal-event, and end-to-end consistency evidence.
+
+### 2026-09-07 - Sprint 4 task closeout and Sprint 5 notification work
+
+- Auth session validation task [`.github#254`](https://github.com/digital-bank-java/.github/issues/254) is closed against merged [auth-service #13](https://github.com/digital-bank-java/auth-service/pull/13). The task is assigned to `ramioooz`, typed as a native Task, mapped to Sprint 4, and tracked under the existing Auth & Session Management hierarchy.
+- Created parented Sprint 5 Task [`.github#258`](https://github.com/digital-bank-java/.github/issues/258) under Payment Rail Architecture [`.github#31`](https://github.com/digital-bank-java/.github/issues/31). Its scope is limited to consuming the already-governed payment instruction state events in Notification Service, durable notification work, event-id deduplication, and invalid-event quarantine/DLQ handling.
+- Task #258 is in progress in Project #1, assigned to `ramioooz`, and mapped to Sprint 5, `notification-service`, Slice 7 - Events + Notification, and P0 delivery priority. Provider adapters, external delivery, account/ledger mutation, transfer saga orchestration, AWS/UAT/PROD, redundant CI jobs, and broad redundant unit tests remain out of scope.
+
+### 2026-09-07 - Payment state-event post-merge SIT rollout
+
+- Payment Service PRs [#13](https://github.com/digital-bank-java/payment-service/pull/13) and [#14](https://github.com/digital-bank-java/payment-service/pull/14) are merged. The merged mainline was built as `digital-bank-java/payment-service:sit-payment-events-20260907` and deployed to `digital-bank-sit` with Helm revision 7.
+- Payment Service is `1/1` Ready with zero restarts; readiness returned `status: UP`, and startup logs show the `sit` profile and port 8085.
+- Kafka confirms `payment.instruction.state.v1` and `payment.instruction.state.v1.dlq` exist in SIT. This proves platform readiness for the Notification Service consumer task #258.
+- Functional payment creation/terminal-transition, duplicate-publication, PostgreSQL outbox, and AKHQ evidence remain open under [`.github#250`](https://github.com/digital-bank-java/.github/issues/250); no premature story closure was recorded.
+
+### 2026-09-07 - Notification payment-state consumer review PR
+
+- Opened normal, non-draft [notification-service #14](https://github.com/digital-bank-java/notification-service/pull/14) for parented Sprint 5 Task [`.github#258`](https://github.com/digital-bank-java/.github/issues/258), under [`.github#31`](https://github.com/digital-bank-java/.github/issues/31). The Project item is now `In review`.
+- The implementation consumes `payment.instruction.state.v1`, validates the governed envelope and business identity fields, persists durable inbox/notification-work/quarantine records, deduplicates by `eventId`, and handles invalid/conflicting/exhausted records without provider adapters or public routes.
+- PR checks are green: Maven verification, Helm validation, and container build/smoke. The PR remains open for review; post-merge SIT rollout and functional valid/duplicate/invalid-event evidence are still required before closing task #258.
+
+### 2026-09-07 - Notification payment-state consumer SIT candidate verification
+
+- The final Notification Service candidate image `digital-bank-java/notification-service:sit-payment-events-fix2-20260907` was deployed to `digital-bank-sit` with Helm revision 10. The deployment is `1/1` Ready, has zero restarts, and `/actuator/health` reports `UP`.
+- Kafka runtime verification confirms the `notification-service` group has assignments for both `payment.instruction.state.v1-0` and the existing `events.transfer.created.v1-0` consumer. Startup logs show the application completed successfully and assigned the payment-state partition.
+- Two startup defects were found and corrected before merge validation: the payment listener now uses a module-aware local Jackson mapper because the service does not expose an `ObjectMapper` bean, and the existing transfer listener factory explicitly qualifies `transferCreatedConsumerFactory` after the payment consumer factory was introduced.
+- [notification-service #14](https://github.com/digital-bank-java/notification-service/pull/14) remains open and non-draft for review. The final candidate is runtime-healthy, but task [`.github#258`](https://github.com/digital-bank-java/.github/issues/258) remains in review until the PR is merged and functional valid, duplicate, and invalid-event acceptance evidence is recorded.
+
+### 2026-09-07 - Notification payment-state functional SIT acceptance
+
+- Published a synthetic contract-valid `PENDING` event to `payment.instruction.state.v1`. Read-only PostgreSQL verification found exactly one `payment_event_inbox` row and one `payment_notification_work` row.
+- Published the exact same event again. The inbox and work counts remained one, proving event-id deduplication without a second notification work item.
+- Published a synthetic malformed event with lowercase currency. It produced exactly one `payment_event_quarantine` row and no inbox row.
+- The `notification-service` Kafka group committed through the test records with `LAG 0`. The test used synthetic identifiers only and did not read or mutate credentials or business data.
+- This completes the functional acceptance evidence for [`.github#258`](https://github.com/digital-bank-java/.github/issues/258). The task remains in review until [notification-service #14](https://github.com/digital-bank-java/notification-service/pull/14) is merged.
+
+### 2026-09-07 - Payment Service protected-boundary SIT check
+
+- An unauthenticated synthetic `POST /internal/v1/payment-instructions` request returned `401 Unauthorized`, `WWW-Authenticate: Bearer`, and `application/problem+json`; no payment instruction or outbox mutation was created.
+- Positive-path Payment Service acceptance remains credential-gated: it requires an authorized synthetic `payment.internal` bearer token to create an instruction and verify PENDING/terminal outbox publication and Kafka delivery. No credential value was read or fabricated.
+- Evidence is recorded on [`.github#250`](https://github.com/digital-bank-java/.github/issues/250). AWS/UAT/PROD and provider-specific payment work remain deferred.
