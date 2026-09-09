@@ -955,3 +955,11 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - The Project `Epic` classification for task [`.github#208`](https://github.com/digital-bank-java/.github/issues/208) is set to `Step-Up Authorization`, matching its parent Story #56 and Sprint 4 scope.
 - The local `digital-bank-sit` application deployments are currently `1/1` available. The final open acceptance boundaries require private authorized SIT fixtures for transfer, MFA, and positive payment workflows; no credentials, OTPs, historical DLQ records, or database rows will be fabricated or modified.
 - The only open organization pull request is [`.github#259`](https://github.com/digital-bank-java/.github/pull/259), which records the post-merge rollout and acceptance checkpoints. No implementation PR is currently waiting outside that review.
+
+### 2026-09-09 - Approved controlled Sprint 3 acceptance fixture
+
+- Created and parented [`.github#261`](https://github.com/digital-bank-java/.github/issues/261) beneath the Sprint 3 transfer-saga story [`.github#103`](https://github.com/digital-bank-java/.github/issues/103). Its scope is a local-SIT-only acceptance fixture, not a financial product capability.
+- The approved design uses an explicitly enabled, idempotent infrastructure seed for synthetic customer and account records plus a reconciled opening Ledger entry. It does not create a direct balance-change API, alter production architecture, or apply to UAT or PROD.
+- Authentication uses a short-lived fixture Secret that changes only the Auth fixture credential references. It never reads, prints, replaces, or rotates the JWT signing secret. Cleanup restores the deployment and deletes the temporary Secret on every runner exit path.
+- A narrowly scoped Ledger Kafka consumer switch will be disabled by default, permitted only under the `sit` profile, and used only to obtain deterministic reservation-release compensation evidence. It has no HTTP surface and must be removed from the deployed environment after the one acceptance case.
+- The full design and implementation plan are recorded in `docs/superpowers/specs/2026-09-09-sit-transfer-acceptance-fixture-design.md` and `docs/superpowers/plans/2026-09-09-sit-transfer-acceptance-fixture.md`. Implementation PRs and redacted runtime evidence will be linked here before Sprint 3 is closed.
