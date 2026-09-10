@@ -663,6 +663,13 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - The reusable MFA implementation story is complete through merged [mfa-service #1](https://github.com/digital-bank-java/mfa-service/pull/1) through [mfa-service #12](https://github.com/digital-bank-java/mfa-service/pull/12), and the Ledger command-consumer implementation is complete through merged [ledger-service #17](https://github.com/digital-bank-java/ledger-service/pull/17). Their organization tracking items are closed; MFA/ledger runtime enablement and verification remain separate SIT work.
 - Do not record the full Auth, Payment, Notification, or event-driven transfer rollout as complete until the merged configurations are served by Config Server and the workloads and representative flows are verified in `digital-bank-sit`.
 
+### 2026-09-11 - Sprint 4 closeout
+
+- Merged the Sprint 4 MFA assurance implementation and configuration PRs: [transaction-service #31](https://github.com/digital-bank-java/transaction-service/pull/31), [config-repo #51](https://github.com/digital-bank-java/config-repo/pull/51), and [mfa-service #22](https://github.com/digital-bank-java/mfa-service/pull/22).
+- Merged the acceptance record in [.github #267](https://github.com/digital-bank-java/.github/pull/267). Its controlled SIT evidence showed the transfer advancing from `AWAITING_STEP_UP` through `PENDING` to `AWAITING_LEDGER_POSTING`, with MFA assurance and account reservation events processed and the Ledger command published.
+- Closed the completed Sprint 4 task hierarchy: [`.github#208`](https://github.com/digital-bank-java/.github/issues/208), [`.github#56`](https://github.com/digital-bank-java/.github/issues/56), [`.github#32`](https://github.com/digital-bank-java/.github/issues/32), and Sprint 4 [`.github#22`](https://github.com/digital-bank-java/.github/issues/22). Their Project #1 items are synchronized to `Done`.
+- Temporary SIT fixtures, secrets, port-forwards, and temporary images were removed. AWS/UAT/PROD and SonarQube remain deferred by project decision.
+
 ### 2026-09-05 - Backlog and review cleanup
 
 - Closed completed Sprint 4 parent stories [`.github#55`](https://github.com/digital-bank-java/.github/issues/55) and [`.github#56`](https://github.com/digital-bank-java/.github/issues/56) after confirming that every native child task is closed. Their Project items are synchronized to `Done`.
