@@ -1013,3 +1013,11 @@ Consult GitHub Project #1 for the authoritative Sprint hierarchy and current iss
 - Verified Redis authentication: a client without credentials receives `NOAUTH Authentication required`; the configured internal credential receives `PONG`. The Redis NetworkPolicy permits the API Gateway workload in the SIT namespace.
 - The rollout exposed two deployment/configuration defects and they are isolated in reviewable PRs: [auth-service #16](https://github.com/digital-bank-java/auth-service/pull/16) makes Spring Boot bind the canonical JWT properties constructor, and [ledger-service #27](https://github.com/digital-bank-java/ledger-service/pull/27) injects the shared JWT signing Secret into Ledger pods. Account was missing the same mapping in the live deployment because its earlier Helm upgrade stopped at a field-manager conflict; the merged Account chart already contains the mapping.
 - The Auth and Ledger corrective PRs must be merged before treating the permanent Helm-managed rollout as complete. The temporary SIT images and explicit deployment patches are validation-only and must be replaced by normal Helm upgrades after merge.
+
+### 2026-09-13 - Permanent SIT rollout complete
+
+- Confirmed [auth-service #16](https://github.com/digital-bank-java/auth-service/pull/16), [ledger-service #27](https://github.com/digital-bank-java/ledger-service/pull/27), and [.github #273](https://github.com/digital-bank-java/.github/pull/273) are merged.
+- Rebuilt the merged Auth and Ledger images and completed Helm-managed upgrades for Auth Service, Account Service, Ledger Service, and Redis. All four Helm releases report `deployed`, and all SIT workloads are healthy.
+- Repeated Gateway checks: health is `200`; protected customer and account endpoints reject unauthenticated requests with `401`.
+- Repeated Redis checks: unauthenticated clients receive `NOAUTH Authentication required`, while the configured internal credential receives `PONG`.
+- The temporary review image tags and rollout-only deployment patches have been replaced by the normal Helm release state. No AWS/UAT/PROD or SonarQube work was started.
