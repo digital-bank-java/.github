@@ -44,6 +44,10 @@ The following should be fixed before or alongside the release-blocking work:
 - Reviewed actuator exposure and logging paths; no committed production credentials, bearer tokens, TOTP secrets, or private keys were found.
 - Reviewed service ports, probes, Config Server wiring, existing Kubernetes Secret references, and non-root container configuration.
 
+## Corrective PR Status
+
+The first corrective wave has been merged: API Gateway #28, Auth Service #14, Account Service #46, Transaction Service #33, Notification Service #15, Config Repo #52, and Infra SIT #45. Their focused checks passed; Testcontainers-dependent verification was limited locally by unavailable Docker.
+
 ## Completion Gate
 
 The public release review is complete only when every P1 finding is either fixed and verified or explicitly documented as a deliberate, approved scope exception. Public visibility and branch protection are separate repository-settings changes and remain pending the owner's instruction.
