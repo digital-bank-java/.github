@@ -46,8 +46,8 @@ The following should be fixed before or alongside the release-blocking work:
 
 ## Corrective PR Status
 
-The first corrective wave has been merged: API Gateway #28, Auth Service #14, Account Service #46, Transaction Service #33, Notification Service #15, Config Repo #52, and Infra SIT #45. Their focused checks passed; Testcontainers-dependent verification was limited locally by unavailable Docker.
+The first corrective wave and the follow-up hardening wave are merged. The hardening wave includes Ledger Service #26, Customer Service #38, Account Service #47, Auth Service #15, Config Repo #53 and #54, Infra SIT #46, API Gateway #32, Payment Service #15, Transaction Service #34, and MFA Service #23. Their focused checks passed; Testcontainers-dependent verification was limited locally by unavailable Docker.
 
 ## Completion Gate
 
-The public release review is complete only when every P1 finding is either fixed and verified or explicitly documented as a deliberate, approved scope exception. Public visibility and branch protection are separate repository-settings changes and remain pending the owner's instruction.
+All findings from this review are now addressed in merged code. The remaining release gate is operational: roll out the merged images/configuration to local SIT and verify authentication, ownership, audience validation, Ledger authorization, Redis authentication, and network policy. Public visibility and branch protection are separate repository-settings changes and remain pending the owner's instruction.
