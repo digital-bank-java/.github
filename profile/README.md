@@ -20,7 +20,7 @@ Normal HTTP traffic enters through the API Gateway. The gateway routes authentic
 
 For a transfer, Transaction Service coordinates the workflow, Account Service owns account state and reservations, and Ledger Service owns the official immutable accounting entries. Kafka events, outbox delivery, idempotent consumers, and reconciliation provide the foundation for eventual consistency. Payment and Notification Services own their respective lifecycles and do not mutate ledger balances directly.
 
-The detailed boundary and event-flow decisions are documented in [`platform-architecture.md`](docs/platform-architecture.md). Contract conventions are in [`platform-conventions.md`](docs/platform-conventions.md), and the event schemas are documented in [`asyncapi-contracts.md`](docs/asyncapi-contracts.md).
+The detailed boundary and event-flow decisions are documented in [`platform-architecture.md`](../docs/platform-architecture.md). Contract conventions are in [`platform-conventions.md`](../docs/platform-conventions.md), and the event schemas are documented in [`asyncapi-contracts.md`](../docs/asyncapi-contracts.md).
 
 ## Repository Map
 
@@ -44,13 +44,13 @@ The detailed boundary and event-flow decisions are documented in [`platform-arch
 
 SIT is the lowest shared runtime environment for development and integrated testing. It runs on local Docker Desktop Kubernetes in the `digital-bank-sit` namespace. UAT and PROD are future AWS environments, not currently required to run the platform.
 
-Start with the [local SIT guide](docs/local-sit.md). It covers prerequisites, dependency installation, service rollout, health checks, port-forwarding, centralized Swagger, Kafka inspection through AKHQ, and controlled synthetic test fixtures. Do not commit credentials or exported secrets; use Kubernetes Secrets and local environment variables as described by the repository documentation.
+Start with the [local SIT guide](../docs/local-sit.md). It covers prerequisites, dependency installation, service rollout, health checks, port-forwarding, centralized Swagger, Kafka inspection through AKHQ, and controlled synthetic test fixtures. Do not commit credentials or exported secrets; use Kubernetes Secrets and local environment variables as described by the repository documentation.
 
 The supported workstation-debugging pattern is to run one service locally with the `sit` profile while connecting to port-forwarded SIT dependencies. Full gateway and event-flow verification remains a Kubernetes SIT workflow.
 
 ## Verification
 
-Each Java service documents its Maven verification command and container workflow. Platform changes should be checked with the relevant service `./mvnw verify`, Helm lint/template validation, and the SIT health and API checks described in the service README and [Java testing guidance](docs/testing/java-test-convention.md).
+Each Java service documents its Maven verification command and container workflow. Platform changes should be checked with the relevant service `./mvnw verify`, Helm lint/template validation, and the SIT health and API checks described in the service README and [Java testing guidance](../docs/testing/java-test-convention.md).
 
 The API Gateway is the normal path for customer-facing API calls. Internal ledger posting endpoints remain protected internal contracts and are not public business routes. Centralized OpenAPI documentation is available through the gateway in SIT when the platform is running.
 
@@ -62,6 +62,6 @@ The project deliberately separates completed local-SIT foundations from deferred
 
 ## Contributing
 
-Read the organization [engineering standards](README.md) and each repository's `AGENTS.md` and README before changing code. Work from an issue in the [Digital Bank Java project](https://github.com/orgs/digital-bank-java/projects/1), keep new work under a sprint parent, use a focused branch, and open a pull request for review. Do not merge directly to `main`.
+Read the organization [engineering standards](../README.md) and each repository's `AGENTS.md` and README before changing code. Work from an issue in the [Digital Bank Java project](https://github.com/orgs/digital-bank-java/projects/1), keep new work under a sprint parent, use a focused branch, and open a pull request for review. Do not merge directly to `main`.
 
-Project status and architectural decisions are recorded in [`docs/project-handoff.md`](docs/project-handoff.md). The project backlog remains the executable source of delivery status; this page is the public orientation point.
+Project status and architectural decisions are recorded in [`docs/project-handoff.md`](../docs/project-handoff.md). The project backlog remains the executable source of delivery status; this page is the public orientation point.
